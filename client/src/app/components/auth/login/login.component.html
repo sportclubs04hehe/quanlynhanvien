@@ -1,0 +1,96 @@
+<section class="vh-100">
+    <div class="container-fluid h-custom">
+        <div class="row d-flex justify-content-center align-items-center h-100">
+            <div class="col-md-9 col-lg-6 col-xl-5">
+                <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-login-form/draw2.webp"
+                    class="img-fluid" alt="Sample image">
+            </div>
+            <div class="col-md-8 col-lg-6 col-xl-4 offset-xl-1">
+                <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+                    <h2 class="mb-4">Đăng nhập</h2>
+
+                    @if (errorMessage()) {
+                        <div class="alert alert-danger" role="alert">
+                            {{ errorMessage() }}
+                        </div>
+                    }
+
+                    <!-- Email input -->
+                    <div data-mdb-input-init class="form-outline mb-4">
+                        <label class="form-label" for="form3Example3">Email <span class="text-danger">*</span></label>
+                        <input 
+                            type="email" 
+                            id="form3Example3" 
+                            formControlName="email"
+                            class="form-control form-control-lg"
+                            [class.is-invalid]="email?.invalid && email?.touched"
+                            placeholder="example@gmail.com" />
+                        @if (email?.invalid && email?.touched) {
+                            <div class="invalid-feedback">
+                                @if (email?.errors?.['required']) {
+                                    Email là bắt buộc
+                                }
+                                @if (email?.errors?.['email']) {
+                                    Email không hợp lệ
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Password input -->
+                    <div data-mdb-input-init class="form-outline mb-3">
+                        <label class="form-label" for="form3Example4">Mật khẩu <span class="text-danger">*</span></label>
+                        <input 
+                            type="password" 
+                            id="form3Example4" 
+                            formControlName="password"
+                            class="form-control form-control-lg"
+                            [class.is-invalid]="password?.invalid && password?.touched"
+                            placeholder="Nhập mật khẩu" />
+                        @if (password?.invalid && password?.touched) {
+                            <div class="invalid-feedback">
+                                @if (password?.errors?.['required']) {
+                                    Mật khẩu là bắt buộc
+                                }
+                                @if (password?.errors?.['minlength']) {
+                                    Mật khẩu phải có ít nhất 6 ký tự
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <!-- Checkbox -->
+                        <div class="form-check mb-0">
+                            <input 
+                                class="form-check-input me-2" 
+                                type="checkbox" 
+                                formControlName="rememberMe"
+                                id="form2Example3" />
+                            <label class="form-check-label" for="form2Example3">
+                                Ghi nhớ đăng nhập
+                            </label>
+                        </div>
+                        <a href="/auth/forgot-password" class="text-body">Quên mật khẩu?</a>
+                    </div>
+
+                    <div class="text-center text-lg-start mt-4 pt-2">
+                        <button 
+                            type="submit" 
+                            class="btn btn-primary btn-lg"
+                            [disabled]="isLoading()"
+                            style="padding-left: 2.5rem; padding-right: 2.5rem;">
+                            @if (isLoading()) {
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                Đang đăng nhập...
+                            } @else {
+                                Đăng nhập
+                            }
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
