@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.21" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.10" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.10">
@@ -20,6 +21,10 @@
   <ItemGroup>
     <Folder Include="Controllers\" />
     <Folder Include="DTO\" />
+    <Folder Include="Repository\Interface\" />
+    <Folder Include="Repository\Implement\" />
+    <Folder Include="Service\Implement\" />
+    <Folder Include="Service\Interface\" />
   </ItemGroup>
 
 </Project>

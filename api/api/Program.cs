@@ -1,5 +1,9 @@
 ﻿using api.Data;
 using api.Model;
+using api.Repository.Implement;
+using api.Repository.Interface;
+using api.Service.Implement;
+using api.Service.Interface;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,12 +14,20 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Add AutoMapper
+builder.Services.AddAutoMapper(typeof(Program));
+
+// Add Repository và Service
+builder.Services.AddScoped<IPhongBanRepository, PhongBanRepository>();
+builder.Services.AddScoped<IPhongBanService, PhongBanService>();
+
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication()
     .AddCookie(IdentityConstants.ApplicationScheme)
     .AddBearerToken(IdentityConstants.BearerScheme);
 
 builder.Services.AddIdentityCore<User>()
+    .AddRoles<IdentityRole<Guid>>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddApiEndpoints();
 

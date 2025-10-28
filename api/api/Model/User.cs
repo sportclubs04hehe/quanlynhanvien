@@ -2,8 +2,7 @@
 
 namespace api.Model
 {
-    public class User : IdentityUser
+    public class User : IdentityUser<Guid>
     {
-        public string? Initials { get; set; }
     }
 }

@@ -1,10 +1,11 @@
 ﻿using api.Model;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace api.Data
 {
-    public class ApplicationDbContext : IdentityDbContext<User>
+    public class ApplicationDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) 
             : base(options)
@@ -12,13 +13,34 @@ namespace api.Data
             
         }
 
+        public DbSet<NhanVien> NhanViens => Set<NhanVien>();
+        public DbSet<PhongBan> PhongBans => Set<PhongBan>();
+        public DbSet<ChucVu> ChucVus => Set<ChucVu>();
+        public DbSet<DonXinNghiPhep> DonXinNghiPheps => Set<DonXinNghiPhep>();
+        public DbSet<ThongBao> ThongBaos => Set<ThongBao>();
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
 
-            builder.Entity<User>().Property(u => u.Initials).HasMaxLength(5);
+            builder.Entity<NhanVien>()
+                .HasOne(e => e.QuanLy)
+                .WithMany()
+                .HasForeignKey(e => e.QuanLyId)
+                .OnDelete(DeleteBehavior.Restrict);
 
-            builder.HasDefaultSchema("quanlynhanvien"); // Set default schema to "quanlynhanvien"
+            builder.Entity<DonXinNghiPhep>()
+                .HasOne(d => d.NhanVien)
+                .WithMany(n => n.DonXinNghiPhep)
+                .HasForeignKey(d => d.NhanVienId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<DonXinNghiPhep>()
+                .HasOne(d => d.NguoiDuyet)
+                .WithMany()
+                .HasForeignKey(d => d.DuocChapThuanBoi)
+                .OnDelete(DeleteBehavior.Restrict);
         }
+
     }
 }
