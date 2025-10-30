@@ -1,0 +1,137 @@
+<div class="container-fluid mt-4">
+  <div class="row mb-3">
+    <div class="col">
+      <h2>Quản lý Phòng Ban</h2>
+    </div>
+  </div>
+
+  <!-- Search and Add Button -->
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <div class="input-group">
+        <input 
+          type="text" 
+          class="form-control" 
+          placeholder="Tìm kiếm phòng ban (tối thiểu 2 ký tự)..."
+          [value]="searchTerm()"
+          (input)="onSearchInput($any($event.target).value)">
+        @if (searchTerm()) {
+          <button 
+            class="btn btn-outline-secondary" 
+            type="button"
+            (click)="clearSearch()"
+            title="Xóa tìm kiếm">
+            <i class="bi bi-x-circle"></i>
+          </button>
+        }
+        <button class="btn btn-outline-secondary" type="button" disabled>
+          <i class="bi bi-search"></i>
+        </button>
+      </div>
+      @if (searchTerm() && searchTerm().length < 2) {
+        <small class="text-muted">
+          <i class="bi bi-info-circle"></i> Nhập ít nhất 2 ký tự để tìm kiếm
+        </small>
+      }
+    </div>
+    <div class="col-md-6 text-end">
+      <button class="btn btn-primary" (click)="openCreateModal()">
+        <i class="bi bi-plus-circle"></i> Thêm Phòng Ban
+      </button>
+    </div>
+  </div>
+
+  <!-- Error Message -->
+  @if (errorMessage()) {
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      {{ errorMessage() }}
+      <button type="button" class="btn-close" (click)="errorMessage.set(null)"></button>
+    </div>
+  }
+
+  <!-- Table -->
+  <div class="card">
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead class="table-light">
+              <tr>
+                <th>STT</th>
+                <th>Tên Phòng Ban</th>
+                <th>Mô Tả</th>
+                <th>Số Lượng Nhân Viên</th>
+                <th class="text-center">Thao Tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              @if (phongBans().length === 0) {
+                <tr>
+                  <td colspan="5" class="text-center py-4">
+                    <p class="text-muted mb-0">Không có dữ liệu</p>
+                  </td>
+                </tr>
+              }
+              @for (phongBan of phongBans(); track phongBan.id; let i = $index) {
+                <tr>
+                  <td>{{ (pageNumber() - 1) * pageSize() + i + 1 }}</td>
+                  <td><strong>{{ phongBan.tenPhongBan }}</strong></td>
+                  <td>{{ phongBan.moTa || 'N/A' }}</td>
+                  <td>
+                    <span class="badge bg-info">{{ phongBan.soLuongNhanVien }} người</span>
+                  </td>
+                  <td class="text-center">
+                    <button 
+                      class="btn btn-sm btn-outline-primary me-2" 
+                      (click)="openEditModal(phongBan)"
+                      title="Chỉnh sửa">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button 
+                      class="btn btn-sm btn-outline-danger" 
+                      (click)="deletePhongBan(phongBan)"
+                      title="Xóa">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        @if (totalPages() > 1) {
+          <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center mb-0">
+              <li class="page-item" [class.disabled]="pageNumber() === 1">
+                <a class="page-link" (click)="pageNumber() > 1 && onPageChange(pageNumber() - 1)">
+                  Trước
+                </a>
+              </li>
+              
+              @for (page of pages; track page) {
+                <li class="page-item" [class.active]="page === pageNumber()">
+                  <a class="page-link" (click)="onPageChange(page)">{{ page }}</a>
+                </li>
+              }
+              
+              <li class="page-item" [class.disabled]="pageNumber() === totalPages()">
+                <a class="page-link" (click)="pageNumber() < totalPages() && onPageChange(pageNumber() + 1)">
+                  Sau
+                </a>
+              </li>
+            </ul>
+          </nav>
+        }
+
+        <!-- Summary -->
+        <div class="text-center mt-3 text-muted">
+          <small>
+            Hiển thị {{ (pageNumber() - 1) * pageSize() + 1 }} - 
+            {{ Math.min(pageNumber() * pageSize(), totalCount()) }} 
+            trong tổng số {{ totalCount() }} phòng ban
+          </small>
+        </div>
+      </div>
+    </div>
+</div>

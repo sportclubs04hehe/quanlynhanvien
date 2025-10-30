@@ -1,37 +1,58 @@
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
   <div class="container-fluid">
-    <a class="navbar-brand" href="#">CÔNG TY S&P</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <a class="navbar-brand" routerLink="/dashboard">CÔNG TY S&P</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" 
+            data-bs-target="#navbarSupportedContent" 
+            aria-controls="navbarSupportedContent" aria-expanded="false" 
+            aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
+
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+
         <li class="nav-item">
-          <a class="nav-link active" aria-current="page" href="#">Trang chủ</a>
+          <a class="nav-link" routerLink="/dashboard" routerLinkActive="active" 
+             [routerLinkActiveOptions]="{ exact: true }">
+            Trang chủ
+          </a>
         </li>
-          <li class="nav-item">
-          <a class="nav-link" href="#">Nhân viên</a>
-        </li>
+
         <li class="nav-item">
-          <a class="nav-link" href="#">Nghỉ phép</a>
+          <a class="nav-link" routerLink="/nhanvien" routerLinkActive="active">
+            Nhân viên
+          </a>
         </li>
-         <li class="nav-item">
-          <a class="nav-link" href="#">Thống kê</a>
+
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/nghiphep" routerLinkActive="active">
+            Nghỉ phép
+          </a>
         </li>
-         
+
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/phongban" routerLinkActive="active">
+            Phòng ban
+          </a>
+        </li>
+
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" 
+             role="button" data-bs-toggle="dropdown" aria-expanded="false">
             Hệ thống / Cài đặt
           </a>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-            <li><a class="dropdown-item" href="#">Tạo tài khoản</a></li>
+            <li><a class="dropdown-item" routerLink="/taotaikhoan">Tạo tài khoản</a></li>
             <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#">Quản lý tài khoản</a></li>
+            <li><a class="dropdown-item" routerLink="/quanlytaikhoan">Quản lý tài khoản</a></li>
             <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#">Cài đặt khác</a></li>
+            <li><a class="dropdown-item" routerLink="/caidat">Cài đặt khác</a></li>
           </ul>
         </li>
+
       </ul>
+
+       <button class="btn btn-danger" (click)="logout()">Đăng xuất</button>
     </div>
   </div>
 </nav>

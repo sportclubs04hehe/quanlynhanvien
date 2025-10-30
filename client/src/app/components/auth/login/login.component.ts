@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
 import { CommonModule } from '@angular/common';
 import { LoginRequest } from '../../../types/login.model';
+import { SpinnerService } from '../../../services/spinner.service';
 
 @Component({
   selector: 'app-login',
@@ -16,6 +17,7 @@ export class LoginComponent {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly spinner = inject(SpinnerService);
 
   loginForm: FormGroup;
   isLoading = signal(false);
@@ -47,6 +49,7 @@ export class LoginComponent {
 
     this.isLoading.set(true);
     this.errorMessage.set(null);
+    this.spinner.show('Đang đăng nhập...');
 
     const loginRequest: LoginRequest = {
       email: this.loginForm.value.email,
@@ -56,11 +59,35 @@ export class LoginComponent {
     this.authService.login(loginRequest).subscribe({
       next: (response) => {
         this.isLoading.set(false);
+        this.spinner.hide();
         this.router.navigate(['/dashboard']);
       },
       error: (error) => {
         this.isLoading.set(false);
-        const errorMsg = error.error?.message || error.error?.title || 'Đăng nhập thất bại. Vui lòng kiểm tra email và mật khẩu.';
+        this.spinner.hide();
+        
+        // Xử lý thông báo lỗi dựa trên status code
+        let errorMsg = 'Đã xảy ra lỗi. Vui lòng thử lại sau.';
+        
+        // Ưu tiên message từ custom middleware
+        if (error.error?.message) {
+          errorMsg = error.error.message;
+        } else if (error.status === 401) {
+          // Unauthorized - Sai email hoặc mật khẩu
+          errorMsg = 'Email hoặc mật khẩu không đúng. Vui lòng kiểm tra lại.';
+        } else if (error.status === 400) {
+          // Bad Request - Validation errors
+          errorMsg = 'Thông tin đăng nhập không hợp lệ.';
+        } else if (error.status === 0) {
+          // Network error
+          errorMsg = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.';
+        } else if (error.error?.detail) {
+          // Nếu có detail từ API
+          errorMsg = error.error.detail === 'Failed' 
+            ? 'Email hoặc mật khẩu không đúng. Vui lòng kiểm tra lại.'
+            : error.error.detail;
+        }
+        
         this.errorMessage.set(errorMsg);
       }
     });

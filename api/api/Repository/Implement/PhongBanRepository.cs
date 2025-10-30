@@ -22,8 +22,12 @@ namespace api.Repository.Implement
 
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
-                query = query.Where(p => p.TenPhongBan.Contains(searchTerm) || 
-                                        (p.MoTa != null && p.MoTa.Contains(searchTerm)));
+                var lowerSearch = searchTerm.ToLower();
+
+                query = query.Where(p =>
+                    p.TenPhongBan.ToLower().Contains(lowerSearch) ||
+                    (p.MoTa != null && p.MoTa.ToLower().Contains(lowerSearch))
+                );
             }
 
             var totalCount = await query.CountAsync();

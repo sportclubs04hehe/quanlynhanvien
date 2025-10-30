@@ -1,0 +1,85 @@
+<div class="modal-header">
+  <h5 class="modal-title">{{ title }}</h5>
+  <button type="button" class="btn-close" (click)="modal.dismiss()" aria-label="Close"></button>
+</div>
+
+<div class="modal-body">
+  @if (errorMessage()) {
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      {{ errorMessage() }}
+      <button type="button" class="btn-close" (click)="errorMessage.set(null)"></button>
+    </div>
+  }
+
+  <form [formGroup]="phongBanForm" (ngSubmit)="onSubmit()">
+    <!-- Tên Phòng Ban -->
+    <div class="mb-3">
+      <label for="tenPhongBan" class="form-label">
+        Tên Phòng Ban <span class="text-danger">*</span>
+      </label>
+      <input 
+        type="text" 
+        class="form-control" 
+        id="tenPhongBan"
+        formControlName="tenPhongBan"
+        [class.is-invalid]="tenPhongBan?.invalid && tenPhongBan?.touched"
+        placeholder="Nhập tên phòng ban">
+      
+      @if (tenPhongBan?.invalid && tenPhongBan?.touched) {
+        <div class="invalid-feedback">
+          @if (tenPhongBan?.errors?.['required']) {
+            Tên phòng ban là bắt buộc
+          }
+          @if (tenPhongBan?.errors?.['maxlength']) {
+            Tên phòng ban không được vượt quá 100 ký tự
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Mô Tả -->
+    <div class="mb-3">
+      <label for="moTa" class="form-label">Mô Tả</label>
+      <textarea 
+        class="form-control" 
+        id="moTa"
+        formControlName="moTa"
+        [class.is-invalid]="moTa?.invalid && moTa?.touched"
+        rows="4"
+        placeholder="Nhập mô tả phòng ban (tùy chọn)"></textarea>
+      
+      @if (moTa?.invalid && moTa?.touched) {
+        <div class="invalid-feedback">
+          @if (moTa?.errors?.['maxlength']) {
+            Mô tả không được vượt quá 500 ký tự
+          }
+        </div>
+      }
+    </div>
+  </form>
+</div>
+
+<div class="modal-footer">
+  <button 
+    type="button" 
+    class="btn btn-secondary" 
+    (click)="onCancel()"
+    [disabled]="isSubmitting()">
+    Hủy
+  </button>
+  <button 
+    type="button" 
+    class="btn btn-primary" 
+    (click)="onSubmit()">
+    @if (isSubmitting()) {
+      <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+      Đang xử lý...
+    } @else {
+      @if (mode === 'create') {
+        Thêm mới
+      } @else {
+        Cập nhật
+      }
+    }
+  </button>
+</div>

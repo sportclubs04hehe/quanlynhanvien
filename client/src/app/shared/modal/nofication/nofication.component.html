@@ -1,0 +1,40 @@
+<div class="modal-header" [ngClass]="{
+  'bg-danger text-white': type === 'danger',
+  'bg-warning': type === 'warning',
+  'bg-info text-white': type === 'info',
+  'bg-success text-white': type === 'success'
+}">
+  <h5 class="modal-title text-light">
+    <i class="bi" [ngClass]="{
+      'bi-exclamation-triangle-fill': type === 'danger' || type === 'warning',
+      'bi-info-circle-fill': type === 'info',
+      'bi-check-circle-fill': type === 'success'
+    }"></i>
+    {{ title }}
+  </h5>
+  <button type="button" class="btn-close" 
+          [class.btn-close-white]="type === 'danger' || type === 'info' || type === 'success'"
+          (click)="cancel()" 
+          aria-label="Close"></button>
+</div>
+
+<div class="modal-body">
+  <p class="mb-0">{{ message }}</p>
+</div>
+
+<div class="modal-footer">
+  <button type="button" class="btn btn-secondary" (click)="cancel()">
+    {{ cancelText }}
+  </button>
+  <button type="button" 
+          class="btn" 
+          [ngClass]="{
+            'btn-danger': type === 'danger',
+            'btn-warning': type === 'warning',
+            'btn-info': type === 'info',
+            'btn-success': type === 'success'
+          }"
+          (click)="confirm()">
+    {{ confirmText }}
+  </button>
+</div>

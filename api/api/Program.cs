@@ -1,4 +1,5 @@
 ﻿using api.Data;
+using api.Middleware;
 using api.Model;
 using api.Repository.Implement;
 using api.Repository.Interface;
@@ -20,13 +21,23 @@ builder.Services.AddAutoMapper(typeof(Program));
 // Add Repository và Service
 builder.Services.AddScoped<IPhongBanRepository, PhongBanRepository>();
 builder.Services.AddScoped<IPhongBanService, PhongBanService>();
+builder.Services.AddScoped<IChucVuRepository, ChucVuRepository>();
+builder.Services.AddScoped<IChucVuService, ChucVuService>();
 
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication()
     .AddCookie(IdentityConstants.ApplicationScheme)
     .AddBearerToken(IdentityConstants.BearerScheme);
 
-builder.Services.AddIdentityCore<User>()
+builder.Services.AddIdentityCore<User>(options =>
+{
+    options.Password.RequireDigit = false;           // Khong yeu cau so
+    options.Password.RequireLowercase = false;       // Khong yeu cau chu thuong
+    options.Password.RequireUppercase = false;       // Khong yeu cau chu hoa
+    options.Password.RequireNonAlphanumeric = false; // Khong ky tu dac biet
+    options.Password.RequiredLength = 6;             // Do dai 6 ky tu
+    options.Password.RequiredUniqueChars = 1;        // So ky tu toi thieu
+})
     .AddRoles<IdentityRole<Guid>>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddApiEndpoints();
@@ -55,8 +66,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors("AllowAngularClient"); 
+app.UseCors("AllowAngularClient");
 
+app.UseMiddleware<CustomErrorHandlingMiddleware>();
+
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
