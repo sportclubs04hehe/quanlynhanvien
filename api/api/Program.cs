@@ -8,6 +8,8 @@ using api.Service.Interface;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services
@@ -23,6 +25,8 @@ builder.Services.AddScoped<IPhongBanRepository, PhongBanRepository>();
 builder.Services.AddScoped<IPhongBanService, PhongBanService>();
 builder.Services.AddScoped<IChucVuRepository, ChucVuRepository>();
 builder.Services.AddScoped<IChucVuService, ChucVuService>();
+builder.Services.AddScoped<INhanVienRepository, NhanVienRepository>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication()

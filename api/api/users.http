@@ -1,0 +1,46 @@
+### Variables
+@baseUrl = http://localhost:5000
+@userId = {{userId}}
+
+### 1. Đăng ký user mới
+POST {{baseUrl}}/api/Users/register
+Content-Type: application/json
+
+{
+  "email": "nguyenvana@example.com",
+  "password": "password123",
+  "tenDayDu": "Nguyễn Văn A",
+  "phoneNumber": "0123456789",
+  "phongBanId": null,
+  "chucVuId": null,
+  "ngaySinh": "1990-01-01",
+  "ngayVaoLam": "2024-01-01"
+}
+
+### 2. Lấy danh sách users (tất cả)
+GET {{baseUrl}}/api/Users?pageNumber=1&pageSize=10
+
+### 3. Tìm kiếm users
+GET {{baseUrl}}/api/Users?pageNumber=1&pageSize=10&searchTerm=nguyen
+
+### 4. Lấy chi tiết user
+GET {{baseUrl}}/api/Users/{{userId}}
+
+### 5. Cập nhật user
+PUT {{baseUrl}}/api/Users/{{userId}}
+Content-Type: application/json
+
+{
+  "tenDayDu": "Nguyễn Văn A - Updated",
+  "phoneNumber": "0987654321",
+  "phongBanId": null,
+  "chucVuId": null,
+  "ngaySinh": "1990-01-01",
+  "ngayVaoLam": "2024-01-01",
+  "status": "Active"
+}
+
+### 6. Xóa user
+DELETE {{baseUrl}}/api/Users/{{userId}}
+
+###
