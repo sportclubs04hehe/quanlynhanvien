@@ -9,6 +9,7 @@ import { NoficationComponent } from '../../shared/modal/nofication/nofication.co
 import { ThemSuaNhanvienComponent } from './them-sua-nhanvien/them-sua-nhanvien.component';
 import { ChitietNhanvienComponent } from './chitiet-nhanvien/chitiet-nhanvien.component';
 import { UserDto, NhanVienStatus } from '../../types/users.model';
+import { CanComponentDeactivate } from '../../guards/unsaved-changes.guard';
 
 @Component({
   selector: 'app-quanlynhanvien',
@@ -17,7 +18,7 @@ import { UserDto, NhanVienStatus } from '../../types/users.model';
   templateUrl: './quanlynhanvien.component.html',
   styleUrl: './quanlynhanvien.component.css'
 })
-export class QuanlynhanvienComponent implements OnInit, OnDestroy {
+export class QuanlynhanvienComponent implements OnInit, OnDestroy, CanComponentDeactivate {
   private modal = inject(NgbModal);
   private nhanVienService = inject(QuanlynhanvienService);
   private spinner = inject(SpinnerService);
@@ -42,6 +43,12 @@ export class QuanlynhanvienComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  // CanComponentDeactivate implementation
+  canDeactivate(): boolean {
+    // Kiểm tra xem có modal nào đang mở không
+    return !this.modal.hasOpenModals();
   }
 
   private setupSearchDebounce() {
@@ -98,7 +105,8 @@ export class QuanlynhanvienComponent implements OnInit, OnDestroy {
     
     const modalRef = this.modal.open(ThemSuaNhanvienComponent, { 
       size: 'lg',
-      backdrop: 'static'
+      backdrop: 'static',
+      keyboard: false // Disable ESC key
     });
     
     modalRef.componentInstance.mode = 'create';
@@ -119,7 +127,8 @@ export class QuanlynhanvienComponent implements OnInit, OnDestroy {
     
     const modalRef = this.modal.open(ThemSuaNhanvienComponent, { 
       size: 'lg',
-      backdrop: 'static'
+      backdrop: 'static',
+      keyboard: false // Disable ESC key
     });
     
     modalRef.componentInstance.mode = 'edit';

@@ -11,37 +11,50 @@ import { isPlatformBrowser } from '@angular/common';
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly platformId = inject(PLATFORM_ID);
-  private readonly baseUrl = `${environment.apiUrl}`;
+  private readonly baseUrl = `${environment.apiUrl}/users`; 
 
   private _authState = signal<LoginResponse | null>(null);
   authState = computed(() => this._authState());
 
   isLoggedIn = computed(() => !!this._authState()?.accessToken);
+  currentUser = computed(() => this._authState()?.user);
 
   constructor() {
     // Only access localStorage in browser environment
     if (isPlatformBrowser(this.platformId)) {
       const token = localStorage.getItem('accessToken');
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (token && refreshToken) {
-        this._authState.set({
-          tokenType: 'Bearer',
-          accessToken: token,
-          expiresIn: 0,
-          refreshToken: refreshToken
-        });
+      const userJson = localStorage.getItem('user');
+      
+      if (token && userJson) {
+        try {
+          const user = JSON.parse(userJson);
+          this._authState.set({
+            tokenType: 'Bearer',
+            accessToken: token,
+            expiresIn: 0,
+            refreshToken: '',
+            user: user
+          });
+        } catch (error) {
+          // Nếu parse lỗi, clear storage
+          localStorage.clear();
+        }
       }
     }
   }
 
   login(payload: LoginRequest): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.baseUrl}/login?useCookies=false`, payload)
+    return this.http.post<LoginResponse>(`${this.baseUrl}/login`, payload)
       .pipe(
         tap((res) => {
           this._authState.set(res);
           if (isPlatformBrowser(this.platformId)) {
             localStorage.setItem('accessToken', res.accessToken);
-            localStorage.setItem('refreshToken', res.refreshToken);
+            localStorage.setItem('user', JSON.stringify(res.user));
+            // RefreshToken sẽ implement sau
+            if (res.refreshToken) {
+              localStorage.setItem('refreshToken', res.refreshToken);
+            }
           }
         }),
         catchError((err) => {
@@ -59,15 +72,11 @@ export class AuthService {
   }
 
   refreshToken() {
-    if (!isPlatformBrowser(this.platformId)) {
-      return;
-    }
+    // TODO: Implement refresh token khi backend hỗ trợ
+    // Hiện tại backend chưa có endpoint refresh token
+    console.warn('Refresh token chưa được implement');
     
-    const refreshToken = localStorage.getItem('refreshToken');
-    return this.http.post<LoginResponse>(`${this.baseUrl}/refresh`, { refreshToken })
-      .subscribe({
-        next: (res) => this._authState.set(res),
-        error: (err) => this.logout()
-      });
+    // Tạm thời logout khi token hết hạn
+    this.logout();
   }
 }

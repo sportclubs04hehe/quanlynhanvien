@@ -17,6 +17,8 @@ namespace api.DTO
         [MinLength(6, ErrorMessage = "Mật khẩu phải có ít nhất 6 ký tự")]
         public required string Password { get; set; }
 
+        public string? Role { get; set; }
+
         // Thông tin NhanVien
         [Required(ErrorMessage = "Tên đầy đủ là bắt buộc")]
         [StringLength(100, ErrorMessage = "Tên đầy đủ không được vượt quá 100 ký tự")]
@@ -56,6 +58,9 @@ namespace api.DTO
         public PhongBanDto? PhongBan { get; set; }
         public ChucVuDto? ChucVu { get; set; }
         public string? TenQuanLy { get; set; }
+        
+        // Role
+        public List<string> Roles { get; set; } = new();
     }
 
     /// <summary>
@@ -83,4 +88,30 @@ namespace api.DTO
         public string? TelegramChatId { get; set; }
         public NhanVienStatus? Status { get; set; }
     }
+
+    /// <summary>
+    /// DTO để đăng nhập
+    /// </summary>
+    public class LoginDto
+    {
+        [Required(ErrorMessage = "Email là bắt buộc")]
+        [EmailAddress(ErrorMessage = "Email không hợp lệ")]
+        public required string Email { get; set; }
+
+        [Required(ErrorMessage = "Mật khẩu là bắt buộc")]
+        public required string Password { get; set; }
+    }
+
+    /// <summary>
+    /// DTO trả về sau khi đăng nhập thành công
+    /// </summary>
+    public class LoginResponseDto
+    {
+        public string TokenType { get; set; } = "Bearer";        // Loại token (thường là Bearer)
+        public string AccessToken { get; set; } = string.Empty;  // Mã truy cập JWT
+        public int ExpiresIn { get; set; }                       // Thời gian hết hạn (tính bằng giây)
+        public string RefreshToken { get; set; } = string.Empty; // Token để làm mới AccessToken
+        public UserDto User { get; set; } = null!;               // Thông tin người dùng đăng nhập
+    }
+
 }

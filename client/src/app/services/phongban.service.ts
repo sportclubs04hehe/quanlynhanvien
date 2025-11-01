@@ -13,7 +13,7 @@ import { CacheService } from './cache.service';
 export class PhongbanService {
   private readonly http = inject(HttpClient);
   private readonly cache = inject(CacheService);
-  private readonly baseUrl = `${environment.apiUrl}/api/PhongBans`;
+  private readonly baseUrl = `${environment.apiUrl}/PhongBans`;
   private readonly CACHE_PREFIX = 'phongban_';
 
   getAll(pageNumber: number = 1, pageSize: number = 10, searchTerm?: string): Observable<PagedResult<PhongBanDto>> {

@@ -1,5 +1,7 @@
 using api.DTO;
+using api.Model.Enums;
 using api.Service.Interface;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace api.Controllers
@@ -16,9 +18,35 @@ namespace api.Controllers
         }
 
         /// <summary>
+        /// Đăng nhập
+        /// </summary>
+        [HttpPost("login")]
+        [AllowAnonymous]
+        public async Task<ActionResult<LoginResponseDto>> Login([FromBody] LoginDto dto)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var response = await _authService.LoginAsync(dto);
+                if (response == null)
+                    return Unauthorized(new { message = "Email hoặc mật khẩu không đúng" });
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi đăng nhập", error = ex.Message });
+            }
+        }
+
+        /// <summary>
         /// Đăng ký user mới (tạo cả User và NhanVien)
+        /// Chỉ Giám Đốc và Phó Giám Đốc mới được tạo user
         /// </summary>
         [HttpPost("register")]
+        [Authorize(Roles = AppRolesExtensions.GiamDocOrPhoGiamDoc)]
         public async Task<ActionResult<UserDto>> Register([FromBody] RegisterUserDto dto)
         {
             try
@@ -41,8 +69,10 @@ namespace api.Controllers
 
         /// <summary>
         /// Lấy danh sách users với phân trang và tìm kiếm
+        /// Tất cả users đã đăng nhập đều xem được
         /// </summary>
         [HttpGet]
+        [Authorize(Roles = AppRolesExtensions.AllRoles)]
         public async Task<ActionResult<PagedResult<UserDto>>> GetAll(
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 10,
@@ -70,8 +100,10 @@ namespace api.Controllers
 
         /// <summary>
         /// Cập nhật thông tin user
+        /// Chỉ Giám Đốc và Phó Giám Đốc mới được update
         /// </summary>
         [HttpPut("{id}")]
+        [Authorize(Roles = AppRolesExtensions.GiamDocOrPhoGiamDoc)]
         public async Task<ActionResult<UserDto>> Update(Guid id, [FromBody] UpdateUserDto dto)
         {
             try
@@ -93,8 +125,10 @@ namespace api.Controllers
 
         /// <summary>
         /// Xóa user (xóa cả User và NhanVien)
+        /// CHỈ Giám Đốc mới được xóa
         /// </summary>
         [HttpDelete("{id}")]
+        [Authorize(Roles = AppRolesExtensions.GiamDoc)]
         public async Task<ActionResult> Delete(Guid id)
         {
             try

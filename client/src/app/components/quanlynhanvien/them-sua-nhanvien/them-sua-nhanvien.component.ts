@@ -6,12 +6,13 @@ import { finalize } from 'rxjs';
 import { QuanlynhanvienService } from '../../../services/quanlynhanvien.service';
 import { PhongbanService } from '../../../services/phongban.service';
 import { SpinnerService } from '../../../services/spinner.service';
-import { NoficationComponent } from '../../../shared/modal/nofication/nofication.component';
+import { ConfirmDialogComponent } from '../../../shared/modal/confirm-dialog/confirm-dialog.component';
 import { RegisterUserDto, UpdateUserDto, UserDto, NhanVienStatus } from '../../../types/users.model';
 import { PhongBanDto } from '../../../types/phongban.model';
 import { ChucVuDto } from '../../../types/chucvu.model';
 import { PagedResult } from '../../../types/page-result.model';
 import { ChucvuService } from '../../../services/chucvu.service';
+import { CanComponentDeactivate } from '../../../guards/unsaved-changes.guard';
 
 @Component({
   selector: 'app-them-sua-nhanvien',
@@ -20,7 +21,7 @@ import { ChucvuService } from '../../../services/chucvu.service';
   templateUrl: './them-sua-nhanvien.component.html',
   styleUrl: './them-sua-nhanvien.component.css'
 })
-export class ThemSuaNhanvienComponent implements OnInit {
+export class ThemSuaNhanvienComponent implements OnInit, CanComponentDeactivate {
   @Input() mode: 'create' | 'edit' = 'create';
   @Input() userId?: string;
   @Input() userData?: UserDto;
@@ -61,6 +62,11 @@ export class ThemSuaNhanvienComponent implements OnInit {
     this.userForm.valueChanges.subscribe(() => {
       this.isDirty = true;
     });
+  }
+
+  // CanComponentDeactivate interface implementation
+  canDeactivate(): boolean {
+    return !this.isDirty;
   }
 
   private initForm() {
@@ -204,16 +210,10 @@ export class ThemSuaNhanvienComponent implements OnInit {
 
   dismiss() {
     if (this.isDirty) {
-      const modalRef = this.modal.open(NoficationComponent, {
+      const modalRef = this.modal.open(ConfirmDialogComponent, {
         centered: true,
         backdrop: 'static'
       });
-
-      modalRef.componentInstance.title = 'Xác nhận thoát';
-      modalRef.componentInstance.message = 'Bạn có thay đổi chưa được lưu. Bạn có chắc chắn muốn thoát?';
-      modalRef.componentInstance.confirmText = 'Thoát';
-      modalRef.componentInstance.cancelText = 'Ở lại';
-      modalRef.componentInstance.type = 'warning';
 
       modalRef.result.then(
         (confirmed) => {

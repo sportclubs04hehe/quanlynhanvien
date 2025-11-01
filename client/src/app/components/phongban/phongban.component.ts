@@ -8,6 +8,7 @@ import { PhongBanDto } from '../../types/phongban.model';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, Subject, takeUntil, finalize } from 'rxjs';
+import { CanComponentDeactivate } from '../../guards/unsaved-changes.guard';
 
 @Component({
   selector: 'app-phongban',
@@ -16,7 +17,7 @@ import { debounceTime, distinctUntilChanged, Subject, takeUntil, finalize } from
   templateUrl: './phongban.component.html',
   styleUrl: './phongban.component.css'
 })
-export class PhongbanComponent implements OnInit, OnDestroy {
+export class PhongbanComponent implements OnInit, OnDestroy, CanComponentDeactivate {
   private modal = inject(NgbModal);
   private phongbanService = inject(PhongbanService);
   private spinner = inject(SpinnerService);
@@ -43,6 +44,12 @@ export class PhongbanComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  // CanComponentDeactivate implementation
+  canDeactivate(): boolean {
+    // Kiểm tra xem có modal nào đang mở không
+    return !this.modal.hasOpenModals();
   }
 
   private setupSearchDebounce() {
@@ -99,7 +106,8 @@ export class PhongbanComponent implements OnInit, OnDestroy {
     
     const modalRef = this.modal.open(ThemSuaPhongbanComponent, { 
       size: 'md',
-      backdrop: 'static'
+      backdrop: 'static',
+      keyboard: false // Disable ESC key
     });
     
     modalRef.componentInstance.mode = 'create';
@@ -120,7 +128,8 @@ export class PhongbanComponent implements OnInit, OnDestroy {
     
     const modalRef = this.modal.open(ThemSuaPhongbanComponent, { 
       size: 'md',
-      backdrop: 'static'
+      backdrop: 'static',
+      keyboard: false // Disable ESC key
     });
     
     modalRef.componentInstance.mode = 'edit';

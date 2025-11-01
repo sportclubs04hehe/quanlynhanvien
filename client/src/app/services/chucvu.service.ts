@@ -13,7 +13,7 @@ import { environment } from '../../environments/environment.development';
 export class ChucvuService {
   private http = inject(HttpClient);
   private cache = inject(CacheService);
-  private apiUrl = `${environment.apiUrl}/api/ChucVus`;
+  private apiUrl = `${environment.apiUrl}/ChucVus`;
   private readonly CACHE_PREFIX = 'chucvu';
 
   getAll(pageNumber: number = 1, pageSize: number = 10, searchTerm?: string): Observable<PagedResult<ChucVuDto>> {

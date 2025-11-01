@@ -1,9 +1,11 @@
 import { Component, inject, Input, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { PhongbanService } from '../../../services/phongban.service';
 import { CommonModule } from '@angular/common';
 import { PhongBanDto } from '../../../types/phongban.model';
+import { CanComponentDeactivate } from '../../../guards/unsaved-changes.guard';
+import { ConfirmDialogComponent } from '../../../shared/modal/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-them-sua-phongban',
@@ -12,10 +14,11 @@ import { PhongBanDto } from '../../../types/phongban.model';
   templateUrl: './them-sua-phongban.component.html',
   styleUrl: './them-sua-phongban.component.css'
 })
-export class ThemSuaPhongbanComponent implements OnInit {
+export class ThemSuaPhongbanComponent implements OnInit, CanComponentDeactivate {
   modal = inject(NgbActiveModal);
   private fb = inject(FormBuilder);
   private phongbanService = inject(PhongbanService);
+  private ngbModal = inject(NgbModal);
 
   @Input() mode: 'create' | 'edit' = 'create';
   @Input() phongBanId?: string;
@@ -24,6 +27,7 @@ export class ThemSuaPhongbanComponent implements OnInit {
   phongBanForm!: FormGroup;
   isSubmitting = signal(false);
   errorMessage = signal<string | null>(null);
+  private isDirty = false;
 
   ngOnInit() {
     this.initForm();
@@ -34,6 +38,16 @@ export class ThemSuaPhongbanComponent implements OnInit {
         moTa: this.phongBanData.moTa
       });
     }
+
+    // Track form changes
+    this.phongBanForm.valueChanges.subscribe(() => {
+      this.isDirty = true;
+    });
+  }
+
+  // CanComponentDeactivate interface implementation
+  canDeactivate(): boolean {
+    return !this.isDirty;
   }
 
   initForm() {
@@ -76,6 +90,7 @@ export class ThemSuaPhongbanComponent implements OnInit {
       this.phongbanService.create(formData).subscribe({
         next: () => {
           this.isSubmitting.set(false);
+          this.isDirty = false; // Reset dirty flag after successful save
           this.modal.close(true);
         },
         error: (error) => {
@@ -88,6 +103,7 @@ export class ThemSuaPhongbanComponent implements OnInit {
       this.phongbanService.update(this.phongBanId, formData).subscribe({
         next: () => {
           this.isSubmitting.set(false);
+          this.isDirty = false; // Reset dirty flag after successful save
           this.modal.close(true);
         },
         error: (error) => {
@@ -100,7 +116,23 @@ export class ThemSuaPhongbanComponent implements OnInit {
   }
 
   onCancel() {
-    this.modal.dismiss();
+    if (this.isDirty) {
+      const modalRef = this.ngbModal.open(ConfirmDialogComponent, {
+        centered: true,
+        backdrop: 'static'
+      });
+
+      modalRef.result.then(
+        (confirmed) => {
+          if (confirmed) {
+            this.modal.dismiss();
+          }
+        },
+        () => {} // Dismissed - do nothing
+      );
+    } else {
+      this.modal.dismiss();
+    }
   }
 }
 

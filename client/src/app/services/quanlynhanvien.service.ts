@@ -13,7 +13,7 @@ import { RegisterUserDto, UpdateUserDto, UserDto } from '../types/users.model';
 export class QuanlynhanvienService {
   private readonly http = inject(HttpClient);
   private readonly cache = inject(CacheService);
-  private readonly baseUrl = `${environment.apiUrl}/api/Users`;
+  private readonly baseUrl = `${environment.apiUrl}/Users`;
   private readonly CACHE_PREFIX = 'user_';
 
   getAll(pageNumber: number = 1, pageSize: number = 10, searchTerm?: string): Observable<PagedResult<UserDto>> {

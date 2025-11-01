@@ -5,6 +5,11 @@ namespace api.Service.Interface
     public interface IAuthService
     {
         /// <summary>
+        /// Đăng nhập
+        /// </summary>
+        Task<LoginResponseDto?> LoginAsync(LoginDto dto);
+
+        /// <summary>
         /// Đăng ký user mới (tạo cả User và NhanVien)
         /// </summary>
         Task<UserDto> RegisterAsync(RegisterUserDto dto);

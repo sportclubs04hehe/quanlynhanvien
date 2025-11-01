@@ -1,83 +1,67 @@
-﻿using api.Data;
+﻿using api.Extensions;
 using api.Middleware;
-using api.Model;
-using api.Repository.Implement;
-using api.Repository.Interface;
-using api.Service.Implement;
-using api.Service.Interface;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 
+// Cấu hình để sử dụng legacy timestamp behavior cho PostgreSQL
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services
+// ============ CONFIGURE SERVICES ============
+
+// API Controllers
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
-// Add AutoMapper
+// Swagger/OpenAPI với JWT support
+builder.Services.AddSwaggerWithJwt();
+
+// AutoMapper
 builder.Services.AddAutoMapper(typeof(Program));
 
-// Add Repository và Service
-builder.Services.AddScoped<IPhongBanRepository, PhongBanRepository>();
-builder.Services.AddScoped<IPhongBanService, PhongBanService>();
-builder.Services.AddScoped<IChucVuRepository, ChucVuRepository>();
-builder.Services.AddScoped<IChucVuService, ChucVuService>();
-builder.Services.AddScoped<INhanVienRepository, NhanVienRepository>();
-builder.Services.AddScoped<IAuthService, AuthService>();
+// Application Services (Repositories & Services)
+builder.Services.AddApplicationServices();
 
-builder.Services.AddAuthorization();
-builder.Services.AddAuthentication()
-    .AddCookie(IdentityConstants.ApplicationScheme)
-    .AddBearerToken(IdentityConstants.BearerScheme);
+// Database (PostgreSQL + Entity Framework)
+builder.Services.AddApplicationDatabase(builder.Configuration);
 
-builder.Services.AddIdentityCore<User>(options =>
-{
-    options.Password.RequireDigit = false;           // Khong yeu cau so
-    options.Password.RequireLowercase = false;       // Khong yeu cau chu thuong
-    options.Password.RequireUppercase = false;       // Khong yeu cau chu hoa
-    options.Password.RequireNonAlphanumeric = false; // Khong ky tu dac biet
-    options.Password.RequiredLength = 6;             // Do dai 6 ky tu
-    options.Password.RequiredUniqueChars = 1;        // So ky tu toi thieu
-})
-    .AddRoles<IdentityRole<Guid>>()
-    .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddApiEndpoints();
+// Identity (User Management)
+builder.Services.AddApplicationIdentity();
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-{
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
-});
+// JWT Authentication
+builder.Services.AddJwtAuthentication(builder.Configuration);
 
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAngularClient",
-        policy => policy
-            .WithOrigins("http://localhost:4200")
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials());
-});
+// CORS
+builder.Services.AddApplicationCors();
+
+// ============ BUILD APPLICATION ============
 
 var app = builder.Build();
 
-// Middleware
+// ============ CONFIGURE MIDDLEWARE PIPELINE ============
+
+// Seed database (Roles và Admin user)
+await app.SeedDatabaseAsync();
+
+// Development-only middleware
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseCors("AllowAngularClient");
+// CORS (phải đặt trước Authentication/Authorization)
+app.UseCors(CorsExtensions.AllowAngularClientPolicy);
 
+// Custom Error Handling Middleware
 app.UseMiddleware<CustomErrorHandlingMiddleware>();
 
+// Authentication & Authorization
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Map Controllers
 app.MapControllers();
-app.MapIdentityApi<User>();
+
+// ============ RUN APPLICATION ============
 
 app.Run();
