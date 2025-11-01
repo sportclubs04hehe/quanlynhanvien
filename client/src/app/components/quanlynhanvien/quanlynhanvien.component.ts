@@ -25,6 +25,7 @@ export class QuanlynhanvienComponent implements OnInit, OnDestroy, CanComponentD
 
   users = signal<UserDto[]>([]);
   errorMessage = signal<string | null>(null);
+  isLoading = signal(false);
   
   pageNumber = signal(1);
   pageSize = signal(10);
@@ -65,13 +66,17 @@ export class QuanlynhanvienComponent implements OnInit, OnDestroy, CanComponentD
 
   loadUsers() {
     this.errorMessage.set(null);
+    this.isLoading.set(true);
     this.spinner.show('Đang tải danh sách nhân viên...');
 
     const term = this.searchTerm().trim();
     const searchValue = term.length >= 2 ? term : undefined;
 
     this.nhanVienService.getAll(this.pageNumber(), this.pageSize(), searchValue)
-      .pipe(finalize(() => this.spinner.hide()))
+      .pipe(finalize(() => {
+        this.spinner.hide();
+        this.isLoading.set(false);
+      }))
       .subscribe({
         next: (result) => {
           this.users.set(result.items);

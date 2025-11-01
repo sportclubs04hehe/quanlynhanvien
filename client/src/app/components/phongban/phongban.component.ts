@@ -24,6 +24,7 @@ export class PhongbanComponent implements OnInit, OnDestroy, CanComponentDeactiv
 
   phongBans = signal<PhongBanDto[]>([]);
   errorMessage = signal<string | null>(null);
+  isLoading = signal(false);
   
   // Pagination
   pageNumber = signal(1);
@@ -66,13 +67,17 @@ export class PhongbanComponent implements OnInit, OnDestroy, CanComponentDeactiv
 
   loadPhongBans() {
     this.errorMessage.set(null);
+    this.isLoading.set(true);
     this.spinner.show('Đang tải danh sách phòng ban...');
 
     const term = this.searchTerm().trim();
     const searchValue = term.length >= 2 ? term : undefined;
 
     this.phongbanService.getAll(this.pageNumber(), this.pageSize(), searchValue)
-      .pipe(finalize(() => this.spinner.hide()))
+      .pipe(finalize(() => {
+        this.spinner.hide();
+        this.isLoading.set(false);
+      }))
       .subscribe({
         next: (result) => {
           this.phongBans.set(result.items);

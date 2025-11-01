@@ -31,7 +31,7 @@ export const routes: Routes = [
   { 
     path: 'phongban', 
     component: PhongbanComponent, 
-    canActivate: [authGuard],
+    canActivate: [authGuard, roleGuard],
     canDeactivate: [unsavedChangesGuard]
   },
   
