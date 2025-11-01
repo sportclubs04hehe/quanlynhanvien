@@ -41,6 +41,5 @@ namespace api.Data
                 .HasForeignKey(d => d.DuocChapThuanBoi)
                 .OnDelete(DeleteBehavior.Restrict);
         }
-
     }
 }

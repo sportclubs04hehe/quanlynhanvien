@@ -55,6 +55,10 @@ export class ThemSuaPhongbanComponent implements OnInit {
     return this.mode === 'create' ? 'Thêm Phòng Ban Mới' : 'Chỉnh Sửa Phòng Ban';
   }
 
+  get isCreateMode(): boolean {
+    return this.mode === 'create';
+  }
+
   onSubmit() {
     if (this.phongBanForm.invalid) {
       Object.keys(this.phongBanForm.controls).forEach(key => {

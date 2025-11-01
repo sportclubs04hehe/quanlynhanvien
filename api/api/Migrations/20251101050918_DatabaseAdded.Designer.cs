@@ -12,8 +12,8 @@ using api.Data;
 namespace api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251028023422_DbAdded")]
-    partial class DbAdded
+    [Migration("20251101050918_DatabaseAdded")]
+    partial class DatabaseAdded
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -187,16 +187,16 @@ namespace api.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("NgayBatDau")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime?>("NgayCapNhat")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime>("NgayKetThuc")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime>("NgayTao")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<Guid>("NhanVienId")
                         .HasColumnType("uuid");
@@ -223,10 +223,10 @@ namespace api.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime?>("NgaySinh")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime?>("NgayVaoLam")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<Guid?>("PhongBanId")
                         .HasColumnType("uuid");
@@ -234,8 +234,8 @@ namespace api.Migrations
                     b.Property<Guid?>("QuanLyId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Status")
-                        .HasColumnType("text");
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.Property<string>("TelegramChatId")
                         .HasColumnType("text");
@@ -280,7 +280,7 @@ namespace api.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("DaGuiLuc")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<Guid>("DonXinNghiPhepId")
                         .HasColumnType("uuid");

@@ -1,11 +1,15 @@
-<div class="modal-header">
-  <h5 class="modal-title">{{ title }}</h5>
-  <button type="button" class="btn-close" (click)="modal.dismiss()" aria-label="Close"></button>
+<div class="modal-header bg-primary text-white">
+  <h5 class="modal-title">
+    <i [class]="isCreateMode ? 'bi bi-plus-circle me-2' : 'bi bi-pencil-square me-2'"></i>
+    {{ title }}
+  </h5>
+  <button type="button" class="btn-close btn-close-white" (click)="onCancel()"></button>
 </div>
 
 <div class="modal-body">
   @if (errorMessage()) {
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
       {{ errorMessage() }}
       <button type="button" class="btn-close" (click)="errorMessage.set(null)"></button>
     </div>
@@ -23,8 +27,8 @@
         id="tenPhongBan"
         formControlName="tenPhongBan"
         [class.is-invalid]="tenPhongBan?.invalid && tenPhongBan?.touched"
-        placeholder="Nhập tên phòng ban">
-      
+        placeholder="Nhập tên phòng ban"
+      />
       @if (tenPhongBan?.invalid && tenPhongBan?.touched) {
         <div class="invalid-feedback">
           @if (tenPhongBan?.errors?.['required']) {
@@ -46,8 +50,8 @@
         formControlName="moTa"
         [class.is-invalid]="moTa?.invalid && moTa?.touched"
         rows="4"
-        placeholder="Nhập mô tả phòng ban (tùy chọn)"></textarea>
-      
+        placeholder="Nhập mô tả phòng ban (tùy chọn)"
+      ></textarea>
       @if (moTa?.invalid && moTa?.touched) {
         <div class="invalid-feedback">
           @if (moTa?.errors?.['maxlength']) {
@@ -64,22 +68,17 @@
     type="button" 
     class="btn btn-secondary" 
     (click)="onCancel()"
-    [disabled]="isSubmitting()">
-    Hủy
+    [disabled]="isSubmitting()"
+  >
+    <i class="bi bi-x-circle me-1"></i>Hủy
   </button>
   <button 
     type="button" 
     class="btn btn-primary" 
-    (click)="onSubmit()">
-    @if (isSubmitting()) {
-      <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-      Đang xử lý...
-    } @else {
-      @if (mode === 'create') {
-        Thêm mới
-      } @else {
-        Cập nhật
-      }
-    }
+    (click)="onSubmit()"
+    [disabled]="phongBanForm.invalid || isSubmitting()"
+  >
+    <i [class]="isCreateMode ? 'bi bi-plus-circle me-1' : 'bi bi-check-circle me-1'"></i>
+    {{ isCreateMode ? 'Tạo' : 'Cập nhật' }}
   </button>
 </div>

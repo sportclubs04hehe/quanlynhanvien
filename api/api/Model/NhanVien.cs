@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using api.Model.Enums;
 
 namespace api.Model
 {
@@ -19,7 +20,7 @@ namespace api.Model
         public DateTime? NgayVaoLam { get; set; }
 
         public string? TelegramChatId { get; set; }
-        public string? Status { get; set; }
+        public NhanVienStatus Status { get; set; } = NhanVienStatus.Active;
 
         public virtual User User { get; set; }
         public virtual PhongBan? PhongBan { get; set; }

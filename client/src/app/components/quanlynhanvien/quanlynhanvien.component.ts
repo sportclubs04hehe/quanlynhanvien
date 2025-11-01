@@ -1,42 +1,41 @@
 import { Component, inject, OnInit, signal, OnDestroy } from '@angular/core';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ThemSuaPhongbanComponent } from './them-sua-phongban/them-sua-phongban.component';
-import { NoficationComponent } from '../../shared/modal/nofication/nofication.component';
-import { PhongbanService } from '../../services/phongban.service';
-import { SpinnerService } from '../../services/spinner.service';
-import { PhongBanDto } from '../../types/phongban.model';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { debounceTime, distinctUntilChanged, Subject, takeUntil, finalize } from 'rxjs';
+import { QuanlynhanvienService } from '../../services/quanlynhanvien.service';
+import { SpinnerService } from '../../services/spinner.service';
+import { NoficationComponent } from '../../shared/modal/nofication/nofication.component';
+import { ThemSuaNhanvienComponent } from './them-sua-nhanvien/them-sua-nhanvien.component';
+import { ChitietNhanvienComponent } from './chitiet-nhanvien/chitiet-nhanvien.component';
+import { UserDto, NhanVienStatus } from '../../types/users.model';
 
 @Component({
-  selector: 'app-phongban',
+  selector: 'app-quanlynhanvien',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './phongban.component.html',
-  styleUrl: './phongban.component.css'
+  templateUrl: './quanlynhanvien.component.html',
+  styleUrl: './quanlynhanvien.component.css'
 })
-export class PhongbanComponent implements OnInit, OnDestroy {
+export class QuanlynhanvienComponent implements OnInit, OnDestroy {
   private modal = inject(NgbModal);
-  private phongbanService = inject(PhongbanService);
+  private nhanVienService = inject(QuanlynhanvienService);
   private spinner = inject(SpinnerService);
 
-  phongBans = signal<PhongBanDto[]>([]);
+  users = signal<UserDto[]>([]);
   errorMessage = signal<string | null>(null);
   
-  // Pagination
   pageNumber = signal(1);
   pageSize = signal(10);
   totalCount = signal(0);
   totalPages = signal(0);
   
-  // Search with debounce
   searchTerm = signal('');
   private searchSubject = new Subject<string>();
   private destroy$ = new Subject<void>();
   
   ngOnInit() {
-    this.loadPhongBans();
+    this.loadUsers();
     this.setupSearchDebounce();
   }
 
@@ -53,28 +52,28 @@ export class PhongbanComponent implements OnInit, OnDestroy {
     ).subscribe(searchTerm => {
       this.searchTerm.set(searchTerm);
       this.pageNumber.set(1);
-      this.loadPhongBans();
+      this.loadUsers();
     });
   }
 
-  loadPhongBans() {
+  loadUsers() {
     this.errorMessage.set(null);
-    this.spinner.show('Đang tải danh sách phòng ban...');
+    this.spinner.show('Đang tải danh sách nhân viên...');
 
     const term = this.searchTerm().trim();
     const searchValue = term.length >= 2 ? term : undefined;
 
-    this.phongbanService.getAll(this.pageNumber(), this.pageSize(), searchValue)
+    this.nhanVienService.getAll(this.pageNumber(), this.pageSize(), searchValue)
       .pipe(finalize(() => this.spinner.hide()))
       .subscribe({
         next: (result) => {
-          this.phongBans.set(result.items);
+          this.users.set(result.items);
           this.totalCount.set(result.totalCount);
           this.totalPages.set(result.totalPages || Math.ceil(result.totalCount / result.pageSize));
         },
         error: (error) => {
-          this.errorMessage.set('Không thể tải danh sách phòng ban');
-          console.error('Error loading phong bans:', error);
+          this.errorMessage.set('Không thể tải danh sách nhân viên');
+          console.error('Error loading users:', error);
         }
       });
   }
@@ -90,15 +89,15 @@ export class PhongbanComponent implements OnInit, OnDestroy {
 
   onPageChange(page: number) {
     this.pageNumber.set(page);
-    this.loadPhongBans();
+    this.loadUsers();
   }
 
   openCreateModal() {
     // Blur active element để tránh aria-hidden warning
     this.blurActiveElement();
     
-    const modalRef = this.modal.open(ThemSuaPhongbanComponent, { 
-      size: 'md',
+    const modalRef = this.modal.open(ThemSuaNhanvienComponent, { 
+      size: 'lg',
       backdrop: 'static'
     });
     
@@ -107,37 +106,49 @@ export class PhongbanComponent implements OnInit, OnDestroy {
     modalRef.result.then(
       (result) => {
         if (result) {
-          this.loadPhongBans();
-        }
-      },
-      () => {} // Dismissed
-    );
-  }
-
-  openEditModal(phongBan: PhongBanDto) {
-    // Blur active element để tránh aria-hidden warning
-    this.blurActiveElement();
-    
-    const modalRef = this.modal.open(ThemSuaPhongbanComponent, { 
-      size: 'md',
-      backdrop: 'static'
-    });
-    
-    modalRef.componentInstance.mode = 'edit';
-    modalRef.componentInstance.phongBanId = phongBan.id;
-    modalRef.componentInstance.phongBanData = phongBan;
-    
-    modalRef.result.then(
-      (result) => {
-        if (result) {
-          this.loadPhongBans();
+          this.loadUsers();
         }
       },
       () => {}
     );
   }
 
-  deletePhongBan(phongBan: PhongBanDto) {
+  openEditModal(user: UserDto) {
+    // Blur active element để tránh aria-hidden warning
+    this.blurActiveElement();
+    
+    const modalRef = this.modal.open(ThemSuaNhanvienComponent, { 
+      size: 'lg',
+      backdrop: 'static'
+    });
+    
+    modalRef.componentInstance.mode = 'edit';
+    modalRef.componentInstance.userId = user.id;
+    modalRef.componentInstance.userData = user;
+    
+    modalRef.result.then(
+      (result) => {
+        if (result) {
+          this.loadUsers();
+        }
+      },
+      () => {}
+    );
+  }
+
+  viewDetail(user: UserDto) {
+    // Blur active element để tránh aria-hidden warning
+    this.blurActiveElement();
+    
+    const modalRef = this.modal.open(ChitietNhanvienComponent, { 
+      size: 'lg'
+    });
+    
+    modalRef.componentInstance.userId = user.id;
+  }
+
+  deleteUser(user: UserDto) {
+    // Blur active element để tránh aria-hidden warning
     this.blurActiveElement();
     
     const modalRef = this.modal.open(NoficationComponent, {
@@ -146,7 +157,7 @@ export class PhongbanComponent implements OnInit, OnDestroy {
     });
 
     modalRef.componentInstance.title = 'Xác nhận xóa';
-    modalRef.componentInstance.message = `Bạn có chắc chắn muốn xóa phòng ban "${phongBan.tenPhongBan}"? Hành động này không thể hoàn tác.`;
+    modalRef.componentInstance.message = `Bạn có chắc chắn muốn xóa nhân viên "${user.tenDayDu}"? Hành động này không thể hoàn tác.`;
     modalRef.componentInstance.confirmText = 'Xóa';
     modalRef.componentInstance.cancelText = 'Hủy';
     modalRef.componentInstance.type = 'danger';
@@ -154,21 +165,21 @@ export class PhongbanComponent implements OnInit, OnDestroy {
     modalRef.result.then(
       (confirmed) => {
         if (confirmed) {
-          this.spinner.show('Đang xóa phòng ban...');
-          this.phongbanService.delete(phongBan.id)
+          this.spinner.show('Đang xóa nhân viên...');
+          this.nhanVienService.delete(user.id)
             .pipe(finalize(() => this.spinner.hide()))
             .subscribe({
               next: () => {
-                this.loadPhongBans();
+                this.loadUsers();
               },
               error: (error) => {
                 const errorModalRef = this.modal.open(NoficationComponent, { centered: true });
                 errorModalRef.componentInstance.title = 'Lỗi';
-                errorModalRef.componentInstance.message = 'Không thể xóa phòng ban. Có thể phòng ban này đang có nhân viên.';
+                errorModalRef.componentInstance.message = 'Không thể xóa nhân viên. Vui lòng thử lại.';
                 errorModalRef.componentInstance.type = 'danger';
                 errorModalRef.componentInstance.confirmText = 'Đóng';
                 errorModalRef.componentInstance.cancelText = '';
-                console.error('Error deleting phong ban:', error);
+                console.error('Error deleting user:', error);
               }
             });
         }
@@ -188,7 +199,31 @@ export class PhongbanComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Expose Math to template
+  getStatusLabel(status: NhanVienStatus): string {
+    switch (status) {
+      case NhanVienStatus.Active:
+        return 'Hoạt động';
+      case NhanVienStatus.Inactive:
+        return 'Ngừng hoạt động';
+      case NhanVienStatus.OnLeave:
+        return 'Nghỉ phép';
+      default:
+        return 'Không xác định';
+    }
+  }
+
+  getStatusClass(status: NhanVienStatus): string {
+    switch (status) {
+      case NhanVienStatus.Active:
+        return 'bg-success';
+      case NhanVienStatus.Inactive:
+        return 'bg-danger';
+      case NhanVienStatus.OnLeave:
+        return 'bg-warning text-dark';
+      default:
+        return 'bg-secondary';
+    }
+  }
+
   Math = Math;
 }
-

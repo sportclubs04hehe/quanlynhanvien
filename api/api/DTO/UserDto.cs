@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using api.Model.Enums;
 
 namespace api.DTO
 {
@@ -46,7 +47,7 @@ namespace api.DTO
         public string Email { get; set; } = string.Empty;
         public string? PhoneNumber { get; set; }
         public string TenDayDu { get; set; } = string.Empty;
-        public string? Status { get; set; }
+        public NhanVienStatus Status { get; set; }
         public DateTime? NgaySinh { get; set; }
         public DateTime? NgayVaoLam { get; set; }
         public string? TelegramChatId { get; set; }
@@ -80,6 +81,6 @@ namespace api.DTO
         public DateTime? NgayVaoLam { get; set; }
 
         public string? TelegramChatId { get; set; }
-        public string? Status { get; set; }
+        public NhanVienStatus? Status { get; set; }
     }
 }

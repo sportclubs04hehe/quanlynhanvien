@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace api.Migrations
 {
     /// <inheritdoc />
-    public partial class DbAdded : Migration
+    public partial class DatabaseAdded : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -192,10 +192,10 @@ namespace api.Migrations
                     PhongBanId = table.Column<Guid>(type: "uuid", nullable: true),
                     ChucVuId = table.Column<Guid>(type: "uuid", nullable: true),
                     QuanLyId = table.Column<Guid>(type: "uuid", nullable: true),
-                    NgaySinh = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    NgayVaoLam = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    NgaySinh = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    NgayVaoLam = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     TelegramChatId = table.Column<string>(type: "text", nullable: true),
-                    Status = table.Column<string>(type: "text", nullable: true)
+                    Status = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -230,13 +230,13 @@ namespace api.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     NhanVienId = table.Column<Guid>(type: "uuid", nullable: false),
-                    NgayBatDau = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    NgayKetThuc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    NgayBatDau = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    NgayKetThuc = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     LyDo = table.Column<string>(type: "text", nullable: false),
                     TrangThai = table.Column<string>(type: "text", nullable: false),
                     DuocChapThuanBoi = table.Column<Guid>(type: "uuid", nullable: true),
-                    NgayTao = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    NgayCapNhat = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    NgayTao = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    NgayCapNhat = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -263,7 +263,7 @@ namespace api.Migrations
                     Type = table.Column<string>(type: "text", nullable: false),
                     NhanVienId = table.Column<Guid>(type: "uuid", nullable: false),
                     DonXinNghiPhepId = table.Column<Guid>(type: "uuid", nullable: false),
-                    DaGuiLuc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DaGuiLuc = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     Status = table.Column<string>(type: "text", nullable: false),
                     Message = table.Column<string>(type: "text", nullable: true)
                 },

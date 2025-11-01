@@ -1,5 +1,6 @@
 using api.DTO;
 using api.Model;
+using api.Model.Enums;
 using api.Repository.Interface;
 using api.Service.Interface;
 using AutoMapper;
@@ -54,7 +55,7 @@ namespace api.Service.Implement
                 var nhanVien = _mapper.Map<NhanVien>(dto);
                 nhanVien.Id = user.Id; // ← QUAN TRỌNG: Cùng ID với User
                 nhanVien.NgayVaoLam = dto.NgayVaoLam ?? DateTime.UtcNow;
-                nhanVien.Status = "Active";
+                nhanVien.Status = NhanVienStatus.Active;
 
                 await _nhanVienRepo.CreateAsync(nhanVien);
 

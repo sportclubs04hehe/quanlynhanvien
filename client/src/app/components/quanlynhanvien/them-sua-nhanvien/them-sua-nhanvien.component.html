@@ -1,0 +1,205 @@
+<div class="modal-header bg-primary text-white">
+  <h5 class="modal-title">
+    <i [class]="isCreateMode ? 'bi bi-plus-circle me-2' : 'bi bi-pencil-square me-2'"></i>
+    {{ title }}
+  </h5>
+  <button type="button" class="btn-close btn-close-white" (click)="dismiss()"></button>
+</div>
+
+<div class="modal-body">
+  @if (errorMessage()) {
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      {{ errorMessage() }}
+      <button type="button" class="btn-close" (click)="errorMessage.set(null)"></button>
+    </div>
+  }
+
+  <form [formGroup]="userForm" (ngSubmit)="onSubmit()">
+    <!-- Email & Password (Create only) -->
+    @if (isCreateMode) {
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label for="email" class="form-label">
+            Email <span class="text-danger">*</span>
+          </label>
+          <input 
+            type="email" 
+            class="form-control" 
+            id="email"
+            formControlName="email"
+            [class.is-invalid]="isFieldInvalid('email')"
+            placeholder="email@example.com"
+          />
+          @if (isFieldInvalid('email')) {
+            <div class="invalid-feedback">{{ getErrorMessage('email') }}</div>
+          }
+        </div>
+
+        <div class="col-md-6">
+          <label for="password" class="form-label">
+            Mật khẩu <span class="text-danger">*</span>
+          </label>
+          <input 
+            type="password" 
+            class="form-control" 
+            id="password"
+            formControlName="password"
+            [class.is-invalid]="isFieldInvalid('password')"
+            placeholder="Tối thiểu 6 ký tự"
+          />
+          @if (isFieldInvalid('password')) {
+            <div class="invalid-feedback">{{ getErrorMessage('password') }}</div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Tên đầy đủ -->
+    <div class="mb-3">
+      <label for="tenDayDu" class="form-label">
+        Họ và tên <span class="text-danger">*</span>
+      </label>
+      <input 
+        type="text" 
+        class="form-control" 
+        id="tenDayDu"
+        formControlName="tenDayDu"
+        [class.is-invalid]="isFieldInvalid('tenDayDu')"
+        placeholder="Nguyễn Văn A"
+      />
+      @if (isFieldInvalid('tenDayDu')) {
+        <div class="invalid-feedback">{{ getErrorMessage('tenDayDu') }}</div>
+      }
+    </div>
+
+    <!-- Số điện thoại & Telegram -->
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label for="phoneNumber" class="form-label">Số điện thoại</label>
+        <input 
+          type="tel" 
+          class="form-control" 
+          id="phoneNumber"
+          formControlName="phoneNumber"
+          placeholder="0123456789"
+        />
+      </div>
+
+      <div class="col-md-6">
+        <label for="telegramChatId" class="form-label">Telegram Chat ID</label>
+        <input 
+          type="text" 
+          class="form-control" 
+          id="telegramChatId"
+          formControlName="telegramChatId"
+          placeholder="123456789"
+        />
+      </div>
+    </div>
+
+    <!-- Phòng ban & Chức vụ -->
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label for="phongBanId" class="form-label">Phòng ban</label>
+        <select 
+          class="form-select" 
+          id="phongBanId"
+          formControlName="phongBanId"
+        >
+          <option value="">-- Chọn phòng ban --</option>
+          @for (pb of phongBans(); track pb.id) {
+            <option [value]="pb.id">{{ pb.tenPhongBan }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="col-md-6">
+        <label for="chucVuId" class="form-label">Chức vụ</label>
+        <select 
+          class="form-select" 
+          id="chucVuId"
+          formControlName="chucVuId"
+        >
+          <option value="">-- Chọn chức vụ --</option>
+          @for (cv of chucVus(); track cv.id) {
+            <option [value]="cv.id">{{ cv.tenChucVu }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <!-- Quản lý -->
+    <div class="mb-3">
+      <label for="quanLyId" class="form-label">Quản lý trực tiếp</label>
+      <select 
+        class="form-select" 
+        id="quanLyId"
+        formControlName="quanLyId"
+      >
+        <option value="">-- Chọn quản lý --</option>
+        @for (ql of quanLys(); track ql.id) {
+          <option [value]="ql.id">{{ ql.tenDayDu }} ({{ ql.email }})</option>
+        }
+      </select>
+    </div>
+
+    <!-- Ngày sinh & Ngày vào làm -->
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label for="ngaySinh" class="form-label">Ngày sinh</label>
+        <input 
+          type="date" 
+          class="form-control" 
+          id="ngaySinh"
+          formControlName="ngaySinh"
+        />
+      </div>
+
+      <div class="col-md-6">
+        <label for="ngayVaoLam" class="form-label">Ngày vào làm</label>
+        <input 
+          type="date" 
+          class="form-control" 
+          id="ngayVaoLam"
+          formControlName="ngayVaoLam"
+        />
+      </div>
+    </div>
+
+    <!-- Status (Edit only) -->
+    @if (!isCreateMode) {
+      <div class="mb-3">
+        <label for="status" class="form-label">Trạng thái <span class="text-danger">*</span></label>
+        <select 
+          class="form-select" 
+          id="status"
+          formControlName="status"
+        >
+          @for (option of statusOptions; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+      </div>
+    }
+  </form>
+</div>
+
+<div class="modal-footer">
+  <button 
+    type="button" 
+    class="btn btn-secondary" 
+    (click)="dismiss()"
+  >
+    <i class="bi bi-x-circle me-1"></i>Hủy
+  </button>
+  <button 
+    type="button" 
+    class="btn btn-primary" 
+    (click)="onSubmit()"
+    [disabled]="userForm.invalid"
+  >
+    <i [class]="isCreateMode ? 'bi bi-plus-circle me-1' : 'bi bi-check-circle me-1'"></i>
+    {{ isCreateMode ? 'Tạo' : 'Cập nhật' }}
+  </button>
+</div>
