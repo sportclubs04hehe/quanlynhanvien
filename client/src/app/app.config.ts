@@ -1,10 +1,15 @@
-import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import { ApplicationConfig, provideZoneChangeDetection, LOCALE_ID } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { routes } from './app.routes';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { authInterceptor } from './interceptors/auth.interceptor';
 import { errorInterceptor } from './interceptors/error.interceptor';
+import { registerLocaleData } from '@angular/common';
+import localeVi from '@angular/common/locales/vi';
+
+// Đăng ký locale data cho tiếng Việt
+registerLocaleData(localeVi);
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -12,8 +17,9 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideHttpClient(
       withFetch(),
-      withInterceptors([authInterceptor, errorInterceptor]) // ← Thêm interceptors
+      withInterceptors([authInterceptor, errorInterceptor]) 
     ),
-    provideAnimations(), 
+    provideAnimations(),
+    { provide: LOCALE_ID, useValue: 'vi' } 
   ]
 };

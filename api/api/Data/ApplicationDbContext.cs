@@ -18,6 +18,7 @@ namespace api.Data
         public DbSet<ChucVu> ChucVus => Set<ChucVu>();
         public DbSet<DonXinNghiPhep> DonXinNghiPheps => Set<DonXinNghiPhep>();
         public DbSet<ThongBao> ThongBaos => Set<ThongBao>();
+        public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -40,6 +41,30 @@ namespace api.Data
                 .WithMany()
                 .HasForeignKey(d => d.DuocChapThuanBoi)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // RefreshToken configuration
+            builder.Entity<RefreshToken>()
+                .HasIndex(rt => rt.Token)
+                .IsUnique();
+
+            builder.Entity<RefreshToken>()
+                .HasOne(rt => rt.User)
+                .WithMany()
+                .HasForeignKey(rt => rt.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Configure DateTime columns to use timestamptz (timestamp with timezone)
+            builder.Entity<RefreshToken>()
+                .Property(rt => rt.CreatedAt)
+                .HasColumnType("timestamptz");
+
+            builder.Entity<RefreshToken>()
+                .Property(rt => rt.ExpiresAt)
+                .HasColumnType("timestamptz");
+
+            builder.Entity<RefreshToken>()
+                .Property(rt => rt.RevokedAt)
+                .HasColumnType("timestamptz");
         }
     }
 }

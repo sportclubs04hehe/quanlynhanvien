@@ -1,15 +1,19 @@
 ﻿using api.Extensions;
-using api.Middleware;
-
-// Cấu hình để sử dụng legacy timestamp behavior cho PostgreSQL
-AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // ============ CONFIGURE SERVICES ============
 
-// API Controllers
-builder.Services.AddControllers();
+// API Controllers with JSON options for proper DateTime serialization
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // Serialize DateTime as ISO 8601 with UTC timezone (Z)
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        // Không thêm ReferenceHandler để tránh circular references
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    });
 builder.Services.AddEndpointsApiExplorer();
 
 // Swagger/OpenAPI với JWT support
@@ -51,9 +55,6 @@ if (app.Environment.IsDevelopment())
 
 // CORS (phải đặt trước Authentication/Authorization)
 app.UseCors(CorsExtensions.AllowAngularClientPolicy);
-
-// Custom Error Handling Middleware
-app.UseMiddleware<CustomErrorHandlingMiddleware>();
 
 // Authentication & Authorization
 app.UseAuthentication();

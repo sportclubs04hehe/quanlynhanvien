@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace api.Migrations
 {
     /// <inheritdoc />
-    public partial class DatabaseAdded : Migration
+    public partial class Database_Added : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -184,6 +184,32 @@ namespace api.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "RefreshTokens",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Token = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamptz", nullable: false),
+                    ExpiresAt = table.Column<DateTime>(type: "timestamptz", nullable: false),
+                    IsRevoked = table.Column<bool>(type: "boolean", nullable: false),
+                    RevokedAt = table.Column<DateTime>(type: "timestamptz", nullable: true),
+                    CreatedByIp = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    RevokedByIp = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    ReplacedByToken = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RefreshTokens", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_RefreshTokens_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "NhanViens",
                 columns: table => new
                 {
@@ -192,8 +218,8 @@ namespace api.Migrations
                     PhongBanId = table.Column<Guid>(type: "uuid", nullable: true),
                     ChucVuId = table.Column<Guid>(type: "uuid", nullable: true),
                     QuanLyId = table.Column<Guid>(type: "uuid", nullable: true),
-                    NgaySinh = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
-                    NgayVaoLam = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    NgaySinh = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    NgayVaoLam = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     TelegramChatId = table.Column<string>(type: "text", nullable: true),
                     Status = table.Column<int>(type: "integer", nullable: false)
                 },
@@ -230,13 +256,13 @@ namespace api.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     NhanVienId = table.Column<Guid>(type: "uuid", nullable: false),
-                    NgayBatDau = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
-                    NgayKetThuc = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    NgayBatDau = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    NgayKetThuc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     LyDo = table.Column<string>(type: "text", nullable: false),
                     TrangThai = table.Column<string>(type: "text", nullable: false),
                     DuocChapThuanBoi = table.Column<Guid>(type: "uuid", nullable: true),
-                    NgayTao = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
-                    NgayCapNhat = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
+                    NgayTao = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    NgayCapNhat = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -263,7 +289,7 @@ namespace api.Migrations
                     Type = table.Column<string>(type: "text", nullable: false),
                     NhanVienId = table.Column<Guid>(type: "uuid", nullable: false),
                     DonXinNghiPhepId = table.Column<Guid>(type: "uuid", nullable: false),
-                    DaGuiLuc = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    DaGuiLuc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Status = table.Column<string>(type: "text", nullable: false),
                     Message = table.Column<string>(type: "text", nullable: true)
                 },
@@ -347,6 +373,17 @@ namespace api.Migrations
                 column: "QuanLyId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_RefreshTokens_Token",
+                table: "RefreshTokens",
+                column: "Token",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RefreshTokens_UserId",
+                table: "RefreshTokens",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ThongBaos_DonXinNghiPhepId",
                 table: "ThongBaos",
                 column: "DonXinNghiPhepId");
@@ -374,6 +411,9 @@ namespace api.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUserTokens");
+
+            migrationBuilder.DropTable(
+                name: "RefreshTokens");
 
             migrationBuilder.DropTable(
                 name: "ThongBaos");

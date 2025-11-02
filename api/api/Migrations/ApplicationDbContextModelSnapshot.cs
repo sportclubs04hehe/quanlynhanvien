@@ -184,16 +184,16 @@ namespace api.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("NgayBatDau")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime?>("NgayCapNhat")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("NgayKetThuc")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("NgayTao")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("NhanVienId")
                         .HasColumnType("uuid");
@@ -220,10 +220,10 @@ namespace api.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime?>("NgaySinh")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime?>("NgayVaoLam")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid?>("PhongBanId")
                         .HasColumnType("uuid");
@@ -270,6 +270,54 @@ namespace api.Migrations
                     b.ToTable("PhongBans");
                 });
 
+            modelBuilder.Entity("api.Model.RefreshToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("CreatedByIp")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<bool>("IsRevoked")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ReplacedByToken")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("RevokedByIp")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Token")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RefreshTokens");
+                });
+
             modelBuilder.Entity("api.Model.ThongBao", b =>
                 {
                     b.Property<Guid>("Id")
@@ -277,7 +325,7 @@ namespace api.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("DaGuiLuc")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("DonXinNghiPhepId")
                         .HasColumnType("uuid");
@@ -465,6 +513,17 @@ namespace api.Migrations
                     b.Navigation("PhongBan");
 
                     b.Navigation("QuanLy");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("api.Model.RefreshToken", b =>
+                {
+                    b.HasOne("api.Model.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });

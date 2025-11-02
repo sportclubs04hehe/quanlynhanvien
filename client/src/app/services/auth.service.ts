@@ -58,25 +58,136 @@ export class AuthService {
           }
         }),
         catchError((err) => {
-          console.error('Login failed', err);
+          console.error('Login failed:', err);
+          // Log chi tiết error để debug
+          if (err.error) {
+            console.log('Error response:', err.error);
+          }
           return throwError(() => err);
         })
       );
   }
 
   logout() {
+    // Revoke token trên server trước khi logout
+    const refreshToken = isPlatformBrowser(this.platformId)
+      ? localStorage.getItem('refreshToken')
+      : null;
+
+    if (refreshToken) {
+      // Call revoke token (fire and forget - không cần đợi response)
+      this.http.post(`${this.baseUrl}/revoke-token`, { refreshToken })
+        .subscribe({
+          next: () => console.log('Token revoked successfully'),
+          error: (err) => console.warn('Failed to revoke token:', err)
+        });
+    }
+
+    // Clear local state
     this._authState.set(null);
     if (isPlatformBrowser(this.platformId)) {
       localStorage.clear();
     }
   }
 
-  refreshToken() {
-    // TODO: Implement refresh token khi backend hỗ trợ
-    // Hiện tại backend chưa có endpoint refresh token
-    console.warn('Refresh token chưa được implement');
+  refreshToken(): Observable<LoginResponse> {
+    const refreshToken = isPlatformBrowser(this.platformId) 
+      ? localStorage.getItem('refreshToken') 
+      : null;
     
-    // Tạm thời logout khi token hết hạn
-    this.logout();
+    const accessToken = this._authState()?.accessToken;
+
+    if (!refreshToken || !accessToken) {
+      this.logout();
+      return throwError(() => new Error('No refresh token available'));
+    }
+
+    return this.http.post<LoginResponse>(`${this.baseUrl}/refresh-token`, {
+      accessToken,
+      refreshToken
+    }).pipe(
+      tap((res) => {
+        this._authState.set(res);
+        if (isPlatformBrowser(this.platformId)) {
+          localStorage.setItem('accessToken', res.accessToken);
+          localStorage.setItem('user', JSON.stringify(res.user));
+          if (res.refreshToken) {
+            localStorage.setItem('refreshToken', res.refreshToken);
+          }
+        }
+      }),
+      catchError((err) => {
+        console.error('Refresh token failed', err);
+        this.logout();
+        return throwError(() => err);
+      })
+    );
+  }
+
+  revokeToken(): Observable<any> {
+    const refreshToken = isPlatformBrowser(this.platformId)
+      ? localStorage.getItem('refreshToken')
+      : null;
+
+    if (!refreshToken) {
+      return throwError(() => new Error('No refresh token to revoke'));
+    }
+
+    return this.http.post(`${this.baseUrl}/revoke-token`, { refreshToken })
+      .pipe(
+        tap(() => {
+          this.logout();
+        }),
+        catchError((err) => {
+          console.error('Revoke token failed', err);
+          return throwError(() => err);
+        })
+      );
+  }
+
+  /**
+   * Revoke TẤT CẢ tokens của user hiện tại
+   * Dùng khi: Đổi mật khẩu, phát hiện bất thường
+   */
+  revokeAllTokens(): Observable<any> {
+    return this.http.post(`${this.baseUrl}/revoke-all-tokens`, {})
+      .pipe(
+        tap(() => {
+          this.logout();
+        }),
+        catchError((err) => {
+          console.error('Revoke all tokens failed', err);
+          return throwError(() => err);
+        })
+      );
+  }
+
+  /**
+   * Lấy danh sách devices đang login (sessions)
+   */
+  getActiveSessions(): Observable<any[]> {
+    // Pass current refresh token để identify current session
+    const refreshToken = isPlatformBrowser(this.platformId)
+      ? localStorage.getItem('refreshToken')
+      : null;
+
+    const options = refreshToken 
+      ? { headers: { 'X-Refresh-Token': refreshToken } }
+      : {};
+
+    return this.http.get<any[]>(`${this.baseUrl}/active-sessions`, options);
+  }
+
+  /**
+   * Revoke một session cụ thể (đăng xuất thiết bị khác)
+   */
+  revokeSession(sessionId: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/revoke-session/${sessionId}`, {})
+      .pipe(
+        catchError((err) => {
+          console.error('Revoke session failed', err);
+          return throwError(() => err);
+        })
+      );
   }
 }

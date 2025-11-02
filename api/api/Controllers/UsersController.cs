@@ -27,17 +27,19 @@ namespace api.Controllers
             try
             {
                 if (!ModelState.IsValid)
-                    return BadRequest(ModelState);
+                    return BadRequest(new { success = false, message = "Dữ liệu không hợp lệ", errors = ModelState });
 
-                var response = await _authService.LoginAsync(dto);
+                var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+                var response = await _authService.LoginAsync(dto, ipAddress);
+                
                 if (response == null)
-                    return Unauthorized(new { message = "Email hoặc mật khẩu không đúng" });
+                    return Unauthorized(new { success = false, message = "Email hoặc mật khẩu không đúng" });
 
                 return Ok(response);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Đã xảy ra lỗi khi đăng nhập", error = ex.Message });
+                return StatusCode(500, new { success = false, message = "Đã xảy ra lỗi khi đăng nhập", error = ex.Message });
             }
         }
 
@@ -142,6 +144,134 @@ namespace api.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = "Đã xảy ra lỗi khi xóa user", error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Refresh access token
+        /// </summary>
+        [HttpPost("refresh-token")]
+        [AllowAnonymous]
+        public async Task<ActionResult<LoginResponseDto>> RefreshToken([FromBody] RefreshTokenRequestDto dto)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+                var response = await _authService.RefreshTokenAsync(dto.AccessToken, dto.RefreshToken, ipAddress);
+                
+                if (response == null)
+                    return Unauthorized(new { message = "Refresh token không hợp lệ hoặc đã hết hạn" });
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi refresh token", error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Revoke refresh token
+        /// </summary>
+        [HttpPost("revoke-token")]
+        [AllowAnonymous] // Cho phép revoke khi logout (có thể chưa có token)
+        public async Task<ActionResult> RevokeToken([FromBody] RevokeTokenRequestDto dto)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+                var result = await _authService.RevokeTokenAsync(dto.RefreshToken, ipAddress);
+                
+                if (!result)
+                    return BadRequest(new { message = "Refresh token không hợp lệ" });
+
+                return Ok(new { message = "Token đã được thu hồi thành công" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi revoke token", error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Revoke TẤT CẢ refresh tokens của user hiện tại
+        /// Dùng khi: Đổi mật khẩu, nghi ngờ bị hack
+        /// </summary>
+        [HttpPost("revoke-all-tokens")]
+        [Authorize]
+        public async Task<ActionResult> RevokeAllTokens()
+        {
+            try
+            {
+                var userId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty);
+                var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+                
+                var revokedCount = await _authService.RevokeAllUserTokensAsync(userId, ipAddress);
+                
+                return Ok(new { 
+                    message = $"Đã thu hồi {revokedCount} tokens thành công",
+                    revokedCount 
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi revoke all tokens", error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Xem danh sách devices đang login (active sessions)
+        /// </summary>
+        [HttpGet("active-sessions")]
+        [Authorize]
+        public async Task<ActionResult<List<RefreshTokenInfoDto>>> GetActiveSessions()
+        {
+            try
+            {
+                var userId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty);
+                
+                // Lấy current refresh token từ request header hoặc body (nếu có)
+                // Để identify current session
+                var currentRefreshToken = Request.Headers["X-Refresh-Token"].FirstOrDefault();
+                
+                var sessions = await _authService.GetActiveSessionsAsync(userId, currentRefreshToken);
+                
+                return Ok(sessions);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi lấy danh sách sessions", error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Revoke một session cụ thể (đăng xuất thiết bị khác)
+        /// </summary>
+        [HttpPost("revoke-session/{tokenId}")]
+        [Authorize]
+        public async Task<ActionResult> RevokeSession(Guid tokenId)
+        {
+            try
+            {
+                var userId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty);
+                var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+                
+                var result = await _authService.RevokeTokenByIdAsync(tokenId, userId, ipAddress);
+                
+                if (!result)
+                    return BadRequest(new { message = "Token không hợp lệ hoặc không thuộc về bạn" });
+
+                return Ok(new { message = "Đã đăng xuất thiết bị thành công" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi revoke session", error = ex.Message });
             }
         }
     }

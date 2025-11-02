@@ -1,0 +1,80 @@
+<div class="card">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">
+          <i class="bi bi-device-hdd me-2"></i>
+          Thiết bị đang đăng nhập
+        </h5>
+      </div>
+      <div class="card-body">
+        <p class="text-muted mb-3">
+          Đây là danh sách các thiết bị/trình duyệt đang đăng nhập vào tài khoản của bạn.
+        </p>
+
+        @if (sessions().length > 0) {
+          <div class="list-group">
+            @for (session of sessions(); track session.id) {
+              <div class="list-group-item">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div class="flex-grow-1">
+                    <div class="d-flex align-items-center mb-2">
+                      <i class="bi bi-laptop me-2 fs-4 text-primary"></i>
+                      <div>
+                        <h6 class="mb-0">
+                          @if (session.isCurrentSession) {
+                            <span class="badge bg-success me-2">Thiết bị hiện tại</span>
+                          }
+                          {{ getDeviceInfo(session) }}
+                        </h6>
+                        <small class="text-muted">
+                          IP: {{ session.createdByIp || 'Unknown' }}
+                        </small>
+                      </div>
+                    </div>
+                    <div class="small text-muted">
+                      <div>
+                        <i class="bi bi-clock me-1"></i>
+                        Đăng nhập: {{ session.createdAt | localDate: 'dd/MM/yyyy HH:mm' }}
+                      </div>
+                      <div>
+                        <i class="bi bi-hourglass-split me-1"></i>
+                        Hết hạn: {{ session.expiresAt | localDate: 'dd/MM/yyyy HH:mm' }}
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    @if (!session.isCurrentSession) {
+                      <button 
+                        class="btn btn-sm btn-outline-danger"
+                        (click)="revokeSession(session)"
+                        title="Đăng xuất thiết bị này"
+                      >
+                        <i class="bi bi-x-circle me-1"></i>
+                        Đăng xuất
+                      </button>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+
+          <div class="alert alert-warning mt-3">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <strong>Lưu ý:</strong> Nếu bạn thấy thiết bị không quen thuộc, hãy đăng xuất ngay và đổi mật khẩu.
+          </div>
+
+          <button 
+            class="btn btn-danger mt-3"
+            (click)="revokeAllSessions()"
+          >
+            <i class="bi bi-power me-1"></i>
+            Đăng xuất tất cả thiết bị
+          </button>
+        } @else {
+          <div class="text-center py-4 text-muted">
+            <i class="bi bi-inbox display-4"></i>
+            <p class="mt-2">Không có session nào</p>
+          </div>
+        }
+      </div>
+    </div>

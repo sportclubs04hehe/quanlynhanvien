@@ -114,4 +114,39 @@ namespace api.DTO
         public UserDto User { get; set; } = null!;               // Thông tin người dùng đăng nhập
     }
 
+    /// <summary>
+    /// DTO để refresh access token
+    /// </summary>
+    public class RefreshTokenRequestDto
+    {
+        [Required(ErrorMessage = "Access token là bắt buộc")]
+        public required string AccessToken { get; set; }
+
+        [Required(ErrorMessage = "Refresh token là bắt buộc")]
+        public required string RefreshToken { get; set; }
+    }
+
+    /// <summary>
+    /// DTO để revoke refresh token
+    /// </summary>
+    public class RevokeTokenRequestDto
+    {
+        [Required(ErrorMessage = "Refresh token là bắt buộc")]
+        public required string RefreshToken { get; set; }
+    }
+
+    /// <summary>
+    /// DTO thông tin session (device đang login)
+    /// </summary>
+    public class RefreshTokenInfoDto
+    {
+        public Guid Id { get; set; }
+        public string Token { get; set; } = string.Empty; // Chỉ hiển thị 10 ký tự cuối
+        public DateTime CreatedAt { get; set; }
+        public DateTime ExpiresAt { get; set; }
+        public string? CreatedByIp { get; set; }
+        public bool IsActive { get; set; }
+        public bool IsCurrentSession { get; set; } // Token hiện tại user đang dùng
+    }
+
 }

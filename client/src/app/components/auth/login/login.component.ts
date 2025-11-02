@@ -66,26 +66,12 @@ export class LoginComponent {
         this.isLoading.set(false);
         this.spinner.hide();
         
-        // Xử lý thông báo lỗi dựa trên status code
         let errorMsg = 'Đã xảy ra lỗi. Vui lòng thử lại sau.';
         
-        // Ưu tiên message từ custom middleware
         if (error.error?.message) {
           errorMsg = error.error.message;
-        } else if (error.status === 401) {
-          // Unauthorized - Sai email hoặc mật khẩu
-          errorMsg = 'Email hoặc mật khẩu không đúng. Vui lòng kiểm tra lại.';
-        } else if (error.status === 400) {
-          // Bad Request - Validation errors
-          errorMsg = 'Thông tin đăng nhập không hợp lệ.';
         } else if (error.status === 0) {
-          // Network error
           errorMsg = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.';
-        } else if (error.error?.detail) {
-          // Nếu có detail từ API
-          errorMsg = error.error.detail === 'Failed' 
-            ? 'Email hoặc mật khẩu không đúng. Vui lòng kiểm tra lại.'
-            : error.error.detail;
         }
         
         this.errorMessage.set(errorMsg);

@@ -1,3 +1,4 @@
+using api.Data;
 using api.DTO;
 using api.Model;
 using api.Model.Enums;
@@ -5,9 +6,11 @@ using api.Repository.Interface;
 using api.Service.Interface;
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace api.Service.Implement
@@ -19,22 +22,25 @@ namespace api.Service.Implement
         private readonly INhanVienRepository _nhanVienRepo;
         private readonly IMapper _mapper;
         private readonly IConfiguration _configuration;
+        private readonly ApplicationDbContext _context;
 
         public AuthService(
             UserManager<User> userManager,
             SignInManager<User> signInManager,
             INhanVienRepository nhanVienRepo,
             IMapper mapper,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            ApplicationDbContext context)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _nhanVienRepo = nhanVienRepo;
             _mapper = mapper;
             _configuration = configuration;
+            _context = context;
         }
 
-        public async Task<LoginResponseDto?> LoginAsync(LoginDto dto)
+        public async Task<LoginResponseDto?> LoginAsync(LoginDto dto, string? ipAddress = null)
         {
             // 1. Tìm user theo email
             var user = await _userManager.FindByEmailAsync(dto.Email);
@@ -57,7 +63,13 @@ namespace api.Service.Implement
             // 5. Tạo JWT token
             var token = GenerateJwtToken(user, roles.ToList());
 
-            // 6. Tạo UserDto
+            // 6. Tạo Refresh Token
+            var refreshToken = await GenerateRefreshTokenAsync(user.Id, ipAddress);
+
+            // 7. Cleanup: Xóa expired tokens + giới hạn số tokens active
+            await CleanupAndLimitTokensAsync(user.Id);
+
+            // 8. Tạo UserDto
             var userDto = _mapper.Map<UserDto>(nhanVien);
             userDto.Roles = roles.ToList();
 
@@ -68,7 +80,7 @@ namespace api.Service.Implement
                 TokenType = "Bearer",
                 AccessToken = token,
                 ExpiresIn = expiryMinutes * 60, // Convert to seconds
-                RefreshToken = "", // Có thể implement refresh token sau
+                RefreshToken = refreshToken.Token,
                 User = userDto
             };
         }
@@ -269,5 +281,261 @@ namespace api.Service.Implement
 
             return true;
         }
+
+        #region Refresh Token Methods
+
+        public async Task<LoginResponseDto?> RefreshTokenAsync(string accessToken, string refreshToken, string? ipAddress = null)
+        {
+            // 1. Validate refresh token - không dùng IsActive trong query
+            var now = DateTime.UtcNow;
+            var storedRefreshToken = await _context.RefreshTokens
+                .Include(rt => rt.User)
+                .FirstOrDefaultAsync(rt => rt.Token == refreshToken);
+
+            // Check IsActive sau khi query (in-memory)
+            if (storedRefreshToken == null || !storedRefreshToken.IsActive)
+                return null;
+
+            // 2. Lấy thông tin user từ expired access token (không validate expiration)
+            var principal = GetPrincipalFromExpiredToken(accessToken);
+            if (principal == null)
+                return null;
+
+            var userId = Guid.Parse(principal.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty);
+            
+            // 3. Kiểm tra user ID trong token khớp với refresh token
+            if (storedRefreshToken.UserId != userId)
+                return null;
+
+            // 4. Lấy thông tin NhanVien
+            var nhanVien = await _nhanVienRepo.GetByIdAsync(userId);
+            if (nhanVien == null)
+                return null;
+
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null)
+                return null;
+
+            // 5. Revoke old refresh token và tạo mới
+            storedRefreshToken.IsRevoked = true;
+            storedRefreshToken.RevokedAt = DateTime.UtcNow;
+            storedRefreshToken.RevokedByIp = ipAddress;
+
+            var roles = await _userManager.GetRolesAsync(user);
+            var newAccessToken = GenerateJwtToken(user, roles.ToList());
+            var newRefreshToken = await GenerateRefreshTokenAsync(userId, ipAddress);
+
+            storedRefreshToken.ReplacedByToken = newRefreshToken.Token;
+            await _context.SaveChangesAsync();
+
+            // 6. Tạo response
+            var userDto = _mapper.Map<UserDto>(nhanVien);
+            userDto.Roles = roles.ToList();
+
+            var expiryMinutes = int.Parse(_configuration["Jwt:ExpiryInMinutes"] ?? "60");
+
+            return new LoginResponseDto
+            {
+                TokenType = "Bearer",
+                AccessToken = newAccessToken,
+                ExpiresIn = expiryMinutes * 60,
+                RefreshToken = newRefreshToken.Token,
+                User = userDto
+            };
+        }
+
+        public async Task<bool> RevokeTokenAsync(string refreshToken, string? ipAddress = null)
+        {
+            var storedToken = await _context.RefreshTokens
+                .FirstOrDefaultAsync(rt => rt.Token == refreshToken);
+
+            if (storedToken == null || !storedToken.IsActive)
+                return false;
+
+            storedToken.IsRevoked = true;
+            storedToken.RevokedAt = DateTime.UtcNow;
+            storedToken.RevokedByIp = ipAddress;
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        /// <summary>
+        /// Revoke token theo ID (dùng cho revoke single session từ UI)
+        /// Chỉ cho phép user revoke token của chính mình
+        /// </summary>
+        public async Task<bool> RevokeTokenByIdAsync(Guid tokenId, Guid userId, string? ipAddress = null)
+        {
+            var storedToken = await _context.RefreshTokens
+                .FirstOrDefaultAsync(rt => rt.Id == tokenId && rt.UserId == userId);
+
+            if (storedToken == null || !storedToken.IsActive)
+                return false;
+
+            storedToken.IsRevoked = true;
+            storedToken.RevokedAt = DateTime.UtcNow;
+            storedToken.RevokedByIp = ipAddress;
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        /// <summary>
+        /// Revoke TẤT CẢ tokens của user
+        /// Dùng khi: Đổi mật khẩu, phát hiện bất thường, admin force logout
+        /// </summary>
+        public async Task<int> RevokeAllUserTokensAsync(Guid userId, string? ipAddress = null)
+        {
+            var now = DateTime.UtcNow;
+            var activeTokens = await _context.RefreshTokens
+                .Where(rt => rt.UserId == userId && 
+                            !rt.IsRevoked && 
+                            rt.ExpiresAt >= now)
+                .ToListAsync();
+
+            foreach (var token in activeTokens)
+            {
+                token.IsRevoked = true;
+                token.RevokedAt = DateTime.UtcNow;
+                token.RevokedByIp = ipAddress;
+            }
+
+            await _context.SaveChangesAsync();
+            return activeTokens.Count;
+        }
+
+        /// <summary>
+        /// Lấy danh sách sessions đang active (devices đang login)
+        /// </summary>
+        public async Task<List<RefreshTokenInfoDto>> GetActiveSessionsAsync(Guid userId, string? currentRefreshToken = null)
+        {
+            var now = DateTime.UtcNow;
+            var activeSessions = await _context.RefreshTokens
+                .Where(rt => rt.UserId == userId && 
+                            !rt.IsRevoked && 
+                            rt.ExpiresAt >= now)
+                .OrderByDescending(rt => rt.CreatedAt)
+                .Select(rt => new RefreshTokenInfoDto
+                {
+                    Id = rt.Id,
+                    Token = "..." + rt.Token.Substring(Math.Max(0, rt.Token.Length - 10)), // Chỉ hiển thị 10 ký tự cuối
+                    CreatedAt = rt.CreatedAt,
+                    ExpiresAt = rt.ExpiresAt,
+                    CreatedByIp = rt.CreatedByIp,
+                    IsActive = true,
+                    IsCurrentSession = !string.IsNullOrEmpty(currentRefreshToken) && rt.Token == currentRefreshToken
+                })
+                .ToListAsync();
+
+            return activeSessions;
+        }
+
+        public async Task CleanupExpiredTokensAsync(Guid userId)
+        {
+            // Không dùng computed property IsActive trong query
+            // Thay vào đó query trực tiếp các điều kiện
+            var now = DateTime.UtcNow;
+            var expiredTokens = await _context.RefreshTokens
+                .Where(rt => rt.UserId == userId && 
+                            (rt.IsRevoked || rt.ExpiresAt < now))
+                .ToListAsync();
+
+            _context.RefreshTokens.RemoveRange(expiredTokens);
+            await _context.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// Cleanup expired tokens + Giới hạn số lượng active tokens
+        /// Giữ tối đa 5 active tokens (cho 5 devices khác nhau)
+        /// </summary>
+        private async Task CleanupAndLimitTokensAsync(Guid userId, int maxActiveTokens = 5)
+        {
+            // 1. Xóa expired và revoked tokens
+            await CleanupExpiredTokensAsync(userId);
+
+            // 2. Lấy danh sách active tokens, sắp xếp theo ngày tạo mới nhất
+            var now = DateTime.UtcNow;
+            var activeTokens = await _context.RefreshTokens
+                .Where(rt => rt.UserId == userId && 
+                            !rt.IsRevoked && 
+                            rt.ExpiresAt >= now)
+                .OrderByDescending(rt => rt.CreatedAt)
+                .ToListAsync();
+
+            // 3. Nếu vượt quá giới hạn, revoke các tokens cũ nhất
+            if (activeTokens.Count > maxActiveTokens)
+            {
+                var tokensToRevoke = activeTokens.Skip(maxActiveTokens).ToList();
+                foreach (var token in tokensToRevoke)
+                {
+                    token.IsRevoked = true;
+                    token.RevokedAt = DateTime.UtcNow;
+                    // Không cần RevokedByIp vì đây là auto cleanup
+                }
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        private async Task<RefreshToken> GenerateRefreshTokenAsync(Guid userId, string? ipAddress = null)
+        {
+            var now = DateTime.UtcNow;
+            var refreshToken = new RefreshToken
+            {
+                Token = GenerateSecureRandomToken(),
+                UserId = userId,
+                CreatedAt = now, // Explicitly set CreatedAt
+                ExpiresAt = now.AddDays(7), // Refresh token có hiệu lực 7 ngày
+                CreatedByIp = ipAddress
+            };
+
+            _context.RefreshTokens.Add(refreshToken);
+            await _context.SaveChangesAsync();
+
+            return refreshToken;
+        }
+
+        private string GenerateSecureRandomToken()
+        {
+            var randomBytes = new byte[64];
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(randomBytes);
+            return Convert.ToBase64String(randomBytes);
+        }
+
+        private ClaimsPrincipal? GetPrincipalFromExpiredToken(string token)
+        {
+            var jwtKey = _configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key not configured");
+
+            var tokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = false,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = _configuration["Jwt:Issuer"],
+                ValidAudience = _configuration["Jwt:Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+            };
+
+            try
+            {
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out var securityToken);
+
+                if (securityToken is not JwtSecurityToken jwtSecurityToken ||
+                    !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    return null;
+                }
+
+                return principal;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        #endregion
     }
 }
