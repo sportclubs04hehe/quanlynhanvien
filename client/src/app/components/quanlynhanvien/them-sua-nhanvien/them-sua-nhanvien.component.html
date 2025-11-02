@@ -38,19 +38,28 @@
 
         <div class="col-md-6">
           <label for="password" class="form-label">
-            Mật khẩu <span class="text-danger">*</span>
+            Mật khẩu <span class="text-muted">(Mặc định: 123456)</span>
           </label>
-          <input 
-            type="password" 
-            class="form-control" 
-            id="password"
-            formControlName="password"
-            [class.is-invalid]="isFieldInvalid('password')"
-            placeholder="Tối thiểu 6 ký tự"
-          />
-          @if (isFieldInvalid('password')) {
-            <div class="invalid-feedback">{{ getErrorMessage('password') }}</div>
-          }
+          <div class="input-group">
+            <input 
+              [type]="showPassword() ? 'text' : 'password'" 
+              class="form-control" 
+              id="password"
+              formControlName="password"
+              [class.is-invalid]="isFieldInvalid('password')"
+              placeholder="Mặc định: 123456"
+            />
+            <button 
+              class="btn btn-outline-secondary" 
+              type="button"
+              (click)="togglePasswordVisibility()"
+            >
+              <i [class]="showPassword() ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+            </button>
+            @if (isFieldInvalid('password')) {
+              <div class="invalid-feedback">{{ getErrorMessage('password') }}</div>
+            }
+          </div>
         </div>
       </div>
     }

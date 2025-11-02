@@ -37,6 +37,7 @@ export class ThemSuaNhanvienComponent implements OnInit, CanComponentDeactivate 
 
   userForm!: FormGroup;
   errorMessage = signal<string | null>(null);
+  showPassword = signal<boolean>(false);
   
   phongBans = signal<PhongBanDto[]>([]);
   chucVus = signal<ChucVuDto[]>([]);
@@ -73,7 +74,7 @@ export class ThemSuaNhanvienComponent implements OnInit, CanComponentDeactivate 
     if (this.mode === 'create') {
       this.userForm = this.fb.group({
         email: ['', [Validators.required, Validators.email]],
-        password: ['', [Validators.required, Validators.minLength(6)]],
+        password: ['123456'], // Mật khẩu mặc định
         tenDayDu: ['', [Validators.required]],
         phoneNumber: [''],
         phongBanId: [''],
@@ -153,7 +154,7 @@ export class ThemSuaNhanvienComponent implements OnInit, CanComponentDeactivate 
     if (this.mode === 'create') {
       const dto: RegisterUserDto = {
         email: formValue.email,
-        password: formValue.password,
+        password: formValue.password || '123456', // Sử dụng mật khẩu mặc định nếu rỗng
         tenDayDu: formValue.tenDayDu,
         phoneNumber: formValue.phoneNumber || undefined,
         phongBanId: formValue.phongBanId || undefined,
@@ -282,5 +283,9 @@ export class ThemSuaNhanvienComponent implements OnInit, CanComponentDeactivate 
     
     // Tạo Date theo UTC (tránh timezone local)
     return new Date(Date.UTC(year, month - 1, day));
+  }
+
+  togglePasswordVisibility() {
+    this.showPassword.set(!this.showPassword());
   }
 }

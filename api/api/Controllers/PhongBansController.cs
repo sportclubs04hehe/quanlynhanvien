@@ -1,11 +1,14 @@
 ﻿using api.DTO;
+using api.Model.Enums;
 using api.Service.Interface;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = AppRolesExtensions.GiamDocOrPhoGiamDoc)]
     public class PhongBansController : ControllerBase
     {
         private readonly IPhongBanService _service;

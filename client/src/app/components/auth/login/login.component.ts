@@ -22,6 +22,7 @@ export class LoginComponent {
   loginForm: FormGroup;
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
+  showPassword = signal<boolean>(false);
 
   constructor() {
     this.loginForm = this.fb.group({
@@ -77,5 +78,9 @@ export class LoginComponent {
         this.errorMessage.set(errorMsg);
       }
     });
+  }
+
+  togglePasswordVisibility() {
+    this.showPassword.set(!this.showPassword());
   }
 }
