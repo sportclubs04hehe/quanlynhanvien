@@ -1,0 +1,54 @@
+/* Datepicker styling */
+.input-group {
+  position: relative;
+}
+
+.input-group .btn-outline-secondary {
+  border-color: #dee2e6;
+  color: #6c757d;
+}
+
+.input-group .btn-outline-secondary:hover {
+  background-color: #f8f9fa;
+  border-color: #dee2e6;
+  color: #495057;
+}
+
+.input-group .btn-outline-secondary:focus {
+  box-shadow: none;
+  border-color: #86b7fe;
+}
+
+/* Datepicker dropdown positioning */
+::ng-deep .ngb-dp-header {
+  background-color: #0d6efd;
+  color: white;
+  padding: 0.5rem;
+}
+
+::ng-deep .ngb-dp-weekday {
+  color: #6c757d;
+  font-weight: 600;
+}
+
+::ng-deep .ngb-dp-day.selected {
+  background-color: #0d6efd;
+  color: white;
+}
+
+::ng-deep .ngb-dp-day:hover:not(.selected) {
+  background-color: #e7f1ff;
+}
+
+::ng-deep .ngb-dp-today {
+  font-weight: bold;
+}
+
+/* Form validation styling */
+.form-control.is-invalid {
+  border-color: #dc3545;
+}
+
+.invalid-feedback {
+  display: block;
+}

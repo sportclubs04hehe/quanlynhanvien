@@ -20,6 +20,6 @@ export const appConfig: ApplicationConfig = {
       withInterceptors([authInterceptor, errorInterceptor]) 
     ),
     provideAnimations(),
-    { provide: LOCALE_ID, useValue: 'vi' } 
+    // { provide: LOCALE_ID, useValue: 'vi' } 
   ]
 };

@@ -2,9 +2,9 @@ import { ChucVuDto } from "./chucvu.model";
 import { PhongBanDto } from "./phongban.model";
 
 export enum NhanVienStatus {
-  Active = 0,
-  Inactive = 1,
-  OnLeave = 2
+  Active = 'Active',
+  Inactive = 'Inactive',
+  OnLeave = 'OnLeave'
 }
 
 export interface RegisterUserDto {

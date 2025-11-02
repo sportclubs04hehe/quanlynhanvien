@@ -1,7 +1,7 @@
 import { Component, inject, Input, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbModal, NgbDatepickerModule, NgbDateStruct } from '@ng-bootstrap/ng-bootstrap';
 import { finalize } from 'rxjs';
 import { QuanlynhanvienService } from '../../../services/quanlynhanvien.service';
 import { PhongbanService } from '../../../services/phongban.service';
@@ -17,7 +17,7 @@ import { CanComponentDeactivate } from '../../../guards/unsaved-changes.guard';
 @Component({
   selector: 'app-them-sua-nhanvien',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, NgbDatepickerModule],
   templateUrl: './them-sua-nhanvien.component.html',
   styleUrl: './them-sua-nhanvien.component.css'
 })
@@ -80,8 +80,8 @@ export class ThemSuaNhanvienComponent implements OnInit, CanComponentDeactivate 
         phongBanId: [''],
         chucVuId: [''],
         quanLyId: [''],
-        ngaySinh: [''],
-        ngayVaoLam: [''],
+        ngaySinh: [null],
+        ngayVaoLam: [null],
         telegramChatId: ['']
       });
     } else {
@@ -91,8 +91,8 @@ export class ThemSuaNhanvienComponent implements OnInit, CanComponentDeactivate 
         phongBanId: [''],
         chucVuId: [''],
         quanLyId: [''],
-        ngaySinh: [''],
-        ngayVaoLam: [''],
+        ngaySinh: [null],
+        ngayVaoLam: [null],
         telegramChatId: [''],
         status: ['']
       });
@@ -112,8 +112,8 @@ export class ThemSuaNhanvienComponent implements OnInit, CanComponentDeactivate 
             phoneNumber: user.phoneNumber,
             phongBanId: user.phongBan?.id || '',
             chucVuId: user.chucVu?.id || '',
-            ngaySinh: user.ngaySinh ? this.formatDateForInput(user.ngaySinh) : '',
-            ngayVaoLam: user.ngayVaoLam ? this.formatDateForInput(user.ngayVaoLam) : '',
+            ngaySinh: user.ngaySinh ? this.dateToNgbDateStruct(user.ngaySinh) : null,
+            ngayVaoLam: user.ngayVaoLam ? this.dateToNgbDateStruct(user.ngayVaoLam) : null,
             telegramChatId: user.telegramChatId,
             status: user.status ?? ''  // Sử dụng nullish coalescing để giữ giá trị 0
           });
@@ -160,8 +160,8 @@ export class ThemSuaNhanvienComponent implements OnInit, CanComponentDeactivate 
         phongBanId: formValue.phongBanId || undefined,
         chucVuId: formValue.chucVuId || undefined,
         quanLyId: formValue.quanLyId || undefined,
-        ngaySinh: formValue.ngaySinh ? this.parseDateAsUTC(formValue.ngaySinh) : undefined,
-        ngayVaoLam: formValue.ngayVaoLam ? this.parseDateAsUTC(formValue.ngayVaoLam) : undefined,
+        ngaySinh: formValue.ngaySinh ? this.ngbDateStructToDate(formValue.ngaySinh) : undefined,
+        ngayVaoLam: formValue.ngayVaoLam ? this.ngbDateStructToDate(formValue.ngayVaoLam) : undefined,
         telegramChatId: formValue.telegramChatId || undefined
       };
 
@@ -185,8 +185,8 @@ export class ThemSuaNhanvienComponent implements OnInit, CanComponentDeactivate 
         phongBanId: formValue.phongBanId || undefined,
         chucVuId: formValue.chucVuId || undefined,
         quanLyId: formValue.quanLyId || undefined,
-        ngaySinh: formValue.ngaySinh ? this.parseDateAsUTC(formValue.ngaySinh) : undefined,
-        ngayVaoLam: formValue.ngayVaoLam ? this.parseDateAsUTC(formValue.ngayVaoLam) : undefined,
+        ngaySinh: formValue.ngaySinh ? this.ngbDateStructToDate(formValue.ngaySinh) : undefined,
+        ngayVaoLam: formValue.ngayVaoLam ? this.ngbDateStructToDate(formValue.ngayVaoLam) : undefined,
         telegramChatId: formValue.telegramChatId || undefined,
         status: formValue.status !== '' && formValue.status !== null && formValue.status !== undefined 
           ? formValue.status 
@@ -257,6 +257,26 @@ export class ThemSuaNhanvienComponent implements OnInit, CanComponentDeactivate 
 
   get title(): string {
     return this.mode === 'create' ? 'Thêm Nhân Viên Mới' : 'Chỉnh Sửa Nhân Viên';
+  }
+
+  // Convert Date to NgbDateStruct
+  private dateToNgbDateStruct(dateValue: Date | string): NgbDateStruct | null {
+    if (!dateValue) return null;
+    
+    const date = typeof dateValue === 'string' 
+      ? new Date(dateValue + 'Z')
+      : dateValue;
+    
+    return {
+      year: date.getUTCFullYear(),
+      month: date.getUTCMonth() + 1,
+      day: date.getUTCDate()
+    };
+  }
+
+  // Convert NgbDateStruct to Date (UTC)
+  private ngbDateStructToDate(dateStruct: NgbDateStruct): Date {
+    return new Date(Date.UTC(dateStruct.year, dateStruct.month - 1, dateStruct.day));
   }
 
   private formatDateForInput(dateValue: Date | string): string {

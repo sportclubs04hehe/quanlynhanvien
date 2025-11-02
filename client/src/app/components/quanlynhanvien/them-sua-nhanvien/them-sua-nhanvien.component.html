@@ -157,22 +157,46 @@
     <div class="row mb-3">
       <div class="col-md-6">
         <label for="ngaySinh" class="form-label">Ngày sinh</label>
-        <input 
-          type="date" 
-          class="form-control" 
-          id="ngaySinh"
-          formControlName="ngaySinh"
-        />
+        <div class="input-group">
+          <input 
+            class="form-control" 
+            placeholder="dd/mm/yyyy"
+            name="ngaySinh"
+            formControlName="ngaySinh"
+            ngbDatepicker 
+            #ngaySinhPicker="ngbDatepicker"
+            [firstDayOfWeek]="1"
+          />
+          <button 
+            class="btn btn-outline-secondary" 
+            type="button"
+            (click)="ngaySinhPicker.toggle()"
+          >
+            <i class="bi bi-calendar3"></i>
+          </button>
+        </div>
       </div>
 
       <div class="col-md-6">
         <label for="ngayVaoLam" class="form-label">Ngày vào làm</label>
-        <input 
-          type="date" 
-          class="form-control" 
-          id="ngayVaoLam"
-          formControlName="ngayVaoLam"
-        />
+        <div class="input-group">
+          <input 
+            class="form-control" 
+            placeholder="dd/mm/yyyy"
+            name="ngayVaoLam"
+            formControlName="ngayVaoLam"
+            ngbDatepicker 
+            #ngayVaoLamPicker="ngbDatepicker"
+            [firstDayOfWeek]="1"
+          />
+          <button 
+            class="btn btn-outline-secondary" 
+            type="button"
+            (click)="ngayVaoLamPicker.toggle()"
+          >
+            <i class="bi bi-calendar3"></i>
+          </button>
+        </div>
       </div>
     </div>
 
