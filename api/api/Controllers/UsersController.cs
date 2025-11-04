@@ -114,7 +114,8 @@ namespace api.Controllers
 
         /// <summary>
         /// Cập nhật thông tin user
-        /// Chỉ Giám Đốc và Trưởng Phòng mới được update
+        /// - Giám Đốc: Có thể sửa tất cả
+        /// - Trưởng Phòng: Chỉ sửa được Nhân Viên, KHÔNG sửa được Giám Đốc
         /// </summary>
         [HttpPut("{id}")]
         [Authorize(Roles = AppRolesExtensions.GiamDocOrTruongPhong)]
@@ -124,6 +125,23 @@ namespace api.Controllers
             {
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
+
+                // Kiểm tra quyền: Trưởng Phòng không được sửa Giám Đốc
+                if (!IsGiamDoc())
+                {
+                    var targetUser = await _authService.GetUserByIdAsync(id);
+                    if (targetUser == null)
+                        return NotFound($"Không tìm thấy user với ID: {id}");
+
+                    // Kiểm tra nếu target user là Giám Đốc
+                    if (targetUser.Roles != null && targetUser.Roles.Contains(AppRolesExtensions.GiamDoc))
+                    {
+                        return Forbid(); // 403 Forbidden
+                    }
+
+                    // Trưởng Phòng không được thay đổi role
+                    dto.Role = null;
+                }
 
                 var updated = await _authService.UpdateUserAsync(id, dto);
                 if (updated == null)
@@ -139,14 +157,29 @@ namespace api.Controllers
 
         /// <summary>
         /// Xóa user (xóa cả User và NhanVien)
-        /// CHỈ Giám Đốc mới được xóa
+        /// - Giám Đốc: Có thể xóa tất cả (trừ chính mình)
+        /// - Trưởng Phòng: Chỉ xóa được Nhân Viên, KHÔNG xóa được Giám Đốc
         /// </summary>
         [HttpDelete("{id}")]
-        [Authorize(Roles = AppRolesExtensions.GiamDoc)]
+        [Authorize(Roles = AppRolesExtensions.GiamDocOrTruongPhong)]
         public async Task<ActionResult> Delete(Guid id)
         {
             try
             {
+                // Kiểm tra quyền: Trưởng Phòng không được xóa Giám Đốc
+                if (!IsGiamDoc())
+                {
+                    var targetUser = await _authService.GetUserByIdAsync(id);
+                    if (targetUser == null)
+                        return NotFound($"Không tìm thấy user với ID: {id}");
+
+                    // Kiểm tra nếu target user là Giám Đốc
+                    if (targetUser.Roles != null && targetUser.Roles.Contains(AppRolesExtensions.GiamDoc))
+                    {
+                        return Forbid(); // 403 Forbidden
+                    }
+                }
+
                 var result = await _authService.DeleteUserAsync(id);
                 if (!result)
                     return NotFound($"Không tìm thấy user với ID: {id}");

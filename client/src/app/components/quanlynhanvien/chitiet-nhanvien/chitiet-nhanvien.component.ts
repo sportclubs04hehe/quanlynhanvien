@@ -4,7 +4,9 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { finalize } from 'rxjs';
 import { QuanlynhanvienService } from '../../../services/quanlynhanvien.service';
 import { SpinnerService } from '../../../services/spinner.service';
+import { RoleService } from '../../../services/role.service';
 import { UserDto, NhanVienStatus } from '../../../types/users.model';
+import { APP_ROLES } from '../../../constants/roles.constants';
 
 @Component({
   selector: 'app-chitiet-nhanvien',
@@ -18,6 +20,7 @@ export class ChitietNhanvienComponent implements OnInit {
 
   private nhanVienService = inject(QuanlynhanvienService);
   private spinner = inject(SpinnerService);
+  roleService = inject(RoleService);
   activeModal = inject(NgbActiveModal);
 
   user = signal<UserDto | null>(null);
@@ -78,5 +81,29 @@ export class ChitietNhanvienComponent implements OnInit {
       default:
         return 'bg-secondary';
     }
+  }
+
+  /**
+   * Kiểm tra xem user hiện tại có quyền sửa target user không
+   * - Giám Đốc: Sửa được tất cả
+   * - Trưởng Phòng: Chỉ sửa được Nhân Viên, KHÔNG sửa được Giám Đốc
+   */
+  canEdit(): boolean {
+    const targetUser = this.user();
+    if (!targetUser) return false;
+
+    // Giám Đốc được sửa tất cả
+    if (this.roleService.isGiamDoc()) {
+      return true;
+    }
+
+    // Trưởng Phòng không được sửa Giám Đốc
+    if (this.roleService.isTruongPhong()) {
+      const isTargetGiamDoc = targetUser.roles?.includes(APP_ROLES.GIAM_DOC) ?? false;
+      return !isTargetGiamDoc;
+    }
+
+    // Nhân viên không có quyền sửa
+    return false;
   }
 }

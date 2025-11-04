@@ -5,11 +5,13 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { debounceTime, distinctUntilChanged, Subject, takeUntil, finalize } from 'rxjs';
 import { QuanlynhanvienService } from '../../services/quanlynhanvien.service';
 import { SpinnerService } from '../../services/spinner.service';
+import { RoleService } from '../../services/role.service';
 import { NoficationComponent } from '../../shared/modal/nofication/nofication.component';
 import { ThemSuaNhanvienComponent } from './them-sua-nhanvien/them-sua-nhanvien.component';
 import { ChitietNhanvienComponent } from './chitiet-nhanvien/chitiet-nhanvien.component';
 import { UserDto, NhanVienStatus } from '../../types/users.model';
 import { CanComponentDeactivate } from '../../guards/unsaved-changes.guard';
+import { APP_ROLES } from '../../constants/roles.constants';
 
 @Component({
   selector: 'app-quanlynhanvien',
@@ -22,6 +24,7 @@ export class QuanlynhanvienComponent implements OnInit, OnDestroy, CanComponentD
   private modal = inject(NgbModal);
   private nhanVienService = inject(QuanlynhanvienService);
   private spinner = inject(SpinnerService);
+  roleService = inject(RoleService);
 
   users = signal<UserDto[]>([]);
   errorMessage = signal<string | null>(null);
@@ -237,6 +240,48 @@ export class QuanlynhanvienComponent implements OnInit, OnDestroy, CanComponentD
       default:
         return 'bg-secondary';
     }
+  }
+
+  /**
+   * Kiểm tra xem user hiện tại có quyền sửa target user không
+   * - Giám Đốc: Sửa được tất cả
+   * - Trưởng Phòng: Chỉ sửa được Nhân Viên, KHÔNG sửa được Giám Đốc
+   */
+  canEdit(targetUser: UserDto): boolean {
+    // Giám Đốc được sửa tất cả
+    if (this.roleService.isGiamDoc()) {
+      return true;
+    }
+
+    // Trưởng Phòng không được sửa Giám Đốc
+    if (this.roleService.isTruongPhong()) {
+      const isTargetGiamDoc = targetUser.roles?.includes(APP_ROLES.GIAM_DOC) ?? false;
+      return !isTargetGiamDoc;
+    }
+
+    // Nhân viên không có quyền sửa
+    return false;
+  }
+
+  /**
+   * Kiểm tra xem user hiện tại có quyền xóa target user không
+   * - Giám Đốc: Xóa được tất cả
+   * - Trưởng Phòng: Chỉ xóa được Nhân Viên, KHÔNG xóa được Giám Đốc
+   */
+  canDelete(targetUser: UserDto): boolean {
+    // Giám Đốc được xóa tất cả
+    if (this.roleService.isGiamDoc()) {
+      return true;
+    }
+
+    // Trưởng Phòng không được xóa Giám Đốc
+    if (this.roleService.isTruongPhong()) {
+      const isTargetGiamDoc = targetUser.roles?.includes(APP_ROLES.GIAM_DOC) ?? false;
+      return !isTargetGiamDoc;
+    }
+
+    // Nhân viên không có quyền xóa
+    return false;
   }
 
   Math = Math;
