@@ -16,8 +16,8 @@ export class RoleService {
     this.authService.currentUser()?.roles.includes(APP_ROLES.GIAM_DOC) ?? false
   );
 
-  isPhoGiamDoc = computed(() => 
-    this.authService.currentUser()?.roles.includes(APP_ROLES.PHO_GIAM_DOC) ?? false
+  isTruongPhong = computed(() => 
+    this.authService.currentUser()?.roles.includes(APP_ROLES.TRUONG_PHONG) ?? false
   );
 
   isNhanVien = computed(() => 
@@ -36,9 +36,9 @@ export class RoleService {
     return roles.every(role => userRoles.includes(role));
   });
 
-  // Kiểm tra có phải Giám Đốc hoặc Phó Giám Đốc (có quyền quản lý)
+  // Kiểm tra có phải Giám Đốc hoặc Trưởng Phòng (có quyền quản lý)
   isManager = computed(() => 
-    this.isGiamDoc() || this.isPhoGiamDoc()
+    this.isGiamDoc() || this.isTruongPhong()
   );
 
   /**

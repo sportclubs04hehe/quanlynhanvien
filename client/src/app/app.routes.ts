@@ -19,13 +19,13 @@ export const routes: Routes = [
   { path: 'auth/login', component: LoginComponent, canActivate: [loginGuard] },
   { path: 'dashboard', component: DashboardComponent, canActivate: [authGuard] },
 
-  // Quản lý nhân viên - Yêu cầu role Giam Doc hoặc Pho Giam Doc
+  // Quản lý nhân viên - Yêu cầu role Giam Doc hoặc Truong Phong
   {
     path: 'quanlynhanvien',
     component: QuanlynhanvienComponent,
     canActivate: [authGuard, roleGuard],
     canDeactivate: [unsavedChangesGuard],
-    data: { roles: [APP_ROLES.GIAM_DOC, APP_ROLES.PHO_GIAM_DOC] } // ← Dùng constants
+    data: { roles: [APP_ROLES.GIAM_DOC, APP_ROLES.TRUONG_PHONG] } // ← Dùng constants
   },
   {
     path: 'sessions',
@@ -40,7 +40,7 @@ export const routes: Routes = [
     component: PhongbanComponent,
     canActivate: [authGuard, roleGuard],
     canDeactivate: [unsavedChangesGuard],
-    data: { roles: [APP_ROLES.GIAM_DOC, APP_ROLES.PHO_GIAM_DOC] }
+    data: { roles: [APP_ROLES.GIAM_DOC, APP_ROLES.TRUONG_PHONG] }
   },
 
   // Add more routes as needed

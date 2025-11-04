@@ -8,7 +8,7 @@
  */
 export const APP_ROLES = {
   GIAM_DOC: 'GiamDoc',
-  PHO_GIAM_DOC: 'PhoGiamDoc',
+  TRUONG_PHONG: 'TruongPhong',
   NHAN_VIEN: 'NhanVien'
 } as const;
 
@@ -22,7 +22,7 @@ export type AppRole = typeof APP_ROLES[keyof typeof APP_ROLES];
  */
 export const ROLE_DISPLAY_NAMES: Record<AppRole, string> = {
   [APP_ROLES.GIAM_DOC]: 'Giám Đốc',
-  [APP_ROLES.PHO_GIAM_DOC]: 'Phó Giám Đốc',
+  [APP_ROLES.TRUONG_PHONG]: 'Trưởng Phòng',
   [APP_ROLES.NHAN_VIEN]: 'Nhân Viên'
 };
 

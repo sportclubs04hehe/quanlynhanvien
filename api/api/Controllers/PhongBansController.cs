@@ -8,7 +8,7 @@ namespace api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = AppRolesExtensions.GiamDocOrPhoGiamDoc)]
+    [Authorize(Roles = AppRolesExtensions.GiamDocOrTruongPhong)]
     public class PhongBansController : ControllerBase
     {
         private readonly IPhongBanService _service;

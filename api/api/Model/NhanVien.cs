@@ -22,10 +22,10 @@ namespace api.Model
         public string? TelegramChatId { get; set; }
         public NhanVienStatus Status { get; set; } = NhanVienStatus.Active;
 
-        public virtual User User { get; set; }
+        public virtual User User { get; set; } = null!;
         public virtual PhongBan? PhongBan { get; set; }
         public virtual ChucVu? ChucVu { get; set; }
         public virtual NhanVien? QuanLy { get; set; }
-        public virtual ICollection<DonXinNghiPhep>? DonXinNghiPhep { get; set; }
+        public virtual ICollection<DonYeuCau>? DonYeuCaus { get; set; }
     }
 }

@@ -12,8 +12,8 @@ using api.Data;
 namespace api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251101200436_Database_Added")]
-    partial class Database_Added
+    [Migration("20251104071210_DatabaseAdded")]
+    partial class DatabaseAdded
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -173,26 +173,50 @@ namespace api.Migrations
                     b.ToTable("ChucVus");
                 });
 
-            modelBuilder.Entity("api.Model.DonXinNghiPhep", b =>
+            modelBuilder.Entity("api.Model.DonYeuCau", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("DiaDiemCongTac")
+                        .HasColumnType("text");
+
                     b.Property<Guid?>("DuocChapThuanBoi")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("GhiChuNguoiDuyet")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("GioDuKienDen")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("LoaiDon")
+                        .HasColumnType("integer");
 
                     b.Property<string>("LyDo")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("NgayBatDau")
+                    b.Property<string>("MucDichCongTac")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("NgayBatDau")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime?>("NgayCapNhat")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime>("NgayKetThuc")
+                    b.Property<DateTime?>("NgayDiMuon")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("NgayDuyet")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("NgayKetThuc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("NgayLamThem")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("NgayTao")
@@ -201,9 +225,11 @@ namespace api.Migrations
                     b.Property<Guid>("NhanVienId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("TrangThai")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<decimal?>("SoGioLamThem")
+                        .HasColumnType("numeric");
+
+                    b.Property<int>("TrangThai")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -211,7 +237,7 @@ namespace api.Migrations
 
                     b.HasIndex("NhanVienId");
 
-                    b.ToTable("DonXinNghiPheps");
+                    b.ToTable("DonYeuCaus");
                 });
 
             modelBuilder.Entity("api.Model.NhanVien", b =>
@@ -327,19 +353,28 @@ namespace api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("DaGuiLuc")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<bool>("DaDoc")
+                        .HasColumnType("boolean");
 
-                    b.Property<Guid>("DonXinNghiPhepId")
+                    b.Property<Guid?>("DonYeuCauId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Message")
+                    b.Property<string>("Link")
                         .HasColumnType("text");
 
                     b.Property<Guid>("NhanVienId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Status")
+                    b.Property<string>("NoiDung")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ThoiGianDoc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("ThoiGianGui")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TieuDe")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -349,7 +384,7 @@ namespace api.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("DonXinNghiPhepId");
+                    b.HasIndex("DonYeuCauId");
 
                     b.HasIndex("NhanVienId");
 
@@ -472,7 +507,7 @@ namespace api.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("api.Model.DonXinNghiPhep", b =>
+            modelBuilder.Entity("api.Model.DonYeuCau", b =>
                 {
                     b.HasOne("api.Model.NhanVien", "NguoiDuyet")
                         .WithMany()
@@ -480,7 +515,7 @@ namespace api.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("api.Model.NhanVien", "NhanVien")
-                        .WithMany("DonXinNghiPhep")
+                        .WithMany("DonYeuCaus")
                         .HasForeignKey("NhanVienId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -533,11 +568,10 @@ namespace api.Migrations
 
             modelBuilder.Entity("api.Model.ThongBao", b =>
                 {
-                    b.HasOne("api.Model.DonXinNghiPhep", "DonXinNghiPhep")
+                    b.HasOne("api.Model.DonYeuCau", "DonYeuCau")
                         .WithMany("ThongBaos")
-                        .HasForeignKey("DonXinNghiPhepId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("DonYeuCauId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("api.Model.NhanVien", "NhanVien")
                         .WithMany()
@@ -545,7 +579,7 @@ namespace api.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("DonXinNghiPhep");
+                    b.Navigation("DonYeuCau");
 
                     b.Navigation("NhanVien");
                 });
@@ -555,14 +589,14 @@ namespace api.Migrations
                     b.Navigation("NhanViens");
                 });
 
-            modelBuilder.Entity("api.Model.DonXinNghiPhep", b =>
+            modelBuilder.Entity("api.Model.DonYeuCau", b =>
                 {
                     b.Navigation("ThongBaos");
                 });
 
             modelBuilder.Entity("api.Model.NhanVien", b =>
                 {
-                    b.Navigation("DonXinNghiPhep");
+                    b.Navigation("DonYeuCaus");
                 });
 
             modelBuilder.Entity("api.Model.PhongBan", b =>

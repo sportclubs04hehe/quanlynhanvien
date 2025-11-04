@@ -16,7 +16,7 @@ namespace api.Data
         public DbSet<NhanVien> NhanViens => Set<NhanVien>();
         public DbSet<PhongBan> PhongBans => Set<PhongBan>();
         public DbSet<ChucVu> ChucVus => Set<ChucVu>();
-        public DbSet<DonXinNghiPhep> DonXinNghiPheps => Set<DonXinNghiPhep>();
+        public DbSet<DonYeuCau> DonYeuCaus => Set<DonYeuCau>();
         public DbSet<ThongBao> ThongBaos => Set<ThongBao>();
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
@@ -30,17 +30,30 @@ namespace api.Data
                 .HasForeignKey(e => e.QuanLyId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            builder.Entity<DonXinNghiPhep>()
+            builder.Entity<DonYeuCau>()
                 .HasOne(d => d.NhanVien)
-                .WithMany(n => n.DonXinNghiPhep)
+                .WithMany(n => n.DonYeuCaus)
                 .HasForeignKey(d => d.NhanVienId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            builder.Entity<DonXinNghiPhep>()
+            builder.Entity<DonYeuCau>()
                 .HasOne(d => d.NguoiDuyet)
                 .WithMany()
                 .HasForeignKey(d => d.DuocChapThuanBoi)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // ThongBao configuration
+            builder.Entity<ThongBao>()
+                .HasOne(tb => tb.NhanVien)
+                .WithMany()
+                .HasForeignKey(tb => tb.NhanVienId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<ThongBao>()
+                .HasOne(tb => tb.DonYeuCau)
+                .WithMany(d => d.ThongBaos)
+                .HasForeignKey(tb => tb.DonYeuCauId)
+                .OnDelete(DeleteBehavior.Cascade); // Xóa đơn → Xóa thông báo liên quan
 
             // RefreshToken configuration
             builder.Entity<RefreshToken>()

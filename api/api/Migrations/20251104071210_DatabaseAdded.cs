@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace api.Migrations
 {
     /// <inheritdoc />
-    public partial class Database_Added : Migration
+    public partial class DatabaseAdded : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -251,30 +251,39 @@ namespace api.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "DonXinNghiPheps",
+                name: "DonYeuCaus",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    LoaiDon = table.Column<int>(type: "integer", nullable: false),
                     NhanVienId = table.Column<Guid>(type: "uuid", nullable: false),
-                    NgayBatDau = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    NgayKetThuc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TrangThai = table.Column<int>(type: "integer", nullable: false),
                     LyDo = table.Column<string>(type: "text", nullable: false),
-                    TrangThai = table.Column<string>(type: "text", nullable: false),
+                    NgayBatDau = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    NgayKetThuc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    SoGioLamThem = table.Column<decimal>(type: "numeric", nullable: true),
+                    NgayLamThem = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    GioDuKienDen = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    NgayDiMuon = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    DiaDiemCongTac = table.Column<string>(type: "text", nullable: true),
+                    MucDichCongTac = table.Column<string>(type: "text", nullable: true),
                     DuocChapThuanBoi = table.Column<Guid>(type: "uuid", nullable: true),
+                    GhiChuNguoiDuyet = table.Column<string>(type: "text", nullable: true),
+                    NgayDuyet = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     NgayTao = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     NgayCapNhat = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_DonXinNghiPheps", x => x.Id);
+                    table.PrimaryKey("PK_DonYeuCaus", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_DonXinNghiPheps_NhanViens_DuocChapThuanBoi",
+                        name: "FK_DonYeuCaus_NhanViens_DuocChapThuanBoi",
                         column: x => x.DuocChapThuanBoi,
                         principalTable: "NhanViens",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_DonXinNghiPheps_NhanViens_NhanVienId",
+                        name: "FK_DonYeuCaus_NhanViens_NhanVienId",
                         column: x => x.NhanVienId,
                         principalTable: "NhanViens",
                         principalColumn: "Id",
@@ -288,18 +297,21 @@ namespace api.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Type = table.Column<string>(type: "text", nullable: false),
                     NhanVienId = table.Column<Guid>(type: "uuid", nullable: false),
-                    DonXinNghiPhepId = table.Column<Guid>(type: "uuid", nullable: false),
-                    DaGuiLuc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Status = table.Column<string>(type: "text", nullable: false),
-                    Message = table.Column<string>(type: "text", nullable: true)
+                    DonYeuCauId = table.Column<Guid>(type: "uuid", nullable: true),
+                    TieuDe = table.Column<string>(type: "text", nullable: false),
+                    NoiDung = table.Column<string>(type: "text", nullable: true),
+                    ThoiGianGui = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DaDoc = table.Column<bool>(type: "boolean", nullable: false),
+                    ThoiGianDoc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    Link = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ThongBaos", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ThongBaos_DonXinNghiPheps_DonXinNghiPhepId",
-                        column: x => x.DonXinNghiPhepId,
-                        principalTable: "DonXinNghiPheps",
+                        name: "FK_ThongBaos_DonYeuCaus_DonYeuCauId",
+                        column: x => x.DonYeuCauId,
+                        principalTable: "DonYeuCaus",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
@@ -348,13 +360,13 @@ namespace api.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_DonXinNghiPheps_DuocChapThuanBoi",
-                table: "DonXinNghiPheps",
+                name: "IX_DonYeuCaus_DuocChapThuanBoi",
+                table: "DonYeuCaus",
                 column: "DuocChapThuanBoi");
 
             migrationBuilder.CreateIndex(
-                name: "IX_DonXinNghiPheps_NhanVienId",
-                table: "DonXinNghiPheps",
+                name: "IX_DonYeuCaus_NhanVienId",
+                table: "DonYeuCaus",
                 column: "NhanVienId");
 
             migrationBuilder.CreateIndex(
@@ -384,9 +396,9 @@ namespace api.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ThongBaos_DonXinNghiPhepId",
+                name: "IX_ThongBaos_DonYeuCauId",
                 table: "ThongBaos",
-                column: "DonXinNghiPhepId");
+                column: "DonYeuCauId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ThongBaos_NhanVienId",
@@ -422,7 +434,7 @@ namespace api.Migrations
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
-                name: "DonXinNghiPheps");
+                name: "DonYeuCaus");
 
             migrationBuilder.DropTable(
                 name: "NhanViens");

@@ -9,7 +9,7 @@ import { AuthService } from '../services/auth.service';
  * {
  *   path: 'admin',
  *   canActivate: [roleGuard],
- *   data: { roles: ['Giam Doc', 'Pho Giam Doc'] }
+ *   data: { roles: ['Giam Doc', 'Truong Phong'] }
  * }
  */
 export const roleGuard: CanActivateFn = (route, state) => {

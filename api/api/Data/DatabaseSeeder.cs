@@ -27,14 +27,14 @@ namespace api.Data
         }
 
         /// <summary>
-        /// Tạo 3 roles: GiamDoc, PhoGiamDoc, NhanVien
+        /// Tạo 3 roles: GiamDoc, TruongPhong, NhanVien
         /// </summary>
         private static async Task SeedRolesAsync(RoleManager<IdentityRole<Guid>> roleManager)
         {
             var roles = new[]
             {
                 AppRolesExtensions.GiamDoc,
-                AppRolesExtensions.PhoGiamDoc,
+                AppRolesExtensions.TruongPhong,
                 AppRolesExtensions.NhanVien
             };
 

@@ -45,10 +45,10 @@ namespace api.Controllers
 
         /// <summary>
         /// Đăng ký user mới (tạo cả User và NhanVien)
-        /// Chỉ Giám Đốc và Phó Giám Đốc mới được tạo user
+        /// Chỉ Giám Đốc và Trưởng Phòng mới được tạo user
         /// </summary>
         [HttpPost("register")]
-        [Authorize(Roles = AppRolesExtensions.GiamDocOrPhoGiamDoc)]
+        [Authorize(Roles = AppRolesExtensions.GiamDocOrTruongPhong)]
         public async Task<ActionResult<UserDto>> Register([FromBody] RegisterUserDto dto)
         {
             try
@@ -102,10 +102,10 @@ namespace api.Controllers
 
         /// <summary>
         /// Cập nhật thông tin user
-        /// Chỉ Giám Đốc và Phó Giám Đốc mới được update
+        /// Chỉ Giám Đốc và Trưởng Phòng mới được update
         /// </summary>
         [HttpPut("{id}")]
-        [Authorize(Roles = AppRolesExtensions.GiamDocOrPhoGiamDoc)]
+        [Authorize(Roles = AppRolesExtensions.GiamDocOrTruongPhong)]
         public async Task<ActionResult<UserDto>> Update(Guid id, [FromBody] UpdateUserDto dto)
         {
             try

@@ -6,7 +6,7 @@ namespace api.Model.Enums
     public enum AppRoles
     {
         GiamDoc = 1,        // Giám Đốc - Full quyền
-        PhoGiamDoc = 2,     // Phó Giám Đốc - Quản lý cấp cao
+        TruongPhong = 2,    // Trưởng Phòng - Quản lý phòng ban
         NhanVien = 3        // Nhân Viên - Quyền cơ bản
     }
 
@@ -16,12 +16,12 @@ namespace api.Model.Enums
     public static class AppRolesExtensions
     {
         public const string GiamDoc = "GiamDoc";
-        public const string PhoGiamDoc = "PhoGiamDoc";
+        public const string TruongPhong = "TruongPhong";
         public const string NhanVien = "NhanVien";
 
         // Combine roles
-        public const string GiamDocOrPhoGiamDoc = "GiamDoc,PhoGiamDoc";
-        public const string AllRoles = "GiamDoc,PhoGiamDoc,NhanVien";
+        public const string GiamDocOrTruongPhong = "GiamDoc,TruongPhong";
+        public const string AllRoles = "GiamDoc,TruongPhong,NhanVien";
 
         /// <summary>
         /// Lấy tên role từ enum
@@ -31,7 +31,7 @@ namespace api.Model.Enums
             return role switch
             {
                 AppRoles.GiamDoc => GiamDoc,
-                AppRoles.PhoGiamDoc => PhoGiamDoc,
+                AppRoles.TruongPhong => TruongPhong,
                 AppRoles.NhanVien => NhanVien,
                 _ => throw new ArgumentException("Invalid role")
             };
@@ -45,7 +45,7 @@ namespace api.Model.Enums
             return role switch
             {
                 AppRoles.GiamDoc => "Giám Đốc",
-                AppRoles.PhoGiamDoc => "Phó Giám Đốc",
+                AppRoles.TruongPhong => "Trưởng Phòng",
                 AppRoles.NhanVien => "Nhân Viên",
                 _ => "Unknown"
             };

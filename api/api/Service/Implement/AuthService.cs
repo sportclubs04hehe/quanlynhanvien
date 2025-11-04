@@ -151,7 +151,7 @@ namespace api.Service.Implement
                 
                 // Validate role có hợp lệ không
                 if (role != AppRolesExtensions.GiamDoc && 
-                    role != AppRolesExtensions.PhoGiamDoc && 
+                    role != AppRolesExtensions.TruongPhong && 
                     role != AppRolesExtensions.NhanVien)
                 {
                     role = AppRolesExtensions.NhanVien; // Fallback

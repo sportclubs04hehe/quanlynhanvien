@@ -22,7 +22,7 @@ namespace api.Profiles
                 .ForMember(dest => dest.PhongBan, opt => opt.Ignore())
                 .ForMember(dest => dest.ChucVu, opt => opt.Ignore())
                 .ForMember(dest => dest.QuanLy, opt => opt.Ignore())
-                .ForMember(dest => dest.DonXinNghiPhep, opt => opt.Ignore());
+                .ForMember(dest => dest.DonYeuCaus, opt => opt.Ignore());
 
             // Map UpdateUserDto -> NhanVien
             CreateMap<UpdateUserDto, NhanVien>()
@@ -31,7 +31,7 @@ namespace api.Profiles
                 .ForMember(dest => dest.PhongBan, opt => opt.Ignore())
                 .ForMember(dest => dest.ChucVu, opt => opt.Ignore())
                 .ForMember(dest => dest.QuanLy, opt => opt.Ignore())
-                .ForMember(dest => dest.DonXinNghiPhep, opt => opt.Ignore());
+                .ForMember(dest => dest.DonYeuCaus, opt => opt.Ignore());
         }
     }
 }

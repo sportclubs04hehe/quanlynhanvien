@@ -7,7 +7,7 @@ import { AuthService } from '../services/auth.service';
  * 
  * Sử dụng:
  * <button *hasRole="'Giam Doc'">Chỉ Giám Đốc thấy</button>
- * <div *hasRole="['Giam Doc', 'Pho Giam Doc']">Giám Đốc và Phó Giám Đốc thấy</div>
+ * <div *hasRole="['Giam Doc', 'Truong Phong']">Giám Đốc và Trưởng Phòng thấy</div>
  */
 @Directive({
   selector: '[hasRole]',
