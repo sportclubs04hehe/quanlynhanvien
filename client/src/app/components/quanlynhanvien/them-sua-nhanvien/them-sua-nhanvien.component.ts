@@ -13,6 +13,8 @@ import { ChucVuDto } from '../../../types/chucvu.model';
 import { PagedResult } from '../../../types/page-result.model';
 import { ChucvuService } from '../../../services/chucvu.service';
 import { CanComponentDeactivate } from '../../../guards/unsaved-changes.guard';
+import { APP_ROLES, ROLE_DISPLAY_NAMES } from '../../../constants/roles.constants';
+import { RoleService } from '../../../services/role.service';
 
 @Component({
   selector: 'app-them-sua-nhanvien',
@@ -32,6 +34,7 @@ export class ThemSuaNhanvienComponent implements OnInit, CanComponentDeactivate 
   private chucVuService: ChucvuService = inject(ChucvuService);
   private spinner = inject(SpinnerService);
   private modal = inject(NgbModal);
+  roleService = inject(RoleService);
   
   activeModal = inject(NgbActiveModal);
 
@@ -42,6 +45,13 @@ export class ThemSuaNhanvienComponent implements OnInit, CanComponentDeactivate 
   phongBans = signal<PhongBanDto[]>([]);
   chucVus = signal<ChucVuDto[]>([]);
   quanLys = signal<UserDto[]>([]);
+  
+  // Role options (chỉ Giám Đốc mới thấy)
+  roleOptions = [
+    { value: APP_ROLES.GIAM_DOC, label: ROLE_DISPLAY_NAMES[APP_ROLES.GIAM_DOC] },
+    { value: APP_ROLES.TRUONG_PHONG, label: ROLE_DISPLAY_NAMES[APP_ROLES.TRUONG_PHONG] },
+    { value: APP_ROLES.NHAN_VIEN, label: ROLE_DISPLAY_NAMES[APP_ROLES.NHAN_VIEN] }
+  ];
   
   // Status enum options
   statusOptions = [
@@ -74,7 +84,8 @@ export class ThemSuaNhanvienComponent implements OnInit, CanComponentDeactivate 
     if (this.mode === 'create') {
       this.userForm = this.fb.group({
         email: ['', [Validators.required, Validators.email]],
-        password: ['123456'], 
+        password: ['123456'],
+        role: [APP_ROLES.NHAN_VIEN], // Default role
         tenDayDu: ['', [Validators.required]],
         phoneNumber: [''],
         phongBanId: [''],
@@ -94,7 +105,8 @@ export class ThemSuaNhanvienComponent implements OnInit, CanComponentDeactivate 
         ngaySinh: [null],
         ngayVaoLam: [null],
         telegramChatId: [''],
-        status: ['']
+        status: [''],
+        role: [''] // Thêm role cho edit mode
       });
     }
   }
@@ -110,6 +122,9 @@ export class ThemSuaNhanvienComponent implements OnInit, CanComponentDeactivate 
           const ngaySinhStruct = user.ngaySinh ? this.dateToNgbDateStruct(user.ngaySinh) : null;
           const ngayVaoLamStruct = user.ngayVaoLam ? this.dateToNgbDateStruct(user.ngayVaoLam) : null;
           
+          // Lấy role đầu tiên nếu có (user thường chỉ có 1 role)
+          const currentRole = user.roles && user.roles.length > 0 ? user.roles[0] : '';
+          
           this.userForm.patchValue({
             tenDayDu: user.tenDayDu,
             phoneNumber: user.phoneNumber,
@@ -119,11 +134,12 @@ export class ThemSuaNhanvienComponent implements OnInit, CanComponentDeactivate 
             ngaySinh: ngaySinhStruct,
             ngayVaoLam: ngayVaoLamStruct,
             telegramChatId: user.telegramChatId,
-            status: user.status ?? ''
+            status: user.status ?? '',
+            role: currentRole
           });
           
           console.log('✅ Form values after patch:', this.userForm.value);
-          console.log('✅ User data loaded:', { quanLyId: user.quanLyId, tenQuanLy: user.tenQuanLy });
+          console.log('✅ User data loaded:', { quanLyId: user.quanLyId, tenQuanLy: user.tenQuanLy, role: currentRole });
           this.isDirty = false;
         },
         error: (error) => {
@@ -162,6 +178,7 @@ export class ThemSuaNhanvienComponent implements OnInit, CanComponentDeactivate 
       const dto: RegisterUserDto = {
         email: formValue.email,
         password: formValue.password || '123456', // Sử dụng mật khẩu mặc định nếu rỗng
+        role: formValue.role || undefined, // Role sẽ được backend xử lý
         tenDayDu: formValue.tenDayDu,
         phoneNumber: formValue.phoneNumber || undefined,
         phongBanId: formValue.phongBanId || undefined,
@@ -197,7 +214,8 @@ export class ThemSuaNhanvienComponent implements OnInit, CanComponentDeactivate 
         telegramChatId: formValue.telegramChatId || undefined,
         status: formValue.status !== '' && formValue.status !== null && formValue.status !== undefined 
           ? formValue.status 
-          : undefined
+          : undefined,
+        role: this.canSelectRole && formValue.role ? formValue.role : undefined  // Chỉ gửi role nếu là Giám Đốc
       };
 
       this.spinner.show('Đang cập nhật nhân viên...');
@@ -264,6 +282,11 @@ export class ThemSuaNhanvienComponent implements OnInit, CanComponentDeactivate 
 
   get title(): string {
     return this.mode === 'create' ? 'Thêm Nhân Viên Mới' : 'Chỉnh Sửa Nhân Viên';
+  }
+  
+  // Chỉ Giám Đốc mới thấy role selector
+  get canSelectRole(): boolean {
+    return this.roleService.isGiamDoc();
   }
 
   // Convert Date to NgbDateStruct

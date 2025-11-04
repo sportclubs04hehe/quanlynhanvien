@@ -10,6 +10,7 @@ export enum NhanVienStatus {
 export interface RegisterUserDto {
   email: string;
   password: string;
+  role?: string;  
   tenDayDu: string;
   phoneNumber?: string;
   phongBanId?: string;
@@ -40,7 +41,7 @@ export interface UserDto {
   chucVu?: ChucVuDto;
   tenQuanLy?: string;
   
-  roles?: string[];  // Thêm roles vì API có trả về
+  roles?: string[]; 
 }
 
 export interface UpdateUserDto {
@@ -53,4 +54,5 @@ export interface UpdateUserDto {
   ngayVaoLam?: Date;
   telegramChatId?: string;
   status?: NhanVienStatus;
+  role?: string;  // Role để cập nhật (chỉ Giám Đốc mới được đổi)
 }

@@ -44,7 +44,8 @@ namespace api.Controllers
 
         /// <summary>
         /// Đăng ký user mới (tạo cả User và NhanVien)
-        /// Chỉ Giám Đốc và Trưởng Phòng mới được tạo user
+        /// - Giám Đốc: Có thể chọn role (GiamDoc, TruongPhong, NhanVien)
+        /// - Trưởng Phòng: Chỉ tạo được NhanVien (role sẽ bị force thành NhanVien)
         /// </summary>
         [HttpPost("register")]
         [Authorize(Roles = AppRolesExtensions.GiamDocOrTruongPhong)]
@@ -54,6 +55,18 @@ namespace api.Controllers
             {
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
+
+                // Nếu người tạo là Trưởng Phòng, force role = NhanVien
+                if (!IsGiamDoc())
+                {
+                    dto.Role = AppRolesExtensions.NhanVien;
+                }
+                
+                // Nếu người tạo là Giám Đốc nhưng không chọn role, default = NhanVien
+                if (string.IsNullOrWhiteSpace(dto.Role))
+                {
+                    dto.Role = AppRolesExtensions.NhanVien;
+                }
 
                 var user = await _authService.RegisterAsync(dto);
                 return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);

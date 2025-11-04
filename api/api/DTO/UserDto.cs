@@ -92,6 +92,11 @@ namespace api.DTO
 
         public string? TelegramChatId { get; set; }
         public NhanVienStatus? Status { get; set; }
+        
+        /// <summary>
+        /// Role để cập nhật (chỉ Giám Đốc mới được đổi role)
+        /// </summary>
+        public string? Role { get; set; }
     }
 
     /// <summary>

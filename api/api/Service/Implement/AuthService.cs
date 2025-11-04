@@ -252,12 +252,47 @@ namespace api.Service.Implement
                 await _userManager.UpdateAsync(existingNhanVien.User);
             }
 
-            // 4. Save NhanVien
+            // 4. Update Role (chỉ nếu dto.Role được cung cấp và hợp lệ)
+            if (!string.IsNullOrWhiteSpace(dto.Role))
+            {
+                // Validate role hợp lệ
+                if (dto.Role == AppRolesExtensions.GiamDoc || 
+                    dto.Role == AppRolesExtensions.TruongPhong || 
+                    dto.Role == AppRolesExtensions.NhanVien)
+                {
+                    var currentRoles = await _userManager.GetRolesAsync(existingNhanVien.User);
+                    
+                    // Chỉ update nếu role khác với role hiện tại
+                    if (!currentRoles.Contains(dto.Role))
+                    {
+                        // Xóa tất cả roles hiện tại
+                        if (currentRoles.Any())
+                        {
+                            await _userManager.RemoveFromRolesAsync(existingNhanVien.User, currentRoles);
+                        }
+                        
+                        // Thêm role mới
+                        await _userManager.AddToRoleAsync(existingNhanVien.User, dto.Role);
+                    }
+                }
+            }
+
+            // 5. Save NhanVien
             var updated = await _nhanVienRepo.UpdateAsync(existingNhanVien);
 
-            // 5. Load lại để có đầy đủ navigation properties
+            // 6. Load lại để có đầy đủ navigation properties
             var result = await _nhanVienRepo.GetByIdAsync(id);
-            return result == null ? null : _mapper.Map<UserDto>(result);
+            if (result == null) return null;
+            
+            // 7. Load roles và map vào DTO
+            var userDto = _mapper.Map<UserDto>(result);
+            var user = await _userManager.FindByIdAsync(id.ToString());
+            if (user != null)
+            {
+                userDto.Roles = (await _userManager.GetRolesAsync(user)).ToList();
+            }
+            
+            return userDto;
         }
 
         public async Task<bool> DeleteUserAsync(Guid id)
