@@ -19,11 +19,13 @@ namespace api.Extensions
             services.AddScoped<IPhongBanRepository, PhongBanRepository>();
             services.AddScoped<IChucVuRepository, ChucVuRepository>();
             services.AddScoped<INhanVienRepository, NhanVienRepository>();
+            services.AddScoped<IDonYeuCauRepository, DonYeuCauRepository>();
 
             // Services
             services.AddScoped<IPhongBanService, PhongBanService>();
             services.AddScoped<IChucVuService, ChucVuService>();
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IDonYeuCauService, DonYeuCauService>();
 
             return services;
         }

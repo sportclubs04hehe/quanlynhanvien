@@ -1,7 +1,6 @@
 using api.Model;
 using api.Model.Enums;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 
 namespace api.Data
 {
@@ -74,8 +73,8 @@ namespace api.Data
             RoleManager<IdentityRole<Guid>> roleManager,
             ApplicationDbContext dbContext)
         {
-            const string adminEmail = "admin@company.com";
-            const string adminPassword = "Admin@123"; 
+            const string adminEmail = "admin@gmail.com";
+            const string adminPassword = "123456"; 
 
             var existingUser = await userManager.FindByEmailAsync(adminEmail);
             if (existingUser == null)
