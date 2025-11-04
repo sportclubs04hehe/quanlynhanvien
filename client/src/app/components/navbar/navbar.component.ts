@@ -3,6 +3,7 @@ import { Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from "@angular/router";
 import { AuthService } from '../../services/auth.service';
 import { HasRoleDirective } from '../../directives/has-role.directive';
+import { APP_ROLES } from '../../constants/roles.constants';
 
 @Component({
   selector: 'app-navbar',
@@ -14,6 +15,9 @@ import { HasRoleDirective } from '../../directives/has-role.directive';
 export class NavbarComponent {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+
+  // Expose roles to template
+  readonly APP_ROLES = APP_ROLES;
 
   logout() {
     this.authService.logout();

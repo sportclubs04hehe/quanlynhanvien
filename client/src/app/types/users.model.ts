@@ -26,12 +26,13 @@ export interface UserDto {
   phoneNumber?: string;
   tenDayDu: string;
   status: NhanVienStatus;
-  ngaySinh?: Date;
-  ngayVaoLam?: Date;
+  ngaySinh?: string | Date;  // API trả về string ISO, có thể parse thành Date
+  ngayVaoLam?: string | Date; // API trả về string ISO, có thể parse thành Date
   telegramChatId?: string;
   phongBan?: PhongBanDto;
   chucVu?: ChucVuDto;
   tenQuanLy?: string;
+  roles?: string[];  // Thêm roles vì API có trả về
 }
 
 export interface UpdateUserDto {

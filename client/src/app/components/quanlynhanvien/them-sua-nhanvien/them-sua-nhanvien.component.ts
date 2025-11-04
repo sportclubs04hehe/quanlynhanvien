@@ -74,7 +74,7 @@ export class ThemSuaNhanvienComponent implements OnInit, CanComponentDeactivate 
     if (this.mode === 'create') {
       this.userForm = this.fb.group({
         email: ['', [Validators.required, Validators.email]],
-        password: ['123456'], // Mật khẩu mặc định
+        password: ['123456'], 
         tenDayDu: ['', [Validators.required]],
         phoneNumber: [''],
         phongBanId: [''],
@@ -107,21 +107,26 @@ export class ThemSuaNhanvienComponent implements OnInit, CanComponentDeactivate 
       .pipe(finalize(() => this.spinner.hide()))
       .subscribe({
         next: (user) => {
+          const ngaySinhStruct = user.ngaySinh ? this.dateToNgbDateStruct(user.ngaySinh) : null;
+          const ngayVaoLamStruct = user.ngayVaoLam ? this.dateToNgbDateStruct(user.ngayVaoLam) : null;
+          
           this.userForm.patchValue({
             tenDayDu: user.tenDayDu,
             phoneNumber: user.phoneNumber,
             phongBanId: user.phongBan?.id || '',
             chucVuId: user.chucVu?.id || '',
-            ngaySinh: user.ngaySinh ? this.dateToNgbDateStruct(user.ngaySinh) : null,
-            ngayVaoLam: user.ngayVaoLam ? this.dateToNgbDateStruct(user.ngayVaoLam) : null,
+            ngaySinh: ngaySinhStruct,
+            ngayVaoLam: ngayVaoLamStruct,
             telegramChatId: user.telegramChatId,
-            status: user.status ?? ''  // Sử dụng nullish coalescing để giữ giá trị 0
+            status: user.status ?? ''
           });
+          
+          console.log('✅ Form values after patch:', this.userForm.value);
           this.isDirty = false;
         },
         error: (error) => {
           this.errorMessage.set('Không thể tải thông tin nhân viên');
-          console.error('Error loading user:', error);
+          console.error('❌ Error loading user:', error);
         }
       });
   }
@@ -263,15 +268,32 @@ export class ThemSuaNhanvienComponent implements OnInit, CanComponentDeactivate 
   private dateToNgbDateStruct(dateValue: Date | string): NgbDateStruct | null {
     if (!dateValue) return null;
     
-    const date = typeof dateValue === 'string' 
-      ? new Date(dateValue + 'Z')
-      : dateValue;
-    
-    return {
-      year: date.getUTCFullYear(),
-      month: date.getUTCMonth() + 1,
-      day: date.getUTCDate()
-    };
+    try {
+      let date: Date;
+      
+      if (typeof dateValue === 'string') {
+        // API trả về: "2025-11-27T00:00:00Z" - đã có Z rồi, không thêm nữa
+        date = new Date(dateValue);
+        
+        // Kiểm tra date hợp lệ
+        if (isNaN(date.getTime())) {
+          console.error('Invalid date string:', dateValue);
+          return null;
+        }
+      } else {
+        date = dateValue;
+      }
+      
+      // Sử dụng UTC để tránh timezone issues
+      return {
+        year: date.getUTCFullYear(),
+        month: date.getUTCMonth() + 1,
+        day: date.getUTCDate()
+      };
+    } catch (error) {
+      console.error('Error parsing date:', dateValue, error);
+      return null;
+    }
   }
 
   // Convert NgbDateStruct to Date (UTC)

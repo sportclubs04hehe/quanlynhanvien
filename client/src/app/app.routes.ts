@@ -39,7 +39,8 @@ export const routes: Routes = [
     path: 'phongban',
     component: PhongbanComponent,
     canActivate: [authGuard, roleGuard],
-    canDeactivate: [unsavedChangesGuard]
+    canDeactivate: [unsavedChangesGuard],
+    data: { roles: [APP_ROLES.GIAM_DOC, APP_ROLES.PHO_GIAM_DOC] }
   },
 
   // Add more routes as needed
