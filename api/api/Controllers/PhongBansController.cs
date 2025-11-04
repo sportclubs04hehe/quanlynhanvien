@@ -7,9 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace api.Controllers
 {
     [Route("api/[controller]")]
-    [ApiController]
     [Authorize(Roles = AppRolesExtensions.GiamDocOrTruongPhong)]
-    public class PhongBansController : ControllerBase
+    public class PhongBansController : BaseApiController
     {
         private readonly IPhongBanService _service;
 

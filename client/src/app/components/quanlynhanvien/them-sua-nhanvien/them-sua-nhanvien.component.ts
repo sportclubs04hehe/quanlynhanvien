@@ -113,8 +113,9 @@ export class ThemSuaNhanvienComponent implements OnInit, CanComponentDeactivate 
           this.userForm.patchValue({
             tenDayDu: user.tenDayDu,
             phoneNumber: user.phoneNumber,
-            phongBanId: user.phongBan?.id || '',
-            chucVuId: user.chucVu?.id || '',
+            phongBanId: user.phongBanId || '',
+            chucVuId: user.chucVuId || '',
+            quanLyId: user.quanLyId || '',
             ngaySinh: ngaySinhStruct,
             ngayVaoLam: ngayVaoLamStruct,
             telegramChatId: user.telegramChatId,
@@ -122,6 +123,7 @@ export class ThemSuaNhanvienComponent implements OnInit, CanComponentDeactivate 
           });
           
           console.log('✅ Form values after patch:', this.userForm.value);
+          console.log('✅ User data loaded:', { quanLyId: user.quanLyId, tenQuanLy: user.tenQuanLy });
           this.isDirty = false;
         },
         error: (error) => {

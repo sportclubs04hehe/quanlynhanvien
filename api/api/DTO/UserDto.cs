@@ -55,8 +55,13 @@ namespace api.DTO
         public string? TelegramChatId { get; set; }
 
         // Thông tin liên quan
+        public Guid? PhongBanId { get; set; }
         public PhongBanDto? PhongBan { get; set; }
+        
+        public Guid? ChucVuId { get; set; }
         public ChucVuDto? ChucVu { get; set; }
+        
+        public Guid? QuanLyId { get; set; }
         public string? TenQuanLy { get; set; }
         
         // Role

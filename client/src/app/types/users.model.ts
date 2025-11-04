@@ -29,9 +29,17 @@ export interface UserDto {
   ngaySinh?: string | Date;  // API trả về string ISO, có thể parse thành Date
   ngayVaoLam?: string | Date; // API trả về string ISO, có thể parse thành Date
   telegramChatId?: string;
+  
+  // IDs
+  phongBanId?: string;
+  chucVuId?: string;
+  quanLyId?: string;
+  
+  // Related objects
   phongBan?: PhongBanDto;
   chucVu?: ChucVuDto;
   tenQuanLy?: string;
+  
   roles?: string[];  // Thêm roles vì API có trả về
 }
 

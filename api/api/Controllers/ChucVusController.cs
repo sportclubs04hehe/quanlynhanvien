@@ -5,8 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace api.Controllers
 {
     [Route("api/[controller]")]
-    [ApiController]
-    public class ChucVusController : ControllerBase
+    public class ChucVusController : BaseApiController
     {
         private readonly IChucVuService _service;
 

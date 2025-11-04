@@ -8,9 +8,8 @@ using System.Security.Claims;
 namespace api.Controllers
 {
     [Route("api/[controller]")]
-    [ApiController]
     [Authorize] // Tất cả endpoints đều cần đăng nhập
-    public class DonYeuCausController : ControllerBase
+    public class DonYeuCausController : BaseApiController
     {
         private readonly IDonYeuCauService _donYeuCauService;
 
@@ -18,30 +17,6 @@ namespace api.Controllers
         {
             _donYeuCauService = donYeuCauService;
         }
-
-        #region Helper Methods
-
-        private Guid GetCurrentUserId()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userIdClaim))
-                throw new UnauthorizedAccessException("Không tìm thấy thông tin user");
-
-            return Guid.Parse(userIdClaim);
-        }
-
-        private bool IsGiamDoc()
-        {
-            return User.IsInRole(AppRolesExtensions.GiamDoc);
-        }
-
-        private bool IsGiamDocOrTruongPhong()
-        {
-            return User.IsInRole(AppRolesExtensions.GiamDoc) || 
-                   User.IsInRole(AppRolesExtensions.TruongPhong);
-        }
-
-        #endregion
 
         #region CRUD Operations
 
