@@ -1,1 +1,315 @@
-<p>don-create-edit works!</p>
+<div class="modal-header bg-primary text-white">
+  <h5 class="modal-title">
+    <i [class]="mode === 'create' ? 'bi bi-plus-circle me-2' : 'bi bi-pencil-square me-2'"></i>
+    {{ mode === 'create' ? 'Tạo Đơn Yêu Cầu' : 'Chỉnh Sửa Đơn Yêu Cầu' }}
+  </h5>
+  <button type="button" class="btn-close btn-close-white" (click)="close()"></button>
+</div>
+
+<div class="modal-body">
+  @if (errorMessage()) {
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      {{ errorMessage() }}
+      <button type="button" class="btn-close" (click)="errorMessage.set(null)"></button>
+    </div>
+  }
+
+  <form [formGroup]="donForm" (ngSubmit)="onSubmit()">
+    <!-- Loại Đơn -->
+    <div class="mb-3">
+      <label for="loaiDon" class="form-label">
+        <i class="bi bi-file-earmark-text me-1"></i>
+        Loại Đơn <span class="text-danger">*</span>
+      </label>
+      <select 
+        class="form-select" 
+        id="loaiDon"
+        formControlName="loaiDon"
+        [class.is-invalid]="hasError('loaiDon')"
+        [disabled]="mode === 'edit'">
+        @for (option of loaiDonOptions; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </select>
+      @if (hasError('loaiDon')) {
+        <div class="invalid-feedback">{{ getErrorMessage('loaiDon') }}</div>
+      }
+      @if (mode === 'edit') {
+        <small class="form-text text-muted">
+          <i class="bi bi-info-circle"></i> Không thể thay đổi loại đơn khi chỉnh sửa
+        </small>
+      }
+    </div>
+
+    <!-- Lý Do -->
+    <div class="mb-3">
+      <label for="lyDo" class="form-label">
+        <i class="bi bi-chat-left-text me-1"></i>
+        Lý Do <span class="text-danger">*</span>
+      </label>
+      <textarea 
+        class="form-control" 
+        id="lyDo"
+        formControlName="lyDo"
+        rows="3"
+        [class.is-invalid]="hasError('lyDo')"
+        placeholder="Nhập lý do chi tiết cho đơn yêu cầu..."
+        maxlength="500">
+      </textarea>
+      <div class="d-flex justify-content-between">
+        @if (hasError('lyDo')) {
+          <div class="invalid-feedback d-block">{{ getErrorMessage('lyDo') }}</div>
+        }
+        <small class="form-text text-muted ms-auto">
+          {{ donForm.get('lyDo')?.value?.length || 0 }}/500 ký tự
+        </small>
+      </div>
+    </div>
+
+    <!-- ========== NGHỈ PHÉP FIELDS ========== -->
+    @if (shouldShowField('ngayBatDau') && shouldShowField('ngayKetThuc')) {
+      <div class="field-section mb-3">
+        <h6 class="section-title">
+          <i class="bi bi-calendar-range me-2"></i>Thông Tin Thời Gian
+        </h6>
+        
+        <div class="row">
+          <div class="col-md-6">
+            <label for="ngayBatDau" class="form-label">
+              Ngày Bắt Đầu <span class="text-danger">*</span>
+            </label>
+            <div class="input-group">
+              <input 
+                class="form-control" 
+                placeholder="dd/mm/yyyy"
+                name="dpNgayBatDau"
+                formControlName="ngayBatDau"
+                ngbDatepicker 
+                #dNgayBatDau="ngbDatepicker"
+                [class.is-invalid]="hasError('ngayBatDau')">
+              <button 
+                class="btn btn-outline-secondary" 
+                (click)="dNgayBatDau.toggle()" 
+                type="button">
+                <i class="bi bi-calendar3"></i>
+              </button>
+            </div>
+            @if (hasError('ngayBatDau')) {
+              <div class="text-danger small mt-1">{{ getErrorMessage('ngayBatDau') }}</div>
+            }
+          </div>
+          
+          <div class="col-md-6">
+            <label for="ngayKetThuc" class="form-label">
+              Ngày Kết Thúc <span class="text-danger">*</span>
+            </label>
+            <div class="input-group">
+              <input 
+                class="form-control" 
+                placeholder="dd/mm/yyyy"
+                name="dpNgayKetThuc"
+                formControlName="ngayKetThuc"
+                ngbDatepicker 
+                #dNgayKetThuc="ngbDatepicker"
+                [class.is-invalid]="hasError('ngayKetThuc')">
+              <button 
+                class="btn btn-outline-secondary" 
+                (click)="dNgayKetThuc.toggle()" 
+                type="button">
+                <i class="bi bi-calendar3"></i>
+              </button>
+            </div>
+            @if (hasError('ngayKetThuc')) {
+              <div class="text-danger small mt-1">{{ getErrorMessage('ngayKetThuc') }}</div>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ========== LÀM THÊM GIỜ FIELDS ========== -->
+    @if (shouldShowField('ngayLamThem') && shouldShowField('soGioLamThem')) {
+      <div class="field-section mb-3">
+        <h6 class="section-title">
+          <i class="bi bi-clock-history me-2"></i>Thông Tin Làm Thêm Giờ
+        </h6>
+        
+        <div class="row">
+          <div class="col-md-6">
+            <label for="ngayLamThem" class="form-label">
+              Ngày Làm Thêm <span class="text-danger">*</span>
+            </label>
+            <div class="input-group">
+              <input 
+                class="form-control" 
+                placeholder="dd/mm/yyyy"
+                name="dpNgayLamThem"
+                formControlName="ngayLamThem"
+                ngbDatepicker 
+                #dNgayLamThem="ngbDatepicker"
+                [class.is-invalid]="hasError('ngayLamThem')">
+              <button 
+                class="btn btn-outline-secondary" 
+                (click)="dNgayLamThem.toggle()" 
+                type="button">
+                <i class="bi bi-calendar3"></i>
+              </button>
+            </div>
+            @if (hasError('ngayLamThem')) {
+              <div class="text-danger small mt-1">{{ getErrorMessage('ngayLamThem') }}</div>
+            }
+          </div>
+          
+          <div class="col-md-6">
+            <label for="soGioLamThem" class="form-label">
+              Số Giờ Làm Thêm <span class="text-danger">*</span>
+            </label>
+            <div class="input-group">
+              <input 
+                type="number" 
+                class="form-control" 
+                id="soGioLamThem"
+                formControlName="soGioLamThem"
+                [class.is-invalid]="hasError('soGioLamThem')"
+                placeholder="VD: 2.5"
+                step="0.5"
+                min="0.5"
+                max="24">
+              <span class="input-group-text">giờ</span>
+            </div>
+            @if (hasError('soGioLamThem')) {
+              <div class="text-danger small mt-1">{{ getErrorMessage('soGioLamThem') }}</div>
+            }
+            <small class="form-text text-muted">Từ 0.5 đến 24 giờ</small>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ========== ĐI MUỘN FIELDS ========== -->
+    @if (shouldShowField('ngayDiMuon') && shouldShowField('gioDuKienDen')) {
+      <div class="field-section mb-3">
+        <h6 class="section-title">
+          <i class="bi bi-alarm me-2"></i>Thông Tin Đi Muộn
+        </h6>
+        
+        <div class="row">
+          <div class="col-md-6">
+            <label for="ngayDiMuon" class="form-label">
+              Ngày Đi Muộn <span class="text-danger">*</span>
+            </label>
+            <div class="input-group">
+              <input 
+                class="form-control" 
+                placeholder="dd/mm/yyyy"
+                name="dpNgayDiMuon"
+                formControlName="ngayDiMuon"
+                ngbDatepicker 
+                #dNgayDiMuon="ngbDatepicker"
+                [class.is-invalid]="hasError('ngayDiMuon')">
+              <button 
+                class="btn btn-outline-secondary" 
+                (click)="dNgayDiMuon.toggle()" 
+                type="button">
+                <i class="bi bi-calendar3"></i>
+              </button>
+            </div>
+            @if (hasError('ngayDiMuon')) {
+              <div class="text-danger small mt-1">{{ getErrorMessage('ngayDiMuon') }}</div>
+            }
+          </div>
+          
+          <div class="col-md-6">
+            <label for="gioDuKienDen" class="form-label">
+              Giờ Dự Kiến Đến <span class="text-danger">*</span>
+            </label>
+            <ngb-timepicker 
+              formControlName="gioDuKienDen"
+              [meridian]="false"
+              [spinners]="false">
+            </ngb-timepicker>
+            @if (hasError('gioDuKienDen')) {
+              <div class="text-danger small mt-1">{{ getErrorMessage('gioDuKienDen') }}</div>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ========== CÔNG TÁC FIELDS ========== -->
+    @if (shouldShowField('diaDiemCongTac') && shouldShowField('mucDichCongTac')) {
+      <div class="field-section mb-3">
+        <h6 class="section-title">
+          <i class="bi bi-geo-alt me-2"></i>Thông Tin Công Tác
+        </h6>
+        
+        <div class="mb-3">
+          <label for="diaDiemCongTac" class="form-label">
+            Địa Điểm Công Tác <span class="text-danger">*</span>
+          </label>
+          <input 
+            type="text" 
+            class="form-control" 
+            id="diaDiemCongTac"
+            formControlName="diaDiemCongTac"
+            [class.is-invalid]="hasError('diaDiemCongTac')"
+            placeholder="VD: Hà Nội, TP.HCM..."
+            maxlength="200">
+          @if (hasError('diaDiemCongTac')) {
+            <div class="invalid-feedback">{{ getErrorMessage('diaDiemCongTac') }}</div>
+          }
+          <small class="form-text text-muted">
+            {{ donForm.get('diaDiemCongTac')?.value?.length || 0 }}/200 ký tự
+          </small>
+        </div>
+        
+        <div class="mb-3">
+          <label for="mucDichCongTac" class="form-label">
+            Mục Đích Công Tác <span class="text-danger">*</span>
+          </label>
+          <textarea 
+            class="form-control" 
+            id="mucDichCongTac"
+            formControlName="mucDichCongTac"
+            rows="3"
+            [class.is-invalid]="hasError('mucDichCongTac')"
+            placeholder="Mô tả mục đích công tác..."
+            maxlength="500">
+          </textarea>
+          @if (hasError('mucDichCongTac')) {
+            <div class="invalid-feedback">{{ getErrorMessage('mucDichCongTac') }}</div>
+          }
+          <small class="form-text text-muted">
+            {{ donForm.get('mucDichCongTac')?.value?.length || 0 }}/500 ký tự
+          </small>
+        </div>
+      </div>
+    }
+
+    <!-- Info Alert -->
+    <div class="alert alert-info">
+      <i class="bi bi-info-circle me-2"></i>
+      <strong>Lưu ý:</strong> Đơn yêu cầu sẽ được gửi đến người quản lý để phê duyệt. 
+      Bạn có thể chỉnh sửa hoặc hủy đơn khi đơn đang ở trạng thái "Đang chờ duyệt".
+    </div>
+  </form>
+</div>
+
+<div class="modal-footer">
+  <button 
+    type="button" 
+    class="btn btn-secondary"
+    (click)="close()">
+    <i class="bi bi-x-circle me-1"></i>Hủy
+  </button>
+  
+  <button 
+    type="submit" 
+    class="btn btn-primary"
+    [disabled]="donForm.invalid"
+    (click)="onSubmit()">
+    <i [class]="mode === 'create' ? 'bi bi-check-circle me-1' : 'bi bi-save me-1'"></i>
+    {{ mode === 'create' ? 'Tạo Đơn' : 'Cập Nhật' }}
+  </button>
+</div>

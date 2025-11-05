@@ -1,1 +1,194 @@
-<p>don-my-list works!</p>
+<div class="container-fluid">
+  <div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+      <h5 class="mb-0">
+        <i class="bi bi-file-earmark-text-fill me-2"></i>Đơn Yêu Cầu Của Tôi
+      </h5>
+    </div>
+    
+    <div class="card-body">
+      <!-- Toolbar: Filters & Actions -->
+      <div class="row mb-3 g-3">
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">
+            <i class="bi bi-funnel"></i> Loại Đơn
+          </label>
+          <select 
+            class="form-select"
+            [value]="selectedLoaiDon() ?? ''"
+            (change)="selectedLoaiDon.set($any($event.target).value || null); onFilterChange()">
+            <option value="">-- Tất cả --</option>
+            <option [value]="LoaiDonYeuCau.NghiPhep">Nghỉ Phép</option>
+            <option [value]="LoaiDonYeuCau.LamThemGio">Làm Thêm Giờ</option>
+            <option [value]="LoaiDonYeuCau.DiMuon">Đi Muộn</option>
+            <option [value]="LoaiDonYeuCau.CongTac">Công Tác</option>
+          </select>
+        </div>
+        
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">
+            <i class="bi bi-flag"></i> Trạng Thái
+          </label>
+          <select 
+            class="form-select"
+            [value]="selectedTrangThai() ?? ''"
+            (change)="selectedTrangThai.set($any($event.target).value || null); onFilterChange()">
+            <option value="">-- Tất cả --</option>
+            <option [value]="TrangThaiDon.DangChoDuyet">Đang Chờ Duyệt</option>
+            <option [value]="TrangThaiDon.DaChapThuan">Đã Chấp Thuận</option>
+            <option [value]="TrangThaiDon.BiTuChoi">Bị Từ Chối</option>
+            <option [value]="TrangThaiDon.DaHuy">Đã Hủy</option>
+          </select>
+        </div>
+        
+        <div class="col-md-3 d-flex align-items-end">
+          @if (hasActiveFilters()) {
+            <button 
+              class="btn btn-outline-secondary w-100"
+              (click)="clearFilters()">
+              <i class="bi bi-x-circle"></i> Xóa Lọc
+            </button>
+          }
+        </div>
+        
+        <div class="col-md-3 d-flex align-items-end">
+          <button 
+            class="btn btn-success w-100"
+            (click)="createDon()">
+            <i class="bi bi-plus-circle me-1"></i>Tạo Đơn Mới
+          </button>
+        </div>
+      </div>
+
+      <!-- Error Message -->
+      @if (errorMessage()) {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          {{ errorMessage() }}
+          <button type="button" class="btn-close" (click)="errorMessage.set(null)"></button>
+        </div>
+      }
+
+      <!-- Dons Table -->
+      @if (isLoading()) {
+        <div class="text-center py-5">
+          <p class="mt-3 text-muted">Đang tải danh sách đơn...</p>
+        </div>
+      } @else if (dons().length > 0) {
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th style="width: 5%;">#</th>
+                <th style="width: 15%;">Loại Đơn</th>
+                <th style="width: 30%;">Lý Do</th>
+                <th style="width: 12%;">Ngày Tạo</th>
+                <th style="width: 13%;">Trạng Thái</th>
+                <th style="width: 25%;" class="text-center">Thao Tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (don of dons(); track don.id; let idx = $index) {
+                <tr>
+                  <td>{{ (pageNumber() - 1) * pageSize() + idx + 1 }}</td>
+                  <td>
+                    <span class="badge bg-info">
+                      <i class="bi bi-file-earmark-text"></i>
+                      {{ don.loaiDonText }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="text-truncate d-inline-block" style="max-width: 300px;" [title]="don.lyDo">
+                      {{ don.lyDo }}
+                    </span>
+                  </td>
+                  <td>
+                    <small class="text-muted">
+                      <i class="bi bi-calendar3"></i>
+                      {{ don.ngayTao | localDate }}
+                    </small>
+                  </td>
+                  <td>
+                    <app-don-status-badge [trangThai]="don.trangThai" />
+                  </td>
+                  <td class="text-center">
+                    <div class="btn-group btn-group-sm" role="group">
+                      <!-- View Detail -->
+                      <button 
+                        class="btn btn-outline-primary"
+                        (click)="viewDetail(don)"
+                        title="Xem chi tiết">
+                        <i class="bi bi-eye"></i>
+                      </button>
+                      
+                      <!-- Edit -->
+                      @if (canEdit(don)) {
+                        <button 
+                          class="btn btn-outline-warning"
+                          (click)="editDon(don)"
+                          title="Chỉnh sửa">
+                          <i class="bi bi-pencil"></i>
+                        </button>
+                      }
+                      
+                      <!-- Cancel -->
+                      @if (canCancel(don)) {
+                        <button 
+                          class="btn btn-outline-warning"
+                          (click)="cancelDon(don)"
+                          title="Hủy đơn">
+                          <i class="bi bi-x-circle"></i>
+                        </button>
+                      }
+                      
+                      <!-- Delete (only for pending requests) -->
+                      @if (canEdit(don)) {
+                        <button 
+                          class="btn btn-outline-danger"
+                          (click)="deleteDon(don)"
+                          title="Xóa đơn">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Pagination -->
+        @if (totalPages() > 1) {
+          <div class="d-flex justify-content-between align-items-center mt-3">
+            <div class="text-muted">
+              Hiển thị {{ (pageNumber() - 1) * pageSize() + 1 }} - 
+              {{ Math.min(pageNumber() * pageSize(), totalCount()) }} 
+              trong tổng số {{ totalCount() }} đơn
+            </div>
+            <ngb-pagination 
+              [collectionSize]="totalCount()"
+              [(page)]="pageNumber"
+              [pageSize]="pageSize()"
+              [maxSize]="5"
+              [rotate]="true"
+              [boundaryLinks]="true"
+              (pageChange)="onPageChange($event)">
+            </ngb-pagination>
+          </div>
+        }
+      } @else {
+        <div class="text-center py-5">
+          <i class="bi bi-inbox display-1 text-muted"></i>
+          <p class="mt-3 text-muted">
+            @if (hasActiveFilters()) {
+              Không tìm thấy đơn nào phù hợp với bộ lọc.
+            } @else {
+              Bạn chưa có đơn yêu cầu nào.
+            }
+          </p>
+        </div>
+      }
+    </div>
+  </div>
+</div>

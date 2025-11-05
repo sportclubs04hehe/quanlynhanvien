@@ -1,0 +1,10 @@
+.badge {
+  font-size: 0.875rem;
+  padding: 0.5em 0.75em;
+  font-weight: 500;
+}
+
+.badge i {
+  margin-right: 0.25rem;
+  font-size: 0.9em;
+}

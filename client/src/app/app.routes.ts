@@ -6,6 +6,7 @@ import { roleGuard } from './guards/role.guard';
 import { unsavedChangesGuard } from './guards/unsaved-changes.guard';
 import { PhongbanComponent } from './components/phongban/phongban.component';
 import { QuanlynhanvienComponent } from './components/quanlynhanvien/quanlynhanvien.component';
+import { DonyeucauComponent } from './components/donyeucau/donyeucau.component';
 import { APP_ROLES } from './constants/roles.constants';
 import { ActiveSessionsComponent } from './components/account/active-sessions/active-sessions.component';
 
@@ -41,6 +42,13 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard],
     canDeactivate: [unsavedChangesGuard],
     data: { roles: [APP_ROLES.GIAM_DOC, APP_ROLES.TRUONG_PHONG] }
+  },
+
+  // Đơn yêu cầu - Tất cả user đã login đều có thể truy cập
+  {
+    path: 'don-yeu-cau',
+    component: DonyeucauComponent,
+    canActivate: [authGuard]
   },
 
   // Add more routes as needed

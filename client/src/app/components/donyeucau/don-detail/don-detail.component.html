@@ -1,1 +1,312 @@
-<p>don-detail works!</p>
+<div class="modal-header bg-info text-white">
+  <h5 class="modal-title">
+    <i class="bi bi-file-earmark-text-fill me-2"></i>Chi Tiết Đơn Yêu Cầu
+  </h5>
+  <button type="button" class="btn-close btn-close-white" (click)="close()"></button>
+</div>
+
+<div class="modal-body">
+  @if (errorMessage()) {
+    <div class="alert alert-danger" role="alert">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      {{ errorMessage() }}
+    </div>
+  } @else if (don()) {
+    <!-- Basic Info Section -->
+    <div class="info-section mb-4">
+      <h6 class="section-title">
+        <i class="bi bi-info-circle me-2"></i>Thông Tin Cơ Bản
+      </h6>
+      
+      <div class="row">
+        <div class="col-md-6">
+          <div class="info-item">
+            <label class="info-label">Loại Đơn</label>
+            <p class="info-value">
+              <span class="badge bg-primary fs-6">
+                <i class="bi bi-file-earmark-text"></i>
+                {{ don()!.loaiDonText }}
+              </span>
+            </p>
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <div class="info-item">
+            <label class="info-label">Trạng Thái</label>
+            <p class="info-value">
+              <app-don-status-badge [trangThai]="don()!.trangThai" />
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-6">
+          <div class="info-item">
+            <label class="info-label">Ngày Tạo</label>
+            <p class="info-value">
+              <i class="bi bi-calendar-plus me-2"></i>
+              {{ don()!.ngayTao | localDate }}
+            </p>
+          </div>
+        </div>
+        
+        @if (don()!.ngayCapNhat) {
+          <div class="col-md-6">
+            <div class="info-item">
+              <label class="info-label">Ngày Cập Nhật</label>
+              <p class="info-value">
+                <i class="bi bi-calendar-check me-2"></i>
+                {{ don()!.ngayCapNhat | localDate }}
+              </p>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+    
+    <!-- Employee Info Section -->
+    <div class="info-section mb-4">
+      <h6 class="section-title">
+        <i class="bi bi-person-circle me-2"></i>Thông Tin Nhân Viên
+      </h6>
+      
+      <div class="row">
+        <div class="col-md-6">
+          <div class="info-item">
+            <label class="info-label">Họ và Tên</label>
+            <p class="info-value fw-bold">{{ don()!.tenNhanVien }}</p>
+          </div>
+        </div>
+        
+        @if (don()!.emailNhanVien) {
+          <div class="col-md-6">
+            <div class="info-item">
+              <label class="info-label">Email</label>
+              <p class="info-value">
+                <i class="bi bi-envelope me-2"></i>
+                {{ don()!.emailNhanVien }}
+              </p>
+            </div>
+          </div>
+        }
+      </div>
+      
+      <div class="row">
+        @if (don()!.phongBan) {
+          <div class="col-md-6">
+            <div class="info-item">
+              <label class="info-label">Phòng Ban</label>
+              <p class="info-value">
+                <span class="badge bg-info">{{ don()!.phongBan!.tenPhongBan }}</span>
+              </p>
+            </div>
+          </div>
+        }
+        
+        @if (don()!.chucVu) {
+          <div class="col-md-6">
+            <div class="info-item">
+              <label class="info-label">Chức Vụ</label>
+              <p class="info-value">
+                <span class="badge bg-secondary">{{ don()!.chucVu!.tenChucVu }}</span>
+              </p>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+    
+    <!-- Request Details Section -->
+    <div class="info-section mb-4">
+      <h6 class="section-title">
+        <i class="bi bi-card-text me-2"></i>Chi Tiết Đơn
+      </h6>
+      
+      <div class="info-item">
+        <label class="info-label">Lý Do</label>
+        <p class="info-value">{{ don()!.lyDo }}</p>
+      </div>
+      
+      <!-- Nghỉ Phép Fields -->
+      @if (don()!.loaiDon === LoaiDonYeuCau.NghiPhep) {
+        <div class="row">
+          <div class="col-md-4">
+            <div class="info-item">
+              <label class="info-label">Ngày Bắt Đầu</label>
+              <p class="info-value">
+                <i class="bi bi-calendar-event me-2"></i>
+                {{ don()!.ngayBatDau | localDate }}
+              </p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="info-item">
+              <label class="info-label">Ngày Kết Thúc</label>
+              <p class="info-value">
+                <i class="bi bi-calendar-event me-2"></i>
+                {{ don()!.ngayKetThuc | localDate }}
+              </p>
+            </div>
+          </div>
+          @if (don()!.soNgay) {
+            <div class="col-md-4">
+              <div class="info-item">
+                <label class="info-label">Số Ngày</label>
+                <p class="info-value">
+                  <span class="badge bg-warning text-dark">{{ don()!.soNgay }} ngày</span>
+                </p>
+              </div>
+            </div>
+          }
+        </div>
+      }
+      
+      <!-- Làm Thêm Giờ Fields -->
+      @if (don()!.loaiDon === LoaiDonYeuCau.LamThemGio) {
+        <div class="row">
+          <div class="col-md-6">
+            <div class="info-item">
+              <label class="info-label">Ngày Làm Thêm</label>
+              <p class="info-value">
+                <i class="bi bi-calendar-event me-2"></i>
+                {{ don()!.ngayLamThem | localDate }}
+              </p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-item">
+              <label class="info-label">Số Giờ</label>
+              <p class="info-value">
+                <span class="badge bg-warning text-dark">{{ formatDecimal(don()!.soGioLamThem) }} giờ</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      }
+      
+      <!-- Đi Muộn Fields -->
+      @if (don()!.loaiDon === LoaiDonYeuCau.DiMuon) {
+        <div class="row">
+          <div class="col-md-6">
+            <div class="info-item">
+              <label class="info-label">Ngày Đi Muộn</label>
+              <p class="info-value">
+                <i class="bi bi-calendar-event me-2"></i>
+                {{ don()!.ngayDiMuon | localDate }}
+              </p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-item">
+              <label class="info-label">Giờ Dự Kiến Đến</label>
+              <p class="info-value">
+                <i class="bi bi-clock me-2"></i>
+                {{ don()!.gioDuKienDen | localDate }}
+              </p>
+            </div>
+          </div>
+        </div>
+      }
+      
+      <!-- Công Tác Fields -->
+      @if (don()!.loaiDon === LoaiDonYeuCau.CongTac) {
+        <div class="row">
+          <div class="col-md-6">
+            <div class="info-item">
+              <label class="info-label">Ngày Bắt Đầu</label>
+              <p class="info-value">
+                <i class="bi bi-calendar-event me-2"></i>
+                {{ don()!.ngayBatDau | localDate }}
+              </p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-item">
+              <label class="info-label">Ngày Kết Thúc</label>
+              <p class="info-value">
+                <i class="bi bi-calendar-event me-2"></i>
+                {{ don()!.ngayKetThuc | localDate }}
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        @if (don()!.soNgay) {
+          <div class="info-item">
+            <label class="info-label">Số Ngày</label>
+            <p class="info-value">
+              <span class="badge bg-warning text-dark">{{ don()!.soNgay }} ngày</span>
+            </p>
+          </div>
+        }
+        
+        @if (don()!.diaDiemCongTac) {
+          <div class="info-item">
+            <label class="info-label">Địa Điểm Công Tác</label>
+            <p class="info-value">
+              <i class="bi bi-geo-alt me-2"></i>
+              {{ don()!.diaDiemCongTac }}
+            </p>
+          </div>
+        }
+        
+        @if (don()!.mucDichCongTac) {
+          <div class="info-item">
+            <label class="info-label">Mục Đích Công Tác</label>
+            <p class="info-value">{{ don()!.mucDichCongTac }}</p>
+          </div>
+        }
+      }
+    </div>
+    
+    <!-- Approval Info Section (if exists) -->
+    @if (hasApprovalInfo(don()!)) {
+      <div class="info-section approval-section">
+        <h6 class="section-title">
+          <i class="bi bi-clipboard-check me-2"></i>Thông Tin Duyệt
+        </h6>
+        
+        <div class="row">
+          @if (don()!.tenNguoiDuyet) {
+            <div class="col-md-6">
+              <div class="info-item">
+                <label class="info-label">Người Duyệt</label>
+                <p class="info-value fw-bold">{{ don()!.tenNguoiDuyet }}</p>
+              </div>
+            </div>
+          }
+          
+          @if (don()!.ngayDuyet) {
+            <div class="col-md-6">
+              <div class="info-item">
+                <label class="info-label">Ngày Duyệt</label>
+                <p class="info-value">
+                  <i class="bi bi-calendar-check me-2"></i>
+                  {{ don()!.ngayDuyet | localDate }}
+                </p>
+              </div>
+            </div>
+          }
+        </div>
+        
+        @if (don()!.ghiChuNguoiDuyet) {
+          <div class="info-item">
+            <label class="info-label">Ghi Chú Người Duyệt</label>
+            <div class="alert alert-info mb-0">
+              <i class="bi bi-chat-left-text me-2"></i>
+              {{ don()!.ghiChuNguoiDuyet }}
+            </div>
+          </div>
+        }
+      </div>
+    }
+  }
+</div>
+
+<div class="modal-footer">
+  <button type="button" class="btn btn-secondary" (click)="close()">
+    <i class="bi bi-x-circle me-1"></i>Đóng
+  </button>
+</div>

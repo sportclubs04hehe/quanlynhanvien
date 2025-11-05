@@ -1,1 +1,4 @@
-<p>don-status-badge works!</p>
+<span class="badge rounded-pill" [ngClass]="getBadgeClass()">
+  <i class="bi" [ngClass]="getIconClass()"></i>
+  {{ getDisplayName() }}
+</span>

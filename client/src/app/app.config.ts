@@ -7,6 +7,7 @@ import { authInterceptor } from './interceptors/auth.interceptor';
 import { errorInterceptor } from './interceptors/error.interceptor';
 import { registerLocaleData } from '@angular/common';
 import localeVi from '@angular/common/locales/vi';
+import { provideToastr } from 'ngx-toastr';
 
 // Đăng ký locale data cho tiếng Việt
 registerLocaleData(localeVi);
@@ -20,6 +21,6 @@ export const appConfig: ApplicationConfig = {
       withInterceptors([authInterceptor, errorInterceptor]) 
     ),
     provideAnimations(),
-    // { provide: LOCALE_ID, useValue: 'vi' } 
+    provideToastr(),
   ]
 };

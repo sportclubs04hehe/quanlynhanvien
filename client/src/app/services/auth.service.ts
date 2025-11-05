@@ -4,6 +4,7 @@ import { environment } from '../../environments/environment.development';
 import { LoginRequest, LoginResponse } from '../types/login.model';
 import { catchError, Observable, tap, throwError } from 'rxjs';
 import { isPlatformBrowser } from '@angular/common';
+import { CacheService } from './cache.service';
 
 @Injectable({
   providedIn: 'root'
@@ -11,6 +12,7 @@ import { isPlatformBrowser } from '@angular/common';
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly cache = inject(CacheService);
   private readonly baseUrl = `${environment.apiUrl}/users`; 
 
   private _authState = signal<LoginResponse | null>(null);
@@ -47,6 +49,9 @@ export class AuthService {
     return this.http.post<LoginResponse>(`${this.baseUrl}/login`, payload)
       .pipe(
         tap((res) => {
+          // Clear old cache before setting new user
+          this.cache.clear();
+          
           this._authState.set(res);
           if (isPlatformBrowser(this.platformId)) {
             localStorage.setItem('accessToken', res.accessToken);
@@ -88,6 +93,9 @@ export class AuthService {
     if (isPlatformBrowser(this.platformId)) {
       localStorage.clear();
     }
+    
+    // Clear all cache to prevent data leakage between users
+    this.cache.clear();
   }
 
   refreshToken(): Observable<LoginResponse> {

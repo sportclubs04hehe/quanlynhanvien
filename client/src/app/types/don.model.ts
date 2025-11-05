@@ -2,7 +2,7 @@ import { ChucVuDto } from "./chucvu.model";
 import { PhongBanDto } from "./phongban.model";
 
 ////////////////////////////////////////////////////////////////////////////
-// ENUMS
+// LE MINH HUY
 ////////////////////////////////////////////////////////////////////////////
 
 /**
@@ -10,10 +10,10 @@ import { PhongBanDto } from "./phongban.model";
  * Phải khớp chính xác với backend: api/Model/Enums/LoaiDonYeuCau.cs
  */
 export enum LoaiDonYeuCau {
-  NghiPhep = 1,      // Đơn xin nghỉ phép (có lương)
-  LamThemGio = 2,    // Đơn xin làm thêm giờ (overtime)
-  DiMuon = 3,        // Đơn xin đi muộn
-  CongTac = 4        // Đơn xin đi công tác
+  NghiPhep = 'NghiPhep',          // Đơn xin nghỉ phép (có lương)
+  LamThemGio = 'LamThemGio',      // Đơn xin làm thêm giờ (overtime)
+  DiMuon = 'DiMuon',              // Đơn xin đi muộn
+  CongTac = 'CongTac'             // Đơn xin đi công tác
 }
 
 /**
@@ -21,10 +21,10 @@ export enum LoaiDonYeuCau {
  * Phải khớp chính xác với backend: api/Model/Enums/TrangThaiDon.cs
  */
 export enum TrangThaiDon {
-  DangChoDuyet = 1,  // Đơn mới tạo, đang chờ duyệt
-  DaChapThuan = 2,   // Đã được phê duyệt
-  BiTuChoi = 3,      // Bị từ chối
-  DaHuy = 4          // Nhân viên tự hủy đơn
+  DangChoDuyet = 'DangChoDuyet',  // Đơn mới tạo, đang chờ duyệt
+  DaChapThuan = 'DaChapThuan',    // Đã được phê duyệt
+  BiTuChoi = 'BiTuChoi',          // Bị từ chối
+  DaHuy = 'DaHuy'                 // Nhân viên tự hủy đơn
 }
 
 ////////////////////////////////////////////////////////////////////////////

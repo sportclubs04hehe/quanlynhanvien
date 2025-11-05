@@ -1,0 +1,24 @@
+.filter-container {
+  margin-bottom: 1.5rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.form-label {
+  font-weight: 500;
+  color: #495057;
+  font-size: 0.9rem;
+}
+
+.form-label i {
+  margin-right: 0.25rem;
+  color: #6c757d;
+}
+
+.btn-outline-secondary {
+  border-color: #ced4da;
+}
+
+.btn-outline-secondary:hover {
+  background-color: #6c757d;
+  border-color: #6c757d;
+}

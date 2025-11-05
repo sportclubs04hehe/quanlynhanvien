@@ -1,1 +1,86 @@
-<p>don-approve-modal works!</p>
+<div class="modal-header">
+  <h5 class="modal-title">
+    <i class="bi bi-clipboard-check"></i> Duyệt Đơn Yêu Cầu
+  </h5>
+  <button 
+    type="button" 
+    class="btn-close" 
+    aria-label="Close"
+    (click)="onCancel()">
+  </button>
+</div>
+
+<div class="modal-body">
+  <!-- Don Info Summary -->
+  <div class="alert alert-info">
+    <div class="row">
+      <div class="col-md-6">
+        <strong><i class="bi bi-person"></i> Nhân viên:</strong> {{ don.tenNhanVien }}
+      </div>
+      <div class="col-md-6">
+        <strong><i class="bi bi-file-earmark-text"></i> Loại đơn:</strong> {{ don.loaiDonText }}
+      </div>
+    </div>
+    <div class="mt-2">
+      <strong><i class="bi bi-card-text"></i> Lý do:</strong>
+      <p class="mb-0 mt-1">{{ don.lyDo }}</p>
+    </div>
+  </div>
+  
+  <!-- Note/Comment -->
+  <div class="mb-3">
+    <label for="ghiChu" class="form-label">
+      <i class="bi bi-chat-left-text"></i> Ghi Chú (Tùy chọn)
+    </label>
+    <textarea 
+      class="form-control"
+      [class.is-invalid]="isNoteTooLong()"
+      id="ghiChu"
+      rows="4"
+      placeholder="Nhập ghi chú của bạn về quyết định này..."
+      [(ngModel)]="ghiChu"
+      [maxlength]="maxLength + 50">
+    </textarea>
+    
+    <div class="form-text" [class.text-danger]="isNoteTooLong()">
+      @if (isNoteTooLong()) {
+        <i class="bi bi-exclamation-triangle"></i>
+      }
+      {{ ghiChu.length }} / {{ maxLength }} ký tự
+      @if (isNoteTooLong()) {
+        <span class="text-danger fw-bold"> - Vượt quá giới hạn!</span>
+      }
+    </div>
+  </div>
+  
+  <!-- Warning -->
+  <div class="alert alert-warning mb-0">
+    <i class="bi bi-info-circle"></i>
+    <strong>Lưu ý:</strong> Quyết định của bạn sẽ được gửi ngay lập tức và không thể hoàn tác.
+  </div>
+</div>
+
+<div class="modal-footer">
+  <button 
+    type="button" 
+    class="btn btn-secondary"
+    (click)="onCancel()">
+    <i class="bi bi-x-circle"></i> Hủy
+  </button>
+  
+  <button 
+    type="button" 
+    class="btn btn-danger"
+    [disabled]="isNoteTooLong()"
+    (click)="onReject()">
+    <i class="bi bi-x-circle-fill"></i> Từ Chối
+  </button>
+  
+  <button 
+    type="button" 
+    class="btn btn-success"
+    [disabled]="isNoteTooLong()"
+    (click)="onApprove()">
+    <i class="bi bi-check-circle-fill"></i> Chấp Thuận
+  </button>
+</div>
