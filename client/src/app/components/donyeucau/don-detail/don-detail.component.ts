@@ -59,7 +59,14 @@ export class DonDetailComponent implements OnInit {
    * Close modal
    */
   close(): void {
-    this.activeModal.dismiss();
+    // Blur any focused element before closing
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    // Use setTimeout to ensure blur completes
+    setTimeout(() => {
+      this.activeModal.dismiss('closed');
+    }, 0);
   }
   
   /**

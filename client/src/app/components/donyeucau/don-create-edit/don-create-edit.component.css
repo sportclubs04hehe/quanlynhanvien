@@ -11,6 +11,48 @@
   overflow-y: auto;
 }
 
+/* Range Datepicker Styles */
+.dp-hidden {
+  position: absolute;
+  width: 0;
+  margin: 0;
+  border: none;
+  padding: 0;
+}
+
+.dp-hidden input {
+  width: 0;
+  height: 0;
+  opacity: 0;
+  padding: 0;
+  border: none;
+}
+
+.custom-day {
+  text-align: center;
+  padding: 0.185rem 0.25rem;
+  display: inline-block;
+  height: 2rem;
+  width: 2rem;
+  cursor: pointer;
+  border-radius: 0.25rem;
+}
+
+.custom-day.focused {
+  background-color: #e6e6e6;
+}
+
+.custom-day.range,
+.custom-day:hover {
+  background-color: rgb(13, 110, 253);
+  color: white;
+}
+
+.custom-day.faded {
+  background-color: rgba(13, 110, 253, 0.5);
+  color: white;
+}
+
 /* Field Sections */
 .field-section {
   background: #f8f9fa;

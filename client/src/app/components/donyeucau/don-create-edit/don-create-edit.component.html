@@ -26,8 +26,7 @@
         class="form-select" 
         id="loaiDon"
         formControlName="loaiDon"
-        [class.is-invalid]="hasError('loaiDon')"
-        [disabled]="mode === 'edit'">
+        [class.is-invalid]="hasError('loaiDon')">
         @for (option of loaiDonOptions; track option.value) {
           <option [value]="option.value">{{ option.label }}</option>
         }
@@ -74,6 +73,37 @@
           <i class="bi bi-calendar-range me-2"></i>Thông Tin Thời Gian
         </h6>
         
+        <!-- Hidden datepicker for range selection -->
+        <div class="dp-hidden position-absolute">
+          <div class="input-group">
+            <input
+              name="datepicker"
+              class="form-control"
+              ngbDatepicker
+              #datepicker="ngbDatepicker"
+              [autoClose]="'outside'"
+              (dateSelect)="onDateSelection($event)"
+              [displayMonths]="2"
+              [dayTemplate]="dayTemplate"
+              outsideDays="hidden"
+              [startDate]="fromDate!"
+              tabindex="-1"
+            />
+            <ng-template #dayTemplate let-date let-focused="focused">
+              <span
+                class="custom-day"
+                [class.focused]="focused"
+                [class.range]="isRange(date)"
+                [class.faded]="isHovered(date) || isInside(date)"
+                (mouseenter)="hoveredDate = date"
+                (mouseleave)="hoveredDate = null"
+              >
+                {{ date.day }}
+              </span>
+            </ng-template>
+          </div>
+        </div>
+        
         <div class="row">
           <div class="col-md-6">
             <label for="ngayBatDau" class="form-label">
@@ -81,16 +111,16 @@
             </label>
             <div class="input-group">
               <input 
+                #dpFromDate
                 class="form-control" 
                 placeholder="dd/mm/yyyy"
-                name="dpNgayBatDau"
-                formControlName="ngayBatDau"
-                ngbDatepicker 
-                #dNgayBatDau="ngbDatepicker"
+                name="dpFromDate"
+                [value]="formatter.format(fromDate)"
+                (input)="fromDate = validateInput(fromDate, dpFromDate.value); donForm.patchValue({ ngayBatDau: fromDate })"
                 [class.is-invalid]="hasError('ngayBatDau')">
               <button 
                 class="btn btn-outline-secondary" 
-                (click)="dNgayBatDau.toggle()" 
+                (click)="datepicker.toggle()" 
                 type="button">
                 <i class="bi bi-calendar3"></i>
               </button>
@@ -106,16 +136,16 @@
             </label>
             <div class="input-group">
               <input 
+                #dpToDate
                 class="form-control" 
                 placeholder="dd/mm/yyyy"
-                name="dpNgayKetThuc"
-                formControlName="ngayKetThuc"
-                ngbDatepicker 
-                #dNgayKetThuc="ngbDatepicker"
+                name="dpToDate"
+                [value]="formatter.format(toDate)"
+                (input)="toDate = validateInput(toDate, dpToDate.value); donForm.patchValue({ ngayKetThuc: toDate })"
                 [class.is-invalid]="hasError('ngayKetThuc')">
               <button 
                 class="btn btn-outline-secondary" 
-                (click)="dNgayKetThuc.toggle()" 
+                (click)="datepicker.toggle()" 
                 type="button">
                 <i class="bi bi-calendar3"></i>
               </button>

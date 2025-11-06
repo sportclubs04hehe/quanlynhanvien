@@ -1,7 +1,7 @@
 import { Component, inject, Input, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { NgbActiveModal, NgbDatepickerModule, NgbDateStruct, NgbTimepickerModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbCalendar, NgbDate, NgbDatepickerModule, NgbDateParserFormatter, NgbDateStruct, NgbTimepickerModule } from '@ng-bootstrap/ng-bootstrap';
 import { finalize } from 'rxjs';
 import { DonYeuCauService } from '../../../services/don-yeu-cau.service';
 import { SpinnerService } from '../../../services/spinner.service';
@@ -30,10 +30,17 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
   private donService = inject(DonYeuCauService);
   private spinner = inject(SpinnerService);
   activeModal = inject(NgbActiveModal);
+  calendar = inject(NgbCalendar);
+  formatter = inject(NgbDateParserFormatter);
   
   donForm!: FormGroup;
   errorMessage = signal<string | null>(null);
   private isDirty = false;
+  
+  // Range date picker properties
+  hoveredDate: NgbDate | null = null;
+  fromDate: NgbDate | null = null;
+  toDate: NgbDate | null = null;
   
   // Expose enum to template
   readonly LoaiDonYeuCau = LoaiDonYeuCau;
@@ -72,7 +79,10 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
    */
   private initForm(): void {
     this.donForm = this.fb.group({
-      loaiDon: [this.mode === 'create' ? LoaiDonYeuCau.NghiPhep : null, Validators.required],
+      loaiDon: [
+        { value: this.mode === 'create' ? LoaiDonYeuCau.NghiPhep : null, disabled: this.mode === 'edit' },
+        Validators.required
+      ],
       lyDo: ['', [Validators.required, Validators.maxLength(500)]],
       
       // Nghỉ Phép & Công Tác
@@ -174,6 +184,14 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
     const ngayDiMuon = don.ngayDiMuon ? this.dateToNgbDateStruct(don.ngayDiMuon) : null;
     const gioDuKienDen = don.gioDuKienDen ? this.dateToTimeStruct(don.gioDuKienDen) : { hour: 9, minute: 0 };
     
+    // Set range dates for datepicker
+    if (ngayBatDau) {
+      this.fromDate = NgbDate.from(ngayBatDau);
+    }
+    if (ngayKetThuc) {
+      this.toDate = NgbDate.from(ngayKetThuc);
+    }
+    
     this.donForm.patchValue({
       loaiDon: don.loaiDon,
       lyDo: don.lyDo,
@@ -220,7 +238,14 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
       .subscribe({
         next: (result) => {
           this.isDirty = false;
-          this.activeModal.close(result);
+          // Blur focused element before closing modal
+          if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+          }
+          // Use setTimeout to ensure blur completes
+          setTimeout(() => {
+            this.activeModal.close(result);
+          }, 0);
         },
         error: (error) => {
           this.errorMessage.set('Không thể tạo đơn. Vui lòng thử lại.');
@@ -243,7 +268,14 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
       .subscribe({
         next: (result) => {
           this.isDirty = false;
-          this.activeModal.close(result);
+          // Blur focused element before closing modal
+          if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+          }
+          // Use setTimeout to ensure blur completes
+          setTimeout(() => {
+            this.activeModal.close(result);
+          }, 0);
         },
         error: (error) => {
           this.errorMessage.set('Không thể cập nhật đơn. Vui lòng thử lại.');
@@ -327,7 +359,14 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
    * Close modal
    */
   close(): void {
-    this.activeModal.dismiss();
+    // Blur any focused element to prevent accessibility warnings
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    // Use setTimeout to ensure blur completes before dismissing
+    setTimeout(() => {
+      this.activeModal.dismiss('closed');
+    }, 0);
   }
   
   /**
@@ -365,6 +404,53 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
   // ============================================================================
   // Helper Methods
   // ============================================================================
+  
+  /**
+   * Range datepicker methods
+   */
+  onDateSelection(date: NgbDate) {
+    if (!this.fromDate && !this.toDate) {
+      this.fromDate = date;
+    } else if (this.fromDate && !this.toDate && date && date.after(this.fromDate)) {
+      this.toDate = date;
+    } else {
+      this.toDate = null;
+      this.fromDate = date;
+    }
+    
+    // Update form values
+    if (this.fromDate) {
+      this.donForm.patchValue({ ngayBatDau: this.fromDate });
+    }
+    if (this.toDate) {
+      this.donForm.patchValue({ ngayKetThuc: this.toDate });
+    }
+  }
+
+  isHovered(date: NgbDate): boolean {
+    return (
+      !!this.fromDate && !this.toDate && !!this.hoveredDate && 
+      date.after(this.fromDate) && date.before(this.hoveredDate)
+    );
+  }
+
+  isInside(date: NgbDate): boolean {
+    return !!this.toDate && date.after(this.fromDate!) && date.before(this.toDate);
+  }
+
+  isRange(date: NgbDate): boolean {
+    return (
+      date.equals(this.fromDate) ||
+      (!!this.toDate && date.equals(this.toDate)) ||
+      this.isInside(date) ||
+      this.isHovered(date)
+    );
+  }
+
+  validateInput(currentValue: NgbDate | null, input: string): NgbDate | null {
+    const parsed = this.formatter.parse(input);
+    return parsed && this.calendar.isValid(NgbDate.from(parsed)) ? NgbDate.from(parsed) : currentValue;
+  }
   
   private dateToNgbDateStruct(date: Date | string): NgbDateStruct {
     const d = typeof date === 'string' ? new Date(date) : date;

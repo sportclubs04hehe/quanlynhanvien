@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, OnDestroy } from '@angular/core';
+import { Component, inject, OnInit, signal, OnDestroy, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgbModal, NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
@@ -31,6 +31,7 @@ export class DonMyListComponent implements OnInit, OnDestroy {
   private donService = inject(DonYeuCauService);
   private spinner = inject(SpinnerService);
   private toastr = inject(ToastrService);
+  private ngZone = inject(NgZone);
   
   // Data
   dons = signal<DonYeuCauDto[]>([]);
@@ -141,64 +142,100 @@ export class DonMyListComponent implements OnInit, OnDestroy {
    * Open detail modal
    */
   viewDetail(don: DonYeuCauDto): void {
-    const modalRef = this.modal.open(DonDetailComponent, { 
-      size: 'lg',
-      backdrop: 'static'
+    // Blur the trigger button to prevent focus issues
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    
+    // Use setTimeout to ensure blur completes before opening modal
+    this.ngZone.runOutsideAngular(() => {
+      setTimeout(() => {
+        this.ngZone.run(() => {
+          const modalRef = this.modal.open(DonDetailComponent, { 
+            size: 'lg',
+            backdrop: 'static'
+          });
+          modalRef.componentInstance.donId = don.id;
+        });
+      }, 0);
     });
-    modalRef.componentInstance.donId = don.id;
   }
   
   /**
    * Open create modal
    */
   createDon(): void {
-    const modalRef = this.modal.open(DonCreateEditComponent, {
-      size: 'lg',
-      backdrop: 'static',
-      keyboard: true
+    // Blur the trigger button to prevent focus issues
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    
+    // Use setTimeout to ensure blur completes before opening modal
+    this.ngZone.runOutsideAngular(() => {
+      setTimeout(() => {
+        this.ngZone.run(() => {
+          const modalRef = this.modal.open(DonCreateEditComponent, {
+            size: 'lg',
+            backdrop: 'static',
+            keyboard: true
+          });
+
+          modalRef.componentInstance.mode = 'create';
+
+          modalRef.result.then(
+            (result: DonYeuCauDto) => {
+              if (result) {
+                this.toastr.success('Tạo đơn yêu cầu thành công!', 'Thành công');
+                this.loadDons(); // Reload list
+              }
+            },
+            (reason) => {
+              // Modal dismissed
+              console.log('Modal dismissed:', reason);
+            }
+          );
+        });
+      }, 0);
     });
-
-    modalRef.componentInstance.mode = 'create';
-
-    modalRef.result.then(
-      (result: DonYeuCauDto) => {
-        if (result) {
-          this.toastr.success('Tạo đơn yêu cầu thành công!', 'Thành công');
-          this.loadDons(); // Reload list
-        }
-      },
-      (reason) => {
-        // Modal dismissed
-        console.log('Modal dismissed:', reason);
-      }
-    );
   }
   
   /**
    * Open edit modal
    */
   editDon(don: DonYeuCauDto): void {
-    const modalRef = this.modal.open(DonCreateEditComponent, {
-      size: 'lg',
-      backdrop: 'static',
-      keyboard: true
+    // Blur the trigger button to prevent focus issues
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    
+    // Use setTimeout to ensure blur completes before opening modal
+    this.ngZone.runOutsideAngular(() => {
+      setTimeout(() => {
+        this.ngZone.run(() => {
+          const modalRef = this.modal.open(DonCreateEditComponent, {
+            size: 'lg',
+            backdrop: 'static',
+            keyboard: true
+          });
+
+          modalRef.componentInstance.mode = 'edit';
+          modalRef.componentInstance.donId = don.id;
+
+          modalRef.result.then(
+            (result: DonYeuCauDto) => {
+              if (result) {
+                this.toastr.success('Cập nhật đơn yêu cầu thành công!', 'Thành công');
+                this.loadDons(); // Reload list
+              }
+            },
+            (reason) => {
+              // Modal dismissed
+              console.log('Modal dismissed:', reason);
+            }
+          );
+        });
+      }, 0);
     });
-
-    modalRef.componentInstance.mode = 'edit';
-    modalRef.componentInstance.donId = don.id;
-
-    modalRef.result.then(
-      (result: DonYeuCauDto) => {
-        if (result) {
-          this.toastr.success('Cập nhật đơn yêu cầu thành công!', 'Thành công');
-          this.loadDons(); // Reload list
-        }
-      },
-      (reason) => {
-        // Modal dismissed
-        console.log('Modal dismissed:', reason);
-      }
-    );
   }
   
   /**
