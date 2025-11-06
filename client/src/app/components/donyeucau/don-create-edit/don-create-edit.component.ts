@@ -326,7 +326,7 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
    * Build UpdateDonYeuCauDto from form
    */
   private buildUpdateDto(): UpdateDonYeuCauDto {
-    const formValue = this.donForm.value;
+    const formValue = this.donForm.getRawValue(); // Use getRawValue() to include disabled fields
     const loaiDon: LoaiDonYeuCau = formValue.loaiDon;
     
     const dto: UpdateDonYeuCauDto = {

@@ -1,11 +1,41 @@
 <div class="container-fluid mt-4">
-  <!-- Temporary: Just show my-list for testing -->
-  <app-don-my-list></app-don-my-list>
-</div>
+  <div class="card shadow-sm border-0">
+    <!-- Tab Navigation -->
+    <div class="card-header bg-white border-bottom">
+      <ul class="nav nav-tabs card-header-tabs" role="tablist">
+        @for (tab of visibleTabs(); track tab.id) {
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" 
+          [class.active]="isActive(tab.id)" 
+          (click)="switchTab(tab.id)" 
+          type="button"
+          role="tab">
+            <i class="bi" [ngClass]="tab.icon"></i>
+            {{ tab.label }}
+          </button>
+        </li>
+        }
+      </ul>
+    </div>
 
-<!-- TODO: Implement full container with tabs:
-- Tab 1: Đơn của tôi (don-my-list)
-- Tab 2: Duyệt đơn (don-approve-list) - if has permission
-- Tab 3: Quản lý đơn (don-admin-list) - if GiamDoc
-- Tab 4: Thống kê (don-stats)
--->
+    <!-- Tab Content -->
+    <div class="card-body p-0">
+      <div class="tab-content">
+        @switch (activeTab()) {
+        @case ('approve') {
+        <app-don-approve-list />
+        }
+        @case ('my-dons') {
+        <app-don-my-list />
+        }
+        @default {
+        <div class="p-5 text-center text-muted">
+          <i class="bi bi-inbox display-1"></i>
+          <p class="mt-3">Tab này đang được phát triển</p>
+        </div>
+        }
+        }
+      </div>
+    </div>
+  </div>
+</div>

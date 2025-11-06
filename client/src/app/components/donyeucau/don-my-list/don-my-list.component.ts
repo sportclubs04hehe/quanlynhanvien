@@ -189,10 +189,7 @@ export class DonMyListComponent implements OnInit, OnDestroy {
                 this.loadDons(); // Reload list
               }
             },
-            (reason) => {
-              // Modal dismissed
-              console.log('Modal dismissed:', reason);
-            }
+            (reason) => {}
           );
         });
       }, 0);
