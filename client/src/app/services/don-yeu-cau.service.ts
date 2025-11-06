@@ -161,7 +161,7 @@ export class DonYeuCauService {
    * Từ chối đơn (Giám Đốc và Trưởng Phòng)
    * POST /api/DonYeuCaus/{id}/tu-choi
    */
-  tuChoi(id: string, ghiChu: string): Observable<DonYeuCauDto> {
+  tuChoi(id: string, ghiChu?: string): Observable<DonYeuCauDto> {
     const dto: DuyetDonYeuCauDto = {
       trangThai: TrangThaiDon.BiTuChoi,
       ghiChuNguoiDuyet: ghiChu

@@ -173,7 +173,7 @@ export class DonApproveListComponent implements OnInit, OnDestroy {
     modalRef.result.then(
       (result: ApprovalResult) => {
         if (result && result.trangThai === TrangThaiDon.BiTuChoi) {
-          this.handleRejection(don.id, result.ghiChuNguoiDuyet || '');
+          this.handleRejection(don.id, result.ghiChuNguoiDuyet);
         }
       },
       () => {
@@ -211,12 +211,7 @@ export class DonApproveListComponent implements OnInit, OnDestroy {
   /**
    * Handle rejection
    */
-  private handleRejection(donId: string, ghiChu: string): void {
-    if (!ghiChu || ghiChu.trim() === '') {
-      this.toastr.warning('Vui lòng nhập lý do từ chối', 'Cảnh báo');
-      return;
-    }
-    
+  private handleRejection(donId: string, ghiChu?: string): void {
     this.spinner.show('Đang từ chối đơn...');
     
     this.donService.tuChoi(donId, ghiChu)
