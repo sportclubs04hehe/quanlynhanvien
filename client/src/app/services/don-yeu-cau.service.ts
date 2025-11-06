@@ -106,13 +106,6 @@ export class DonYeuCauService {
     loaiDon?: LoaiDonYeuCau,
     trangThai?: TrangThaiDon
   ): Observable<PagedResult<DonYeuCauDto>> {
-    const cacheKey = `${this.CACHE_PREFIX}my_${pageNumber}_${pageSize}_${loaiDon}_${trangThai}`;
-    
-    const cached = this.cache.get<DonYeuCauDto>(cacheKey);
-    if (cached) {
-      return of(cached);
-    }
-
     let params = new HttpParams()
       .set('pageNumber', pageNumber.toString())
       .set('pageSize', pageSize.toString());
@@ -120,8 +113,7 @@ export class DonYeuCauService {
     if (loaiDon !== undefined) params = params.set('loaiDon', loaiDon.toString());
     if (trangThai !== undefined) params = params.set('trangThai', trangThai.toString());
 
-    return this.http.get<PagedResult<DonYeuCauDto>>(`${this.baseUrl}/my-dons`, { params })
-      .pipe(tap(result => this.cache.set(cacheKey, result)));
+    return this.http.get<PagedResult<DonYeuCauDto>>(`${this.baseUrl}/my-dons`, { params });
   }
 
   /**
@@ -145,19 +137,11 @@ export class DonYeuCauService {
     pageNumber: number = 1,
     pageSize: number = 10
   ): Observable<PagedResult<DonYeuCauDto>> {
-    const cacheKey = `${this.CACHE_PREFIX}canduyet_${pageNumber}_${pageSize}`;
-    
-    const cached = this.cache.get<DonYeuCauDto>(cacheKey);
-    if (cached) {
-      return of(cached);
-    }
-
     const params = new HttpParams()
       .set('pageNumber', pageNumber.toString())
       .set('pageSize', pageSize.toString());
 
-    return this.http.get<PagedResult<DonYeuCauDto>>(`${this.baseUrl}/can-duyet`, { params })
-      .pipe(tap(result => this.cache.set(cacheKey, result)));
+    return this.http.get<PagedResult<DonYeuCauDto>>(`${this.baseUrl}/can-duyet`, { params });
   }
 
   /**

@@ -117,12 +117,10 @@ export class DonApproveListComponent implements OnInit, OnDestroy {
   }
   
   /**
-   * Refresh list (clear cache and reload)
+   * Refresh list
    */
   refresh(): void {
     this.pageNumber.set(1);
-    // Clear cache để force reload data mới
-    this.donService['clearCache']();
     this.loadDons();
     this.loadPendingCount();
   }

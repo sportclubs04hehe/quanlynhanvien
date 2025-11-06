@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { APP_ROLES } from '../../constants/roles.constants';
@@ -26,14 +26,25 @@ interface Tab {
   templateUrl: './donyeucau.component.html',
   styleUrl: './donyeucau.component.css'
 })
-export class DonyeucauComponent {
+export class DonyeucauComponent implements OnInit {
   private authService = inject(AuthService);
   
-  // Current active tab
+  // Current active tab (will be set in ngOnInit based on user role)
   activeTab = signal<TabType>('my-dons');
   
   // Get current user
   currentUser = this.authService.currentUser;
+  
+  ngOnInit(): void {
+    // Set default tab based on user role
+    const user = this.currentUser();
+    if (user) {
+      const isManager = user.roles.includes(APP_ROLES.GIAM_DOC) || 
+                        user.roles.includes(APP_ROLES.TRUONG_PHONG);
+                        
+      this.activeTab.set(isManager ? 'approve' : 'my-dons');
+    }
+  }
   
   // Define all tabs
   private allTabs: Tab[] = [
