@@ -1,7 +1,7 @@
 import { Component, inject, Input, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { NgbActiveModal, NgbCalendar, NgbDate, NgbDatepickerModule, NgbDateParserFormatter, NgbDateStruct, NgbTimepickerModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbCalendar, NgbDate, NgbDatepickerModule, NgbDateParserFormatter, NgbDateStruct, NgbTimepickerModule, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { finalize } from 'rxjs';
 import { DonYeuCauService } from '../../../services/don-yeu-cau.service';
 import { SpinnerService } from '../../../services/spinner.service';
@@ -13,6 +13,7 @@ import {
   LOAI_DON_DISPLAY_NAMES
 } from '../../../types/don.model';
 import { CanComponentDeactivate } from '../../../guards/unsaved-changes.guard';
+import { ConfirmDialogComponent } from '../../../shared/modal/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-don-create-edit',
@@ -29,6 +30,7 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
   private fb = inject(FormBuilder);
   private donService = inject(DonYeuCauService);
   private spinner = inject(SpinnerService);
+  private modal = inject(NgbModal);
   activeModal = inject(NgbActiveModal);
   calendar = inject(NgbCalendar);
   formatter = inject(NgbDateParserFormatter);
@@ -359,14 +361,37 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
    * Close modal
    */
   close(): void {
-    // Blur any focused element to prevent accessibility warnings
-    if (document.activeElement instanceof HTMLElement) {
-      document.activeElement.blur();
+    if (this.isDirty) {
+      const modalRef = this.modal.open(ConfirmDialogComponent, {
+        centered: true,
+        backdrop: 'static'
+      });
+
+      modalRef.result.then(
+        (confirmed) => {
+          if (confirmed) {
+            // Blur any focused element to prevent accessibility warnings
+            if (document.activeElement instanceof HTMLElement) {
+              document.activeElement.blur();
+            }
+            // Use setTimeout to ensure blur completes before dismissing
+            setTimeout(() => {
+              this.activeModal.dismiss('closed');
+            }, 0);
+          }
+        },
+        () => {} // Dismissed - do nothing
+      );
+    } else {
+      // Blur any focused element to prevent accessibility warnings
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+      // Use setTimeout to ensure blur completes before dismissing
+      setTimeout(() => {
+        this.activeModal.dismiss('closed');
+      }, 0);
     }
-    // Use setTimeout to ensure blur completes before dismissing
-    setTimeout(() => {
-      this.activeModal.dismiss('closed');
-    }, 0);
   }
   
   /**

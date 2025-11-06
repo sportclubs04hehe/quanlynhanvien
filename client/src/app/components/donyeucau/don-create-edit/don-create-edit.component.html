@@ -254,11 +254,13 @@
             <label for="gioDuKienDen" class="form-label">
               Giờ Dự Kiến Đến <span class="text-danger">*</span>
             </label>
-            <ngb-timepicker 
-              formControlName="gioDuKienDen"
-              [meridian]="false"
-              [spinners]="false">
-            </ngb-timepicker>
+            <div class="timepicker-wrapper">
+              <ngb-timepicker 
+                formControlName="gioDuKienDen"
+                [meridian]="false"
+                [spinners]="false">
+              </ngb-timepicker>
+            </div>
             @if (hasError('gioDuKienDen')) {
               <div class="text-danger small mt-1">{{ getErrorMessage('gioDuKienDen') }}</div>
             }
