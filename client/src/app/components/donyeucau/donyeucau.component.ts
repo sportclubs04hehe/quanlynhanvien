@@ -4,6 +4,7 @@ import { AuthService } from '../../services/auth.service';
 import { APP_ROLES } from '../../constants/roles.constants';
 import { DonMyListComponent } from './don-my-list/don-my-list.component';
 import { DonApproveListComponent } from './don-approve-list/don-approve-list.component';
+import { DonAdminListComponent } from './don-admin-list/don-admin-list.component';
 
 type TabType = 'my-dons' | 'approve' | 'admin' | 'stats';
 
@@ -21,7 +22,8 @@ interface Tab {
   imports: [
     CommonModule, 
     DonMyListComponent,
-    DonApproveListComponent
+    DonApproveListComponent,
+    DonAdminListComponent
   ],
   templateUrl: './donyeucau.component.html',
   styleUrl: './donyeucau.component.css'
@@ -61,14 +63,14 @@ export class DonyeucauComponent implements OnInit {
       icon: 'bi-file-earmark-text',
       component: DonMyListComponent
     },
+    {
+      id: 'admin',
+      label: 'Quản Lý Tất Cả',
+      icon: 'bi-shield-lock',
+      component: DonAdminListComponent,
+      roles: [APP_ROLES.GIAM_DOC]
+    }
     // TODO: Implement later
-    // {
-    //   id: 'admin',
-    //   label: 'Quản Lý Tất Cả',
-    //   icon: 'bi-list-check',
-    //   component: DonAdminListComponent,
-    //   roles: [APP_ROLES.GIAM_DOC]
-    // },
     // {
     //   id: 'stats',
     //   label: 'Thống Kê',
