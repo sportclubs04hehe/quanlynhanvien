@@ -1,7 +1,8 @@
-import { Component, EventEmitter, Output, OnInit } from '@angular/core';
+import { Component, EventEmitter, Output, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgbDatepickerModule, NgbDateStruct } from '@ng-bootstrap/ng-bootstrap';
+import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { 
   FilterDonYeuCauDto, 
   LoaiDonYeuCau, 
@@ -17,7 +18,7 @@ import {
   templateUrl: './don-filter.component.html',
   styleUrl: './don-filter.component.css'
 })
-export class DonFilterComponent implements OnInit {
+export class DonFilterComponent implements OnInit, OnDestroy {
   @Output() filterChange = new EventEmitter<FilterDonYeuCauDto>();
   @Output() resetFilter = new EventEmitter<void>();
   
@@ -27,6 +28,10 @@ export class DonFilterComponent implements OnInit {
   selectedTrangThai: TrangThaiDon | '' = '';
   tuNgay: NgbDateStruct | null = null;
   denNgay: NgbDateStruct | null = null;
+  
+  // Subject for search debounce
+  private searchSubject$ = new Subject<string>();
+  private destroy$ = new Subject<void>();
   
   // Expose enums and display names to template
   readonly loaiDonOptions = Object.entries(LOAI_DON_DISPLAY_NAMES).map(([key, value]) => ({
@@ -40,8 +45,31 @@ export class DonFilterComponent implements OnInit {
   }));
   
   ngOnInit(): void {
-    // Initialize with default filter
-    this.onFilterChange();
+    // Setup search debounce - 500ms delay
+    this.searchSubject$
+      .pipe(
+        debounceTime(500),
+        distinctUntilChanged(),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(() => {
+        this.emitFilterChange();
+      });
+    
+    // Initialize with default filter (immediate)
+    this.emitFilterChange();
+  }
+  
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+  
+  /**
+   * Called when search input changes
+   */
+  onSearchChange(): void {
+    this.searchSubject$.next(this.searchTerm);
   }
   
   /**
@@ -53,9 +81,9 @@ export class DonFilterComponent implements OnInit {
   }
   
   /**
-   * Emit filter changes
+   * Emit filter changes (private helper)
    */
-  onFilterChange(): void {
+  private emitFilterChange(): void {
     const filter: FilterDonYeuCauDto = {
       searchTerm: this.searchTerm.trim() || undefined,
       loaiDon: this.selectedLoaiDon || undefined,
@@ -65,6 +93,13 @@ export class DonFilterComponent implements OnInit {
     };
     
     this.filterChange.emit(filter);
+  }
+  
+  /**
+   * Called when dropdown/date filters change (immediate)
+   */
+  onFilterChange(): void {
+    this.emitFilterChange();
   }
   
   /**
@@ -78,7 +113,7 @@ export class DonFilterComponent implements OnInit {
     this.denNgay = null;
     
     this.resetFilter.emit();
-    this.onFilterChange();
+    this.emitFilterChange();
   }
   
   /**

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, OnDestroy } from '@angular/core';
+import { Component, inject, OnInit, signal, OnDestroy, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgbModal, NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
@@ -33,6 +33,7 @@ export class DonAdminListComponent implements OnInit, OnDestroy {
   private donService = inject(DonYeuCauService);
   private spinner = inject(SpinnerService);
   private toastr = inject(ToastrService);
+  private ngZone = inject(NgZone);
   
   // Data
   dons = signal<DonYeuCauDto[]>([]);
@@ -143,11 +144,23 @@ export class DonAdminListComponent implements OnInit, OnDestroy {
    * Open detail modal
    */
   viewDetail(don: DonYeuCauDto): void {
-    const modalRef = this.modal.open(DonDetailComponent, { 
-      size: 'lg',
-      backdrop: 'static'
+    // Blur the trigger button to prevent focus issues
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    
+    // Use setTimeout to ensure blur completes before opening modal
+    this.ngZone.runOutsideAngular(() => {
+      setTimeout(() => {
+        this.ngZone.run(() => {
+          const modalRef = this.modal.open(DonDetailComponent, { 
+            size: 'lg',
+            backdrop: 'static'
+          });
+          modalRef.componentInstance.donId = don.id;
+        });
+      }, 0);
     });
-    modalRef.componentInstance.donId = don.id;
   }
   
   /**
@@ -159,64 +172,88 @@ export class DonAdminListComponent implements OnInit, OnDestroy {
       return;
     }
     
-    const modalRef = this.modal.open(DonCreateEditComponent, {
-      size: 'lg',
-      backdrop: 'static',
-      keyboard: true
+    // Blur the trigger button to prevent focus issues
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    
+    // Use setTimeout to ensure blur completes before opening modal
+    this.ngZone.runOutsideAngular(() => {
+      setTimeout(() => {
+        this.ngZone.run(() => {
+          const modalRef = this.modal.open(DonCreateEditComponent, {
+            size: 'lg',
+            backdrop: 'static',
+            keyboard: true
+          });
+          
+          modalRef.componentInstance.mode = 'edit';
+          modalRef.componentInstance.donId = don.id;
+          
+          modalRef.result.then(
+            (result: DonYeuCauDto) => {
+              if (result) {
+                this.toastr.success('Cập nhật đơn yêu cầu thành công!', 'Thành công');
+                this.loadDons();
+              }
+            },
+            () => {
+              // Modal dismissed
+            }
+          );
+        });
+      }, 0);
     });
-    
-    modalRef.componentInstance.mode = 'edit';
-    modalRef.componentInstance.donId = don.id;
-    
-    modalRef.result.then(
-      (result: DonYeuCauDto) => {
-        if (result) {
-          this.toastr.success('Cập nhật đơn yêu cầu thành công!', 'Thành công');
-          this.loadDons();
-        }
-      },
-      () => {
-        // Modal dismissed
-      }
-    );
   }
   
   /**
    * Delete don (Admin can delete any don)
    */
   deleteDon(don: DonYeuCauDto): void {
-    const modalRef = this.modal.open(ConfirmDialogComponent);
-    modalRef.componentInstance.title = 'Xác Nhận Xóa';
-    modalRef.componentInstance.message = `Bạn có chắc muốn xóa đơn "${don.loaiDonText}" của ${don.tenNhanVien}? Hành động này không thể hoàn tác.`;
-    modalRef.componentInstance.confirmText = 'Xóa';
-    modalRef.componentInstance.confirmClass = 'btn-danger';
+    // Blur the trigger button to prevent focus issues
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
     
-    modalRef.result.then(
-      (confirmed) => {
-        if (confirmed) {
-          this.spinner.show('Đang xóa đơn...');
-          this.donService.delete(don.id)
-            .pipe(
-              takeUntil(this.destroy$),
-              finalize(() => this.spinner.hide())
-            )
-            .subscribe({
-              next: () => {
-                this.toastr.success('Đã xóa đơn yêu cầu', 'Thành công');
-                this.loadDons();
-              },
-              error: (error) => {
-                this.toastr.error(
-                  error.error?.message || 'Không thể xóa đơn. Vui lòng thử lại.',
-                  'Lỗi'
-                );
-                console.error('Error deleting don:', error);
+    // Use setTimeout to ensure blur completes before opening modal
+    this.ngZone.runOutsideAngular(() => {
+      setTimeout(() => {
+        this.ngZone.run(() => {
+          const modalRef = this.modal.open(ConfirmDialogComponent);
+          modalRef.componentInstance.title = 'Xác Nhận Xóa';
+          modalRef.componentInstance.message = `Bạn có chắc muốn xóa đơn "${don.loaiDonText}" của ${don.tenNhanVien}? Hành động này không thể hoàn tác.`;
+          modalRef.componentInstance.confirmText = 'Xóa';
+          modalRef.componentInstance.confirmClass = 'btn-danger';
+          
+          modalRef.result.then(
+            (confirmed) => {
+              if (confirmed) {
+                this.spinner.show('Đang xóa đơn...');
+                this.donService.delete(don.id)
+                  .pipe(
+                    takeUntil(this.destroy$),
+                    finalize(() => this.spinner.hide())
+                  )
+                  .subscribe({
+                    next: () => {
+                      this.toastr.success('Đã xóa đơn yêu cầu', 'Thành công');
+                      this.loadDons();
+                    },
+                    error: (error) => {
+                      this.toastr.error(
+                        error.error?.message || 'Không thể xóa đơn. Vui lòng thử lại.',
+                        'Lỗi'
+                      );
+                      console.error('Error deleting don:', error);
+                    }
+                  });
               }
-            });
-        }
-      },
-      () => {}
-    );
+            },
+            () => {}
+          );
+        });
+      }, 0);
+    });
   }
   
   /**

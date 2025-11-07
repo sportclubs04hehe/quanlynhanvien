@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, OnDestroy } from '@angular/core';
+import { Component, inject, OnInit, signal, OnDestroy, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgbModal, NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
@@ -30,6 +30,7 @@ export class DonApproveListComponent implements OnInit, OnDestroy {
   private donService = inject(DonYeuCauService);
   private spinner = inject(SpinnerService);
   private toastr = inject(ToastrService);
+  private ngZone = inject(NgZone);
   
   // Data
   dons = signal<DonYeuCauDto[]>([]);
@@ -129,57 +130,93 @@ export class DonApproveListComponent implements OnInit, OnDestroy {
    * Open detail modal
    */
   viewDetail(don: DonYeuCauDto): void {
-    const modalRef = this.modal.open(DonDetailComponent, { 
-      size: 'lg',
-      backdrop: 'static'
+    // Blur the trigger button to prevent focus issues
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    
+    // Use setTimeout to ensure blur completes before opening modal
+    this.ngZone.runOutsideAngular(() => {
+      setTimeout(() => {
+        this.ngZone.run(() => {
+          const modalRef = this.modal.open(DonDetailComponent, { 
+            size: 'lg',
+            backdrop: 'static'
+          });
+          modalRef.componentInstance.donId = don.id;
+        });
+      }, 0);
     });
-    modalRef.componentInstance.donId = don.id;
   }
   
   /**
    * Open approve modal (Chấp thuận)
    */
   approveDon(don: DonYeuCauDto): void {
-    const modalRef = this.modal.open(DonApproveModalComponent, {
-      size: 'md',
-      backdrop: 'static'
+    // Blur the trigger button to prevent focus issues
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    
+    // Use setTimeout to ensure blur completes before opening modal
+    this.ngZone.runOutsideAngular(() => {
+      setTimeout(() => {
+        this.ngZone.run(() => {
+          const modalRef = this.modal.open(DonApproveModalComponent, {
+            size: 'md',
+            backdrop: 'static'
+          });
+          
+          modalRef.componentInstance.don = don;
+          
+          modalRef.result.then(
+            (result: ApprovalResult) => {
+              if (result && result.trangThai === TrangThaiDon.DaChapThuan) {
+                this.handleApproval(don.id, result.ghiChuNguoiDuyet);
+              }
+            },
+            () => {
+              // Modal dismissed
+            }
+          );
+        });
+      }, 0);
     });
-    
-    modalRef.componentInstance.don = don;
-    
-    modalRef.result.then(
-      (result: ApprovalResult) => {
-        if (result && result.trangThai === TrangThaiDon.DaChapThuan) {
-          this.handleApproval(don.id, result.ghiChuNguoiDuyet);
-        }
-      },
-      () => {
-        // Modal dismissed
-      }
-    );
   }
   
   /**
    * Open reject modal (Từ chối)
    */
   rejectDon(don: DonYeuCauDto): void {
-    const modalRef = this.modal.open(DonApproveModalComponent, {
-      size: 'md',
-      backdrop: 'static'
+    // Blur the trigger button to prevent focus issues
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    
+    // Use setTimeout to ensure blur completes before opening modal
+    this.ngZone.runOutsideAngular(() => {
+      setTimeout(() => {
+        this.ngZone.run(() => {
+          const modalRef = this.modal.open(DonApproveModalComponent, {
+            size: 'md',
+            backdrop: 'static'
+          });
+          
+          modalRef.componentInstance.don = don;
+          
+          modalRef.result.then(
+            (result: ApprovalResult) => {
+              if (result && result.trangThai === TrangThaiDon.BiTuChoi) {
+                this.handleRejection(don.id, result.ghiChuNguoiDuyet);
+              }
+            },
+            () => {
+              // Modal dismissed
+            }
+          );
+        });
+      }, 0);
     });
-    
-    modalRef.componentInstance.don = don;
-    
-    modalRef.result.then(
-      (result: ApprovalResult) => {
-        if (result && result.trangThai === TrangThaiDon.BiTuChoi) {
-          this.handleRejection(don.id, result.ghiChuNguoiDuyet);
-        }
-      },
-      () => {
-        // Modal dismissed
-      }
-    );
   }
   
   /**
