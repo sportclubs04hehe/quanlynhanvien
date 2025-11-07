@@ -1,0 +1,76 @@
+/* ============================================================================
+   Don Stats Component Styles
+   ============================================================================ */
+
+/* Summary Cards */
+.card {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Chart Container */
+.chart-container {
+  min-height: 300px;
+}
+
+/* Card Headers */
+.card-header {
+  border-bottom: 2px solid #f8f9fa;
+}
+
+.card-header h5 {
+  font-weight: 600;
+}
+
+/* Summary Card Icons */
+.card-body i {
+  opacity: 0.8;
+}
+
+/* Table Styling */
+.table th {
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.table tbody tr {
+  transition: background-color 0.2s;
+}
+
+.table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+/* Badge Styling */
+.badge {
+  font-weight: 500;
+  padding: 0.4em 0.8em;
+}
+
+/* Loading Spinner */
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+}
+
+/* Empty State */
+.bi-inbox {
+  opacity: 0.3;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .chart-container {
+    height: 250px !important;
+  }
+  
+  .col-md-3 .card-body h3 {
+    font-size: 1.5rem;
+  }
+}

@@ -13,12 +13,12 @@ import { ActiveSessionsComponent } from './components/account/active-sessions/ac
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: '/dashboard',
+    redirectTo: '/don-yeu-cau',
     pathMatch: 'full'
   },
   { path: 'login', component: LoginComponent, canActivate: [loginGuard] },
   { path: 'auth/login', component: LoginComponent, canActivate: [loginGuard] },
-  { path: 'dashboard', component: DashboardComponent, canActivate: [authGuard] },
+  { path: 'don-yeu-cau', component: DonyeucauComponent, canActivate: [authGuard] },
 
   // Quản lý nhân viên - Yêu cầu role Giam Doc hoặc Truong Phong
   {
@@ -54,5 +54,5 @@ export const routes: Routes = [
   // Add more routes as needed
   // { path: 'auth/register', component: RegisterComponent, canActivate: [loginGuard] },
   // { path: 'auth/forgot-password', component: ForgotPasswordComponent, canActivate: [loginGuard] },
-  { path: '**', redirectTo: '/dashboard' }
+  { path: '**', redirectTo: '/don-yeu-cau' }
 ];

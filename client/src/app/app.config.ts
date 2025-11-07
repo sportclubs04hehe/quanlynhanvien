@@ -8,6 +8,7 @@ import { errorInterceptor } from './interceptors/error.interceptor';
 import { registerLocaleData } from '@angular/common';
 import localeVi from '@angular/common/locales/vi';
 import { provideToastr } from 'ngx-toastr';
+import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 
 // Đăng ký locale data cho tiếng Việt
 registerLocaleData(localeVi);
@@ -22,5 +23,6 @@ export const appConfig: ApplicationConfig = {
     ),
     provideAnimations(),
     provideToastr(),
+    provideCharts(withDefaultRegisterables())
   ]
 };

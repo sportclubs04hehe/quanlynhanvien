@@ -1,1 +1,229 @@
-<p>don-stats works!</p>
+<div class="container-fluid py-4">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fs-4">
+      <i class="bi bi-bar-chart-fill me-2"></i>
+      {{ getTitle() }}
+    </h2>
+  </div>
+
+  <!-- Date Range Filter -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-4">
+          <label class="form-label">Từ ngày</label>
+          <input 
+            type="date" 
+            class="form-control"
+            [(ngModel)]="fromDate"
+            (ngModelChange)="fromDate.set($event)"
+          />
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Đến ngày</label>
+          <input 
+            type="date" 
+            class="form-control"
+            [(ngModel)]="toDate"
+            (ngModelChange)="toDate.set($event)"
+          />
+        </div>
+        <div class="col-md-4">
+          <button 
+            class="btn btn-primary me-2" 
+            (click)="applyFilter()"
+            [disabled]="isLoading()"
+          >
+            <i class="bi bi-funnel-fill me-1"></i>
+            Lọc
+          </button>
+          <button 
+            class="btn btn-outline-secondary" 
+            (click)="resetFilter()"
+            [disabled]="isLoading()"
+          >
+            <i class="bi bi-arrow-counterclockwise me-1"></i>
+            Xóa lọc
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading()" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Đang tải...</span>
+    </div>
+    <p class="mt-3 text-muted">Đang tải thống kê...</p>
+  </div>
+
+  <!-- Stats Content -->
+  <div *ngIf="!isLoading() && stats()">
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-3">
+        <div class="card border-primary">
+          <div class="card-body text-center">
+            <i class="bi bi-file-earmark-text fs-1 text-primary"></i>
+            <h3 class="mt-2 mb-0">{{ stats()!.tongSoDon }}</h3>
+            <p class="text-muted mb-0">Tổng số đơn</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card border-success">
+          <div class="card-body text-center">
+            <i class="bi bi-check-circle fs-1 text-success"></i>
+            <h3 class="mt-2 mb-0">{{ stats()!.daChapThuan }}</h3>
+            <p class="text-muted mb-0">Đã chấp thuận</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card border-warning">
+          <div class="card-body text-center">
+            <i class="bi bi-hourglass-split fs-1 text-warning"></i>
+            <h3 class="mt-2 mb-0">{{ stats()!.dangChoDuyet }}</h3>
+            <p class="text-muted mb-0">Đang chờ duyệt</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card border-danger">
+          <div class="card-body text-center">
+            <i class="bi bi-x-circle fs-1 text-danger"></i>
+            <h3 class="mt-2 mb-0">{{ stats()!.biTuChoi + stats()!.daHuy }}</h3>
+            <p class="text-muted mb-0">Từ chối / Đã hủy</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row g-4">
+      <!-- Doughnut Chart: Trạng thái đơn -->
+      <div class="col-lg-6">
+        <div class="card h-100">
+          <div class="card-header bg-white">
+            <h5 class="mb-0">
+              <i class="bi bi-pie-chart-fill me-2 text-primary"></i>
+              Phân Bố Theo Trạng Thái
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="chart-container" style="position: relative; height: 350px;">
+              <canvas 
+                baseChart
+                [data]="doughnutChartData()"
+                [type]="doughnutChartType"
+                [options]="doughnutChartOptions"
+              >
+              </canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bar Chart: Loại đơn -->
+      <div class="col-lg-6">
+        <div class="card h-100">
+          <div class="card-header bg-white">
+            <h5 class="mb-0">
+              <i class="bi bi-bar-chart-fill me-2 text-success"></i>
+              Phân Bố Theo Loại Đơn
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="chart-container" style="position: relative; height: 350px;">
+              <canvas 
+                baseChart
+                [data]="barChartData()"
+                [type]="barChartType"
+                [options]="barChartOptions"
+              >
+              </canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detailed Breakdown Table -->
+    <div class="card mt-4">
+      <div class="card-header bg-white">
+        <h5 class="mb-0">
+          <i class="bi bi-table me-2 text-info"></i>
+          Chi Tiết Thống Kê
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Loại Đơn</th>
+                <th class="text-center">Số Lượng</th>
+                <th class="text-end">Tỷ Lệ</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><i class="bi bi-calendar-x text-primary me-2"></i>Nghỉ Phép</td>
+                <td class="text-center">
+                  <span class="badge bg-primary">{{ stats()!.soDonNghiPhep }}</span>
+                </td>
+                <td class="text-end">
+                  {{ getPercentage(stats()!.soDonNghiPhep, stats()!.tongSoDon) }}%
+                </td>
+              </tr>
+              <tr>
+                <td><i class="bi bi-clock-history text-success me-2"></i>Làm Thêm Giờ</td>
+                <td class="text-center">
+                  <span class="badge bg-success">{{ stats()!.soDonLamThemGio }}</span>
+                </td>
+                <td class="text-end">
+                  {{ getPercentage(stats()!.soDonLamThemGio, stats()!.tongSoDon) }}%
+                </td>
+              </tr>
+              <tr>
+                <td><i class="bi bi-exclamation-triangle text-warning me-2"></i>Đi Muộn</td>
+                <td class="text-center">
+                  <span class="badge bg-warning">{{ stats()!.soDonDiMuon }}</span>
+                </td>
+                <td class="text-end">
+                  {{ getPercentage(stats()!.soDonDiMuon, stats()!.tongSoDon) }}%
+                </td>
+              </tr>
+              <tr>
+                <td><i class="bi bi-briefcase text-info me-2"></i>Công Tác</td>
+                <td class="text-center">
+                  <span class="badge bg-info">{{ stats()!.soDonCongTac }}</span>
+                </td>
+                <td class="text-end">
+                  {{ getPercentage(stats()!.soDonCongTac, stats()!.tongSoDon) }}%
+                </td>
+              </tr>
+            </tbody>
+            <tfoot class="table-light fw-bold">
+              <tr>
+                <td>Tổng cộng</td>
+                <td class="text-center">
+                  <span class="badge bg-dark">{{ stats()!.tongSoDon }}</span>
+                </td>
+                <td class="text-end">100%</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!isLoading() && !stats()" class="text-center py-5">
+    <i class="bi bi-inbox fs-1 text-muted"></i>
+    <p class="mt-3 text-muted">Chưa có dữ liệu thống kê</p>
+  </div>
+</div>
