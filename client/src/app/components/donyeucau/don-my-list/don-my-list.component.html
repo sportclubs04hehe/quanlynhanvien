@@ -131,23 +131,13 @@
                         </button>
                       }
                       
-                      <!-- Cancel -->
+                      <!-- Cancel (Hủy đơn - changes status to DaHuy) -->
                       @if (canCancel(don)) {
                         <button 
                           class="btn btn-outline-warning"
                           (click)="cancelDon(don)"
                           title="Hủy đơn">
                           <i class="bi bi-x-circle"></i>
-                        </button>
-                      }
-                      
-                      <!-- Delete (only for pending requests) -->
-                      @if (canEdit(don)) {
-                        <button 
-                          class="btn btn-outline-danger"
-                          (click)="deleteDon(don)"
-                          title="Xóa đơn">
-                          <i class="bi bi-trash"></i>
                         </button>
                       }
                     </div>

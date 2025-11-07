@@ -10,7 +10,6 @@ import { DonYeuCauDto, FilterDonYeuCauDto, LoaiDonYeuCau, TrangThaiDon } from '.
 import { DonStatusBadgeComponent } from '../../../shared/don-status-badge/don-status-badge.component';
 import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
 import { DonDetailComponent } from '../don-detail/don-detail.component';
-import { DonCreateEditComponent } from '../don-create-edit/don-create-edit.component';
 import { ConfirmDialogComponent } from '../../../shared/modal/confirm-dialog/confirm-dialog.component';
 import { DonFilterComponent } from '../../../shared/don-filter/don-filter.component';
 
@@ -68,7 +67,9 @@ export class DonAdminListComponent implements OnInit, OnDestroy {
   }
   
   /**
-   * Load danh sách tất cả đơn (Admin view - Giám Đốc)
+   * Load danh sách đơn ĐÃ XỬ LÝ (Admin view - Giám Đốc)
+   * Backend tự động filter: Chỉ trả về DaChapThuan, BiTuChoi, DaHuy
+   * Không bao gồm: DangChoDuyet (để Trưởng Phòng xử lý theo workflow)
    */
   loadDons(): void {
     this.errorMessage.set(null);
@@ -82,7 +83,9 @@ export class DonAdminListComponent implements OnInit, OnDestroy {
       pageSize: this.pageSize()
     };
     
-    this.donService.getAll(currentFilter)
+    // Use getProcessedDons() instead of getAll()
+    // Backend will automatically exclude DangChoDuyet
+    this.donService.getProcessedDons(currentFilter)
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => {
@@ -164,50 +167,8 @@ export class DonAdminListComponent implements OnInit, OnDestroy {
   }
   
   /**
-   * Open edit modal (Admin can edit any don in DangChoDuyet status)
-   */
-  editDon(don: DonYeuCauDto): void {
-    if (don.trangThai !== TrangThaiDon.DangChoDuyet) {
-      this.toastr.warning('Chỉ có thể chỉnh sửa đơn đang chờ duyệt', 'Cảnh báo');
-      return;
-    }
-    
-    // Blur the trigger button to prevent focus issues
-    if (document.activeElement instanceof HTMLElement) {
-      document.activeElement.blur();
-    }
-    
-    // Use setTimeout to ensure blur completes before opening modal
-    this.ngZone.runOutsideAngular(() => {
-      setTimeout(() => {
-        this.ngZone.run(() => {
-          const modalRef = this.modal.open(DonCreateEditComponent, {
-            size: 'lg',
-            backdrop: 'static',
-            keyboard: true
-          });
-          
-          modalRef.componentInstance.mode = 'edit';
-          modalRef.componentInstance.donId = don.id;
-          
-          modalRef.result.then(
-            (result: DonYeuCauDto) => {
-              if (result) {
-                this.toastr.success('Cập nhật đơn yêu cầu thành công!', 'Thành công');
-                this.loadDons();
-              }
-            },
-            () => {
-              // Modal dismissed
-            }
-          );
-        });
-      }, 0);
-    });
-  }
-  
-  /**
-   * Delete don (Admin can delete any don)
+   * Delete don (Admin can delete for audit/compliance reasons)
+   * Note: Backend should implement soft delete to preserve history
    */
   deleteDon(don: DonYeuCauDto): void {
     // Blur the trigger button to prevent focus issues

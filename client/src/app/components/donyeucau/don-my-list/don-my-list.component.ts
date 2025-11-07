@@ -267,37 +267,6 @@ export class DonMyListComponent implements OnInit, OnDestroy {
   }
   
   /**
-   * Delete don
-   */
-  deleteDon(don: DonYeuCauDto): void {
-    const modalRef = this.modal.open(ConfirmDialogComponent);
-    modalRef.componentInstance.title = 'Xác Nhận Xóa';
-    modalRef.componentInstance.message = `Bạn có chắc muốn xóa đơn "${don.loaiDonText}"? Hành động này không thể hoàn tác.`;
-    modalRef.componentInstance.confirmText = 'Xóa';
-    modalRef.componentInstance.confirmClass = 'btn-danger';
-    
-    modalRef.result.then(
-      (confirmed) => {
-        if (confirmed) {
-          this.spinner.show('Đang xóa đơn...');
-          this.donService.delete(don.id)
-            .pipe(finalize(() => this.spinner.hide()))
-            .subscribe({
-              next: () => {
-                this.loadDons();
-              },
-              error: (error) => {
-                console.error('Error deleting don:', error);
-                alert('Không thể xóa đơn. Vui lòng thử lại.');
-              }
-            });
-        }
-      },
-      () => {}
-    );
-  }
-  
-  /**
    * Check if any filter is active
    */
   hasActiveFilters(): boolean {

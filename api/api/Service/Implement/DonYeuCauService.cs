@@ -39,6 +39,27 @@ namespace api.Service.Implement
             };
         }
 
+        public async Task<PagedResult<DonYeuCauDto>> GetProcessedDonsAsync(FilterDonYeuCauDto filter)
+        {
+            // Call GetAllAsync first
+            var (items, totalCount) = await _donYeuCauRepo.GetAllAsync(filter);
+            
+            // Filter out DangChoDuyet (only show processed requests)
+            var processedItems = items
+                .Where(d => d.TrangThai != TrangThaiDon.DangChoDuyet)
+                .ToList();
+            
+            var dtos = _mapper.Map<List<DonYeuCauDto>>(processedItems);
+
+            return new PagedResult<DonYeuCauDto>
+            {
+                Items = dtos,
+                TotalCount = processedItems.Count, // Adjust total count after filtering
+                PageNumber = filter.PageNumber,
+                PageSize = filter.PageSize
+            };
+        }
+
         public async Task<DonYeuCauDto?> GetByIdAsync(Guid id)
         {
             var don = await _donYeuCauRepo.GetByIdAsync(id);

@@ -58,6 +58,28 @@ export class DonYeuCauService {
   }
 
   /**
+   * Lấy danh sách đơn ĐÃ XỬ LÝ (Giám Đốc - Audit/Report)
+   * GET /api/DonYeuCaus/processed
+   * Chỉ trả về: DaChapThuan, BiTuChoi, DaHuy (exclude DangChoDuyet)
+   */
+  getProcessedDons(filter: FilterDonYeuCauDto): Observable<PagedResult<DonYeuCauDto>> {
+    let params = new HttpParams()
+      .set('pageNumber', (filter.pageNumber || 1).toString())
+      .set('pageSize', (filter.pageSize || 10).toString());
+
+    if (filter.searchTerm) params = params.set('searchTerm', filter.searchTerm);
+    if (filter.loaiDon !== undefined) params = params.set('loaiDon', filter.loaiDon.toString());
+    if (filter.trangThai !== undefined) params = params.set('trangThai', filter.trangThai.toString());
+    if (filter.nhanVienId) params = params.set('nhanVienId', filter.nhanVienId);
+    if (filter.nguoiDuyetId) params = params.set('nguoiDuyetId', filter.nguoiDuyetId);
+    if (filter.phongBanId) params = params.set('phongBanId', filter.phongBanId);
+    if (filter.tuNgay) params = params.set('tuNgay', this.formatDate(filter.tuNgay));
+    if (filter.denNgay) params = params.set('denNgay', this.formatDate(filter.denNgay));
+
+    return this.http.get<PagedResult<DonYeuCauDto>>(`${this.baseUrl}/processed`, { params });
+  }
+
+  /**
    * Lấy đơn yêu cầu theo ID
    * GET /api/DonYeuCaus/{id}
    */

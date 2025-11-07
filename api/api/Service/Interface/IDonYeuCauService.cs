@@ -13,6 +13,12 @@ namespace api.Service.Interface
         Task<PagedResult<DonYeuCauDto>> GetAllAsync(FilterDonYeuCauDto filter);
 
         /// <summary>
+        /// Lấy danh sách đơn ĐÃ XỬ LÝ (Giám Đốc - Audit/Report)
+        /// Chỉ trả về: DaChapThuan, BiTuChoi, DaHuy (exclude DangChoDuyet)
+        /// </summary>
+        Task<PagedResult<DonYeuCauDto>> GetProcessedDonsAsync(FilterDonYeuCauDto filter);
+
+        /// <summary>
         /// Lấy đơn yêu cầu theo ID
         /// </summary>
         Task<DonYeuCauDto?> GetByIdAsync(Guid id);

@@ -21,20 +21,41 @@ namespace api.Controllers
         #region CRUD Operations
 
         /// <summary>
-        /// Lấy danh sách đơn yêu cầu với filter (Giám Đốc và Trưởng Phòng)
+        /// Lấy danh sách tất cả đơn yêu cầu với filter (Giám Đốc và Trưởng Phòng)
+        /// Note: Endpoint này trả về TẤT CẢ trạng thái. Nếu chỉ cần đơn đã xử lý, dùng /processed
         /// </summary>
-        [HttpGet]
-        [Authorize(Roles = AppRolesExtensions.GiamDocOrTruongPhong)]
-        public async Task<ActionResult<PagedResult<DonYeuCauDto>>> GetAll([FromQuery] FilterDonYeuCauDto filter)
+        // [HttpGet]
+        // [Authorize(Roles = AppRolesExtensions.GiamDocOrTruongPhong)]
+        // public async Task<ActionResult<PagedResult<DonYeuCauDto>>> GetAll([FromQuery] FilterDonYeuCauDto filter)
+        // {
+        //     try
+        //     {
+        //         var result = await _donYeuCauService.GetAllAsync(filter);
+        //         return Ok(result);
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         return StatusCode(500, new { message = "Đã xảy ra lỗi khi lấy danh sách đơn", error = ex.Message });
+        //     }
+        // }
+
+        /// <summary>
+        /// Lấy danh sách đơn ĐÃ XỬ LÝ (Giám Đốc - Audit/Report)
+        /// Chỉ trả về: DaChapThuan, BiTuChoi, DaHuy
+        /// Không bao gồm: DangChoDuyet (để Trưởng Phòng xử lý)
+        /// </summary>
+        [HttpGet("processed")]
+        [Authorize(Roles = AppRolesExtensions.GiamDoc)]
+        public async Task<ActionResult<PagedResult<DonYeuCauDto>>> GetProcessedDons([FromQuery] FilterDonYeuCauDto filter)
         {
             try
             {
-                var result = await _donYeuCauService.GetAllAsync(filter);
+                var result = await _donYeuCauService.GetProcessedDonsAsync(filter);
                 return Ok(result);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Đã xảy ra lỗi khi lấy danh sách đơn", error = ex.Message });
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi lấy danh sách đơn đã xử lý", error = ex.Message });
             }
         }
 
