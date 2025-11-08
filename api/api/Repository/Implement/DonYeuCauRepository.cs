@@ -208,11 +208,12 @@ namespace api.Repository.Implement
                 .Include(d => d.NhanVien.PhongBan)
                 .Include(d => d.NhanVien.ChucVu)
                 .Include(d => d.NguoiDuyet)
-                .Where(d => d.TrangThai == TrangThaiDon.DangChoDuyet);
+                .Where(d => d.TrangThai == TrangThaiDon.DangChoDuyet)
+                .Where(d => d.NhanVienId != nguoiDuyetId); // ❌ Không cho tự duyệt đơn của chính mình
 
             // Logic: 
-            // - Trưởng Phòng duyệt đơn của nhân viên trong phòng
-            // - Giám Đốc duyệt tất cả đơn
+            // - Trưởng Phòng duyệt đơn của nhân viên trong phòng (trừ đơn của chính mình)
+            // - Giám Đốc duyệt tất cả đơn (trừ đơn của chính mình)
             if (nguoiDuyet.PhongBanId.HasValue)
             {
                 // Trưởng phòng - chỉ duyệt đơn trong phòng
@@ -223,7 +224,7 @@ namespace api.Repository.Implement
             var totalCount = await query.CountAsync();
 
             var items = await query
-                .OrderBy(d => d.NgayTao) // Đơn cũ nhất lên trước
+                .OrderByDescending(d => d.NgayTao) // Đơn cũ nhất lên trước
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
@@ -447,7 +448,8 @@ namespace api.Repository.Implement
                 return 0;
 
             var query = _context.DonYeuCaus
-                .Where(d => d.TrangThai == TrangThaiDon.DangChoDuyet);
+                .Where(d => d.TrangThai == TrangThaiDon.DangChoDuyet)
+                .Where(d => d.NhanVienId != nguoiDuyetId); // ❌ Không đếm đơn của chính mình
 
             // Logic tương tự GetDonCanDuyetAsync
             if (nguoiDuyet.PhongBanId.HasValue)

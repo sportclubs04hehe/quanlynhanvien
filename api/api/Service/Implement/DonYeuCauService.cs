@@ -211,10 +211,18 @@ namespace api.Service.Implement
             if (nguoiDuyet == null)
                 throw new InvalidOperationException("Không tìm thấy người duyệt");
 
-            var don = await _donYeuCauRepo.DuyetDonAsync(
+            // Không cho phép tự duyệt đơn của chính mình
+            var don = await _donYeuCauRepo.GetByIdAsync(donId);
+            if (don == null)
+                throw new InvalidOperationException("Không tìm thấy đơn yêu cầu");
+            
+            if (don.NhanVienId == nguoiDuyetId)
+                throw new InvalidOperationException("Không thể tự duyệt đơn của chính mình");
+
+            var approvedDon = await _donYeuCauRepo.DuyetDonAsync(
                 donId, nguoiDuyetId, TrangThaiDon.DaChapThuan, ghiChu);
 
-            return _mapper.Map<DonYeuCauDto>(don);
+            return _mapper.Map<DonYeuCauDto>(approvedDon);
         }
 
         public async Task<DonYeuCauDto> TuChoiDonAsync(Guid donId, Guid nguoiDuyetId, string ghiChu)
@@ -228,10 +236,18 @@ namespace api.Service.Implement
             if (nguoiDuyet == null)
                 throw new InvalidOperationException("Không tìm thấy người duyệt");
 
-            var don = await _donYeuCauRepo.DuyetDonAsync(
+            // Không cho phép tự duyệt đơn của chính mình
+            var donToReject = await _donYeuCauRepo.GetByIdAsync(donId);
+            if (donToReject == null)
+                throw new InvalidOperationException("Không tìm thấy đơn yêu cầu");
+            
+            if (donToReject.NhanVienId == nguoiDuyetId)
+                throw new InvalidOperationException("Không thể tự duyệt đơn của chính mình");
+
+            var rejectedDon = await _donYeuCauRepo.DuyetDonAsync(
                 donId, nguoiDuyetId, TrangThaiDon.BiTuChoi, ghiChu);
 
-            return _mapper.Map<DonYeuCauDto>(don);
+            return _mapper.Map<DonYeuCauDto>(rejectedDon);
         }
 
         public async Task<bool> HuyDonAsync(Guid donId, Guid nhanVienId)

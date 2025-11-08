@@ -196,15 +196,24 @@ export class DonStatsComponent implements OnInit {
     
     const from = this.fromDate() || undefined;
     const to = this.toDate() || undefined;
+    const currentUser = this.roleService['authService'].currentUser();
 
     let request;
     if (this.isGiamDoc()) {
       // Giám Đốc: Thống kê toàn công ty
       request = this.donService.thongKeToanCongTy(from, to);
     } else if (this.isTruongPhong()) {
-      // TODO: Lấy phongBanId của Trưởng Phòng từ currentUser
-      // Tạm thời dùng thống kê cá nhân
-      request = this.donService.thongKeMyDons(from, to);
+      // Trưởng Phòng: Thống kê theo phòng ban
+      const phongBanId = currentUser?.phongBan?.id;
+      
+      if (phongBanId) {
+        // Có phòng ban → thống kê phòng ban
+        request = this.donService.thongKePhongBan(phongBanId, from, to);
+      } else {
+        // Không có phòng ban → fallback thống kê cá nhân
+        console.warn('Trưởng Phòng không có phongBanId, fallback to personal stats');
+        request = this.donService.thongKeMyDons(from, to);
+      }
     } else {
       // Nhân viên: Thống kê đơn của tôi
       request = this.donService.thongKeMyDons(from, to);
