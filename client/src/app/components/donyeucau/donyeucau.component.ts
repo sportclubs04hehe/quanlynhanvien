@@ -97,6 +97,25 @@ export class DonyeucauComponent implements OnInit {
       return user.roles.some(userRole => tab.roles!.includes(userRole));
     });
   });
+
+  // Get title for stats tab based on role
+  getStatsTabLabel = computed(() => {
+    if (this.isGiamDoc()) {
+      return 'Thống Kê Toàn Công Ty';
+    } else if (this.isTruongPhong()) {
+      return 'Thống Kê Phòng Ban';
+    } else {
+      return 'Thống Kê Của Tôi';
+    }
+  });
+
+  // Get dynamic tab label
+  getTabLabel(tab: Tab): string {
+    if (tab.id === 'stats') {
+      return this.getStatsTabLabel();
+    }
+    return tab.label;
+  }
   
   // Get active component
   activeComponent = computed(() => {
