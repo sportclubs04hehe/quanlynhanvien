@@ -15,6 +15,8 @@
 /* Clickable Cards */
 .card-clickable {
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
 }
 
 .card-clickable:hover {
@@ -25,6 +27,26 @@
 .card-clickable:active {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* "Xem chi tiết" text styling */
+.card-clickable small {
+  font-weight: 500;
+  opacity: 0.7;
+  transition: all 0.3s ease;
+}
+
+.card-clickable:hover small {
+  opacity: 1;
+  font-weight: 600;
+}
+
+.card-clickable small i {
+  transition: transform 0.3s ease;
+}
+
+.card-clickable:hover small i {
+  transform: translateX(3px);
 }
 
 /* Chart Container */
