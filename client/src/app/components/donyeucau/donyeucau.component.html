@@ -26,13 +26,13 @@
         <app-don-approve-list />
         }
         @case ('my-dons') {
-        <app-don-my-list />
+        <app-don-my-list [initialTrangThai]="initialFilter()" />
         }
         @case ('admin') {
-        <app-don-admin-list />
+        <app-don-admin-list [initialTrangThai]="initialFilter()" />
         }
         @case ('stats') {
-        <app-don-stats />
+        <app-don-stats (navigateToDons)="handleNavigateFromStats($event)" />
         }
         @default {
         <div class="p-5 text-center text-muted">

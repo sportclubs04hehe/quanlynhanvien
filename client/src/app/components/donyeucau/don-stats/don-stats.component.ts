@@ -1,10 +1,10 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
 import { DonYeuCauService } from '../../../services/don-yeu-cau.service';
 import { RoleService } from '../../../services/role.service';
-import { ThongKeDonYeuCauDto } from '../../../types/don.model';
+import { ThongKeDonYeuCauDto, TrangThaiDon } from '../../../types/don.model';
 import { FormsModule } from '@angular/forms';
 
 /**
@@ -35,6 +35,12 @@ export class DonStatsComponent implements OnInit {
   // Role checks
   isGiamDoc = this.roleService.isGiamDoc;
   isTruongPhong = this.roleService.isTruongPhong;
+
+  // Output event khi user click vào card để xem chi tiết
+  navigateToDons = output<TrangThaiDon | null>();
+
+  // Expose enum to template
+  readonly TrangThaiDon = TrangThaiDon;
 
   // ============================================================================
   // Chart 1: Trạng thái đơn (Doughnut Chart)
@@ -247,5 +253,12 @@ export class DonStatsComponent implements OnInit {
   getPercentage(value: number, total: number): string {
     if (total === 0) return '0.0';
     return ((value / total) * 100).toFixed(1);
+  }
+
+  /**
+   * Handle click vào card thống kê để navigate đến danh sách đơn
+   */
+  onCardClick(trangThai: TrangThaiDon | null): void {
+    this.navigateToDons.emit(trangThai);
   }
 }

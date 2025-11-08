@@ -1,11 +1,13 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
+import { RoleService } from '../../services/role.service';
 import { APP_ROLES } from '../../constants/roles.constants';
 import { DonMyListComponent } from './don-my-list/don-my-list.component';
 import { DonApproveListComponent } from './don-approve-list/don-approve-list.component';
 import { DonAdminListComponent } from './don-admin-list/don-admin-list.component';
 import { DonStatsComponent } from './don-stats/don-stats.component';
+import { TrangThaiDon } from '../../types/don.model';
 
 type TabType = 'my-dons' | 'approve' | 'admin' | 'stats';
 
@@ -32,12 +34,20 @@ interface Tab {
 })
 export class DonyeucauComponent implements OnInit {
   private authService = inject(AuthService);
+  private roleService = inject(RoleService);
   
   // Current active tab (will be set in ngOnInit based on user role)
   activeTab = signal<TabType>('my-dons');
   
+  // Filter state để truyền cho các tab con
+  initialFilter = signal<TrangThaiDon | null>(null);
+  
   // Get current user
   currentUser = this.authService.currentUser;
+  
+  // Role checks
+  isGiamDoc = this.roleService.isGiamDoc;
+  isTruongPhong = this.roleService.isTruongPhong;
   
   ngOnInit(): void {
     // Set default tab: Thống Kê luôn là tab đầu tiên
@@ -63,7 +73,7 @@ export class DonyeucauComponent implements OnInit {
     },
     {
       id: 'admin',
-      label: 'Quản Lý Đơn Đã Xử Lý',
+      label: 'Quản Lý Đơn',
       icon: 'bi-shield-lock',
       component: DonAdminListComponent,
       roles: [APP_ROLES.GIAM_DOC]
@@ -108,5 +118,42 @@ export class DonyeucauComponent implements OnInit {
    */
   isActive(tabId: TabType): boolean {
     return this.activeTab() === tabId;
+  }
+
+  /**
+   * Handle navigation từ stats component
+   * Logic:
+   * - Giám Đốc: DangChoDuyet → approve tab, còn lại → admin tab
+   * - Trưởng Phòng: DangChoDuyet → approve tab, còn lại → my-dons tab
+   * - Nhân viên: tất cả → my-dons tab
+   */
+  handleNavigateFromStats(trangThai: TrangThaiDon | null): void {
+    if (this.isGiamDoc()) {
+      // Giám Đốc
+      if (trangThai === TrangThaiDon.DangChoDuyet) {
+        // Đơn chờ duyệt → tab Duyệt Đơn
+        this.activeTab.set('approve');
+        this.initialFilter.set(null); // Approve tab không cần filter vì chỉ hiển thị đơn chờ
+      } else {
+        // Các trạng thái khác → tab Quản Lý Đơn Đã Xử Lý
+        this.activeTab.set('admin');
+        this.initialFilter.set(trangThai);
+      }
+    } else if (this.isTruongPhong()) {
+      // Trưởng Phòng
+      if (trangThai === TrangThaiDon.DangChoDuyet) {
+        // Đơn chờ duyệt → tab Duyệt Đơn
+        this.activeTab.set('approve');
+        this.initialFilter.set(null);
+      } else {
+        // Các trạng thái khác → tab Đơn Của Tôi (xem đơn cá nhân)
+        this.activeTab.set('my-dons');
+        this.initialFilter.set(trangThai);
+      }
+    } else {
+      // Nhân viên → luôn đến tab Đơn Của Tôi
+      this.activeTab.set('my-dons');
+      this.initialFilter.set(trangThai);
+    }
   }
 }

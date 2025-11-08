@@ -3,6 +3,7 @@
     <div class="card-body">
       <!-- Filter Component -->
       <app-don-filter
+        [initialTrangThai]="initialTrangThai()"
         (filterChange)="onFilterChange($event)">
       </app-don-filter>
       

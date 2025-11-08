@@ -64,7 +64,7 @@
     <!-- Summary Cards -->
     <div class="row g-3 mb-4">
       <div class="col-md-3">
-        <div class="card border-primary">
+        <div class="card border-primary card-clickable" (click)="onCardClick(null)" title="Click để xem tất cả đơn">
           <div class="card-body text-center">
             <i class="bi bi-file-earmark-text fs-1 text-primary"></i>
             <h3 class="mt-2 mb-0">{{ stats()!.tongSoDon }}</h3>
@@ -73,7 +73,7 @@
         </div>
       </div>
       <div class="col-md-3">
-        <div class="card border-success">
+        <div class="card border-success card-clickable" (click)="onCardClick(TrangThaiDon.DaChapThuan)" title="Click để xem đơn đã chấp thuận">
           <div class="card-body text-center">
             <i class="bi bi-check-circle fs-1 text-success"></i>
             <h3 class="mt-2 mb-0">{{ stats()!.daChapThuan }}</h3>
@@ -82,7 +82,7 @@
         </div>
       </div>
       <div class="col-md-3">
-        <div class="card border-warning">
+        <div class="card border-warning card-clickable" (click)="onCardClick(TrangThaiDon.DangChoDuyet)" title="Click để xem đơn đang chờ duyệt">
           <div class="card-body text-center">
             <i class="bi bi-hourglass-split fs-1 text-warning"></i>
             <h3 class="mt-2 mb-0">{{ stats()!.dangChoDuyet }}</h3>
@@ -91,7 +91,7 @@
         </div>
       </div>
       <div class="col-md-3">
-        <div class="card border-danger">
+        <div class="card border-danger card-clickable" (click)="onCardClick(TrangThaiDon.BiTuChoi)" title="Click để xem đơn bị từ chối / đã hủy">
           <div class="card-body text-center">
             <i class="bi bi-x-circle fs-1 text-danger"></i>
             <h3 class="mt-2 mb-0">{{ stats()!.biTuChoi + stats()!.daHuy }}</h3>

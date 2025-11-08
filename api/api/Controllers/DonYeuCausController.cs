@@ -24,20 +24,20 @@ namespace api.Controllers
         /// Lấy danh sách tất cả đơn yêu cầu với filter (Giám Đốc và Trưởng Phòng)
         /// Note: Endpoint này trả về TẤT CẢ trạng thái. Nếu chỉ cần đơn đã xử lý, dùng /processed
         /// </summary>
-        // [HttpGet]
-        // [Authorize(Roles = AppRolesExtensions.GiamDocOrTruongPhong)]
-        // public async Task<ActionResult<PagedResult<DonYeuCauDto>>> GetAll([FromQuery] FilterDonYeuCauDto filter)
-        // {
-        //     try
-        //     {
-        //         var result = await _donYeuCauService.GetAllAsync(filter);
-        //         return Ok(result);
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return StatusCode(500, new { message = "Đã xảy ra lỗi khi lấy danh sách đơn", error = ex.Message });
-        //     }
-        // }
+        [HttpGet]
+        [Authorize(Roles = AppRolesExtensions.GiamDocOrTruongPhong)]
+        public async Task<ActionResult<PagedResult<DonYeuCauDto>>> GetAll([FromQuery] FilterDonYeuCauDto filter)
+        {
+            try
+            {
+                var result = await _donYeuCauService.GetAllAsync(filter);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi lấy danh sách đơn", error = ex.Message });
+            }
+        }
 
         /// <summary>
         /// Lấy danh sách đơn ĐÃ XỬ LÝ (Giám Đốc - Audit/Report)

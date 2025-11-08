@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, OnDestroy, NgZone } from '@angular/core';
+import { Component, inject, OnInit, signal, OnDestroy, NgZone, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgbModal, NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
@@ -34,6 +34,9 @@ export class DonAdminListComponent implements OnInit, OnDestroy {
   private toastr = inject(ToastrService);
   private ngZone = inject(NgZone);
   
+  // Input: Initial filter từ parent component
+  initialTrangThai = input<TrangThaiDon | null>(null);
+  
   // Data
   dons = signal<DonYeuCauDto[]>([]);
   errorMessage = signal<string | null>(null);
@@ -59,6 +62,8 @@ export class DonAdminListComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   
   ngOnInit(): void {
+    // DonFilterComponent sẽ tự động emit filterChange với initialTrangThai
+    // và trigger loadDons() thông qua onFilterChange()
   }
   
   ngOnDestroy(): void {
@@ -85,7 +90,7 @@ export class DonAdminListComponent implements OnInit, OnDestroy {
     
     // Use getProcessedDons() instead of getAll()
     // Backend will automatically exclude DangChoDuyet
-    this.donService.getProcessedDons(currentFilter)
+    this.donService.getAll(currentFilter)
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => {

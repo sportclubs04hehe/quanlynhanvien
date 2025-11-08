@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, OnInit, OnDestroy } from '@angular/core';
+import { Component, EventEmitter, Output, Input, OnInit, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgbDatepickerModule, NgbDateStruct } from '@ng-bootstrap/ng-bootstrap';
@@ -18,7 +18,8 @@ import {
   templateUrl: './don-filter.component.html',
   styleUrl: './don-filter.component.css'
 })
-export class DonFilterComponent implements OnInit, OnDestroy {
+export class DonFilterComponent implements OnInit, OnDestroy, OnChanges {
+  @Input() initialTrangThai?: TrangThaiDon | null;
   @Output() filterChange = new EventEmitter<FilterDonYeuCauDto>();
   @Output() resetFilter = new EventEmitter<void>();
   
@@ -45,6 +46,11 @@ export class DonFilterComponent implements OnInit, OnDestroy {
   }));
   
   ngOnInit(): void {
+    // Apply initial filter nếu có
+    if (this.initialTrangThai !== undefined && this.initialTrangThai !== null) {
+      this.selectedTrangThai = this.initialTrangThai;
+    }
+    
     // Setup search debounce - 500ms delay
     this.searchSubject$
       .pipe(
@@ -58,6 +64,17 @@ export class DonFilterComponent implements OnInit, OnDestroy {
     
     // Initialize with default filter (immediate)
     this.emitFilterChange();
+  }
+  
+  ngOnChanges(changes: SimpleChanges): void {
+    // Khi initialTrangThai thay đổi từ parent
+    if (changes['initialTrangThai'] && !changes['initialTrangThai'].firstChange) {
+      const newValue = changes['initialTrangThai'].currentValue;
+      if (newValue !== undefined && newValue !== null) {
+        this.selectedTrangThai = newValue;
+        this.emitFilterChange();
+      }
+    }
   }
   
   ngOnDestroy(): void {
