@@ -72,9 +72,9 @@ export class DonAdminListComponent implements OnInit, OnDestroy {
   }
   
   /**
-   * Load danh sách đơn ĐÃ XỬ LÝ (Admin view - Giám Đốc)
-   * Backend tự động filter: Chỉ trả về DaChapThuan, BiTuChoi, DaHuy
-   * Không bao gồm: DangChoDuyet (để Trưởng Phòng xử lý theo workflow)
+   * Load danh sách đơn
+   * - Giám Đốc: Xem tất cả đơn toàn công ty
+   * - Trưởng Phòng: Backend tự động filter theo phòng ban
    */
   loadDons(): void {
     this.errorMessage.set(null);

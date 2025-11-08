@@ -54,7 +54,7 @@ export class DonyeucauComponent implements OnInit {
     this.activeTab.set('stats');
   }
   
-  // Define all tabs - Thứ tự: Thống Kê → Duyệt Đơn → Quản Lý Đã Xử Lý → Đơn Của Tôi
+  // Define all tabs - Thứ tự: Thống Kê → Duyệt Đơn → Quản Lý Đơn → Đơn Của Tôi
   private allTabs: Tab[] = [
     {
       id: 'stats',
@@ -74,7 +74,7 @@ export class DonyeucauComponent implements OnInit {
       label: 'Quản Lý Đơn',
       icon: 'bi-shield-lock-fill',
       component: DonAdminListComponent,
-      roles: [APP_ROLES.GIAM_DOC]
+      roles: [APP_ROLES.TRUONG_PHONG, APP_ROLES.GIAM_DOC]
     },
     {
       id: 'my-dons',
@@ -142,31 +142,19 @@ export class DonyeucauComponent implements OnInit {
   /**
    * Handle navigation từ stats component
    * Logic:
-   * - Giám Đốc: DangChoDuyet → approve tab, còn lại → admin tab
-   * - Trưởng Phòng: DangChoDuyet → approve tab, còn lại → my-dons tab
+   * - Giám Đốc/Trưởng Phòng: DangChoDuyet → approve tab, còn lại → admin tab
    * - Nhân viên: tất cả → my-dons tab
    */
   handleNavigateFromStats(trangThai: TrangThaiDon | null): void {
-    if (this.isGiamDoc()) {
-      // Giám Đốc
+    if (this.isGiamDoc() || this.isTruongPhong()) {
+      // Giám Đốc hoặc Trưởng Phòng
       if (trangThai === TrangThaiDon.DangChoDuyet) {
         // Đơn chờ duyệt → tab Duyệt Đơn
         this.activeTab.set('approve');
         this.initialFilter.set(null); // Approve tab không cần filter vì chỉ hiển thị đơn chờ
       } else {
-        // Các trạng thái khác → tab Quản Lý Đơn Đã Xử Lý
+        // Các trạng thái khác → tab Quản Lý Đơn
         this.activeTab.set('admin');
-        this.initialFilter.set(trangThai);
-      }
-    } else if (this.isTruongPhong()) {
-      // Trưởng Phòng
-      if (trangThai === TrangThaiDon.DangChoDuyet) {
-        // Đơn chờ duyệt → tab Duyệt Đơn
-        this.activeTab.set('approve');
-        this.initialFilter.set(null);
-      } else {
-        // Các trạng thái khác → tab Đơn Của Tôi (xem đơn cá nhân)
-        this.activeTab.set('my-dons');
         this.initialFilter.set(trangThai);
       }
     } else {

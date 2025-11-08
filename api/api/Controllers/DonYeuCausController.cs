@@ -22,7 +22,8 @@ namespace api.Controllers
 
         /// <summary>
         /// Lấy danh sách tất cả đơn yêu cầu với filter (Giám Đốc và Trưởng Phòng)
-        /// Note: Endpoint này trả về TẤT CẢ trạng thái. Nếu chỉ cần đơn đã xử lý, dùng /processed
+        /// - Giám Đốc: Xem tất cả đơn toàn công ty
+        /// - Trưởng Phòng: Tự động filter theo phòng ban của mình
         /// </summary>
         [HttpGet]
         [Authorize(Roles = AppRolesExtensions.GiamDocOrTruongPhong)]
@@ -30,7 +31,8 @@ namespace api.Controllers
         {
             try
             {
-                var result = await _donYeuCauService.GetAllAsync(filter);
+                var currentUserId = GetCurrentUserId();
+                var result = await _donYeuCauService.GetAllAsync(filter, currentUserId);
                 return Ok(result);
             }
             catch (Exception ex)

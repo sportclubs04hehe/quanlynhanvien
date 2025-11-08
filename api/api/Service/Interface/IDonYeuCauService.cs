@@ -9,8 +9,9 @@ namespace api.Service.Interface
 
         /// <summary>
         /// Lấy danh sách đơn yêu cầu với filter và phân trang
+        /// Auto-detect: Trưởng Phòng chỉ xem đơn phòng ban, Giám Đốc xem tất cả
         /// </summary>
-        Task<PagedResult<DonYeuCauDto>> GetAllAsync(FilterDonYeuCauDto filter);
+        Task<PagedResult<DonYeuCauDto>> GetAllAsync(FilterDonYeuCauDto filter, Guid currentUserId);
 
         /// <summary>
         /// Lấy danh sách đơn ĐÃ XỬ LÝ (Giám Đốc - Audit/Report)

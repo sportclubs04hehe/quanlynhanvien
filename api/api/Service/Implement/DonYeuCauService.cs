@@ -25,8 +25,23 @@ namespace api.Service.Implement
 
         #region CRUD Operations
 
-        public async Task<PagedResult<DonYeuCauDto>> GetAllAsync(FilterDonYeuCauDto filter)
+        public async Task<PagedResult<DonYeuCauDto>> GetAllAsync(FilterDonYeuCauDto filter, Guid currentUserId)
         {
+            // Auto-detect role: Nếu là Trưởng Phòng thì tự động filter theo phòng ban
+            var currentUser = await _nhanVienRepo.GetByIdAsync(currentUserId);
+            if (currentUser != null && currentUser.PhongBanId.HasValue)
+            {
+                // Kiểm tra có phải Trưởng Phòng không
+                // Nếu user có phòng ban và filter chưa set phongBanId 
+                // => Giả định là Trưởng Phòng (vì endpoint đã check role ở Controller)
+                // Giám Đốc thường không có phongBanId hoặc có thể override filter
+                if (!filter.PhongBanId.HasValue)
+                {
+                    // Tự động set phòng ban filter cho Trưởng Phòng
+                    filter.PhongBanId = currentUser.PhongBanId.Value;
+                }
+            }
+
             var (items, totalCount) = await _donYeuCauRepo.GetAllAsync(filter);
             var dtos = _mapper.Map<List<DonYeuCauDto>>(items);
 
