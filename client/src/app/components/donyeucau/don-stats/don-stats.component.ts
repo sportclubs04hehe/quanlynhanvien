@@ -6,6 +6,7 @@ import { DonYeuCauService } from '../../../services/don-yeu-cau.service';
 import { RoleService } from '../../../services/role.service';
 import { ThongKeDonYeuCauDto, TrangThaiDon } from '../../../types/don.model';
 import { FormsModule } from '@angular/forms';
+import { NgbDatepickerModule, NgbDateStruct } from '@ng-bootstrap/ng-bootstrap';
 
 /**
  * Component hiển thị thống kê đơn yêu cầu với charts
@@ -16,7 +17,7 @@ import { FormsModule } from '@angular/forms';
 @Component({
   selector: 'app-don-stats',
   standalone: true,
-  imports: [CommonModule, BaseChartDirective, FormsModule],
+  imports: [CommonModule, BaseChartDirective, FormsModule, NgbDatepickerModule],
   templateUrl: './don-stats.component.html',
   styleUrl: './don-stats.component.css'
 })
@@ -29,8 +30,8 @@ export class DonStatsComponent implements OnInit {
   isLoading = signal(false);
   
   // Date range filter
-  fromDate = signal<string>('');
-  toDate = signal<string>('');
+  fromDate = signal<NgbDateStruct | null>(null);
+  toDate = signal<NgbDateStruct | null>(null);
 
   // Role checks
   isGiamDoc = this.roleService.isGiamDoc;
@@ -194,8 +195,8 @@ export class DonStatsComponent implements OnInit {
   loadStats(): void {
     this.isLoading.set(true);
     
-    const from = this.fromDate() || undefined;
-    const to = this.toDate() || undefined;
+    const from = this.fromDate() ? this.ngbDateToString(this.fromDate()!) : undefined;
+    const to = this.toDate() ? this.ngbDateToString(this.toDate()!) : undefined;
     const currentUser = this.roleService['authService'].currentUser();
 
     let request;
@@ -242,9 +243,19 @@ export class DonStatsComponent implements OnInit {
    * Reset filter
    */
   resetFilter(): void {
-    this.fromDate.set('');
-    this.toDate.set('');
+    this.fromDate.set(null);
+    this.toDate.set(null);
     this.loadStats();
+  }
+
+  /**
+   * Convert NgbDateStruct to ISO string (YYYY-MM-DD)
+   */
+  private ngbDateToString(date: NgbDateStruct): string {
+    const year = date.year;
+    const month = date.month.toString().padStart(2, '0');
+    const day = date.day.toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   /**
