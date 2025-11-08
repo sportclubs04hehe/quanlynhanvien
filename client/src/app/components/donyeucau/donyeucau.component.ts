@@ -50,8 +50,14 @@ export class DonyeucauComponent implements OnInit {
   isTruongPhong = this.roleService.isTruongPhong;
   
   ngOnInit(): void {
-    // Set default tab: Thống Kê luôn là tab đầu tiên
-    this.activeTab.set('stats');
+    // Set default tab dựa vào role:
+    // - Giám Đốc/Trưởng Phòng: Duyệt Đơn (công việc chính)
+    // - Nhân Viên: Đơn Của Tôi (xem/tạo đơn)
+    if (this.isGiamDoc() || this.isTruongPhong()) {
+      this.activeTab.set('approve');
+    } else {
+      this.activeTab.set('my-dons');
+    }
   }
   
   // Define all tabs - Thứ tự: Thống Kê → Duyệt Đơn → Quản Lý Đơn → Đơn Của Tôi
