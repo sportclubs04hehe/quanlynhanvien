@@ -61,8 +61,6 @@ export class DonyeucauComponent implements OnInit {
       label: 'Thống Kê',
       icon: 'bi-bar-chart-fill',
       component: DonStatsComponent
-      // Không có roles = tất cả user đều xem được stats của mình
-      // Stats component tự handle logic: Giám Đốc thấy toàn công ty, Nhân viên thấy của mình
     },
     {
       id: 'approve',
@@ -110,6 +108,8 @@ export class DonyeucauComponent implements OnInit {
    * Switch to a tab
    */
   switchTab(tabId: TabType): void {
+    // Reset filter khi user tự switch tab (không phải từ stats navigation)
+    this.initialFilter.set(null);
     this.activeTab.set(tabId);
   }
   

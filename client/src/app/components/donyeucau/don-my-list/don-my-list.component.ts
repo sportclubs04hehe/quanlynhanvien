@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, OnDestroy, NgZone, input } from '@angular/core';
+import { Component, inject, OnInit, signal, OnDestroy, NgZone, input, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgbModal, NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
@@ -26,7 +26,7 @@ import { DonCreateEditComponent } from '../don-create-edit/don-create-edit.compo
   templateUrl: './don-my-list.component.html',
   styleUrl: './don-my-list.component.css'
 })
-export class DonMyListComponent implements OnInit, OnDestroy {
+export class DonMyListComponent implements OnInit, OnDestroy, OnChanges {
   private modal = inject(NgbModal);
   private donService = inject(DonYeuCauService);
   private spinner = inject(SpinnerService);
@@ -65,6 +65,22 @@ export class DonMyListComponent implements OnInit, OnDestroy {
       this.selectedTrangThai.set(initialFilter);
     }
     this.loadDons();
+  }
+  
+  ngOnChanges(changes: SimpleChanges): void {
+    // Khi initialTrangThai thay đổi từ parent
+    if (changes['initialTrangThai'] && !changes['initialTrangThai'].firstChange) {
+      const newValue = changes['initialTrangThai'].currentValue;
+      
+      if (newValue === null) {
+        // Reset filter khi parent gửi null
+        this.clearFilters();
+      } else if (newValue !== undefined) {
+        // Apply filter mới
+        this.selectedTrangThai.set(newValue);
+        this.loadDons();
+      }
+    }
   }
   
   ngOnDestroy(): void {

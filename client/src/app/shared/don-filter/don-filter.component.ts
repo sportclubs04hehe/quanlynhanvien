@@ -70,7 +70,12 @@ export class DonFilterComponent implements OnInit, OnDestroy, OnChanges {
     // Khi initialTrangThai thay đổi từ parent
     if (changes['initialTrangThai'] && !changes['initialTrangThai'].firstChange) {
       const newValue = changes['initialTrangThai'].currentValue;
-      if (newValue !== undefined && newValue !== null) {
+      
+      if (newValue === null) {
+        // Reset filter khi parent gửi null
+        this.onReset();
+      } else if (newValue !== undefined) {
+        // Apply filter mới
         this.selectedTrangThai = newValue;
         this.emitFilterChange();
       }
