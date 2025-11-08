@@ -139,13 +139,15 @@
                         <i class="bi bi-eye"></i>
                       </button>
                       
-                      <!-- Delete (Soft delete for audit trail) -->
-                      <button 
-                        class="btn btn-outline-danger"
-                        (click)="deleteDon(don)"
-                        title="Xóa đơn (giữ lịch sử)">
-                        <i class="bi bi-trash"></i>
-                      </button>
+                      <!-- Delete (only DangChoDuyet and DaHuy) -->
+                      @if (canDelete(don)) {
+                        <button 
+                          class="btn btn-outline-danger"
+                          (click)="deleteDon(don)"
+                          title="Xóa đơn">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      }
                     </div>
                   </td>
                 </tr>

@@ -6,7 +6,7 @@ import { Subject, takeUntil, finalize } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { DonYeuCauService } from '../../../services/don-yeu-cau.service';
 import { SpinnerService } from '../../../services/spinner.service';
-import { DonYeuCauDto, FilterDonYeuCauDto, LoaiDonYeuCau, TrangThaiDon } from '../../../types/don.model';
+import { DonYeuCauDto, FilterDonYeuCauDto, LoaiDonYeuCau, TrangThaiDon, canDeleteDon } from '../../../types/don.model';
 import { DonStatusBadgeComponent } from '../../../shared/don-status-badge/don-status-badge.component';
 import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
 import { DonDetailComponent } from '../don-detail/don-detail.component';
@@ -169,6 +169,15 @@ export class DonAdminListComponent implements OnInit, OnDestroy {
         });
       }, 0);
     });
+  }
+  
+  /**
+   * Check if don can be deleted
+   * Chỉ cho phép xóa: DangChoDuyet và DaHuy
+   * KHÔNG cho phép xóa: DaChapThuan và BiTuChoi
+   */
+  canDelete(don: DonYeuCauDto): boolean {
+    return canDeleteDon(don.trangThai);
   }
   
   /**

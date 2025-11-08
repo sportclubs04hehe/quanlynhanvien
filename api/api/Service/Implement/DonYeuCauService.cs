@@ -141,15 +141,34 @@ namespace api.Service.Implement
             if (don == null)
                 return false;
 
-            // Giám Đốc có thể xóa bất kỳ đơn nào
-            // Nhân viên chỉ xóa được đơn của mình khi đang chờ duyệt
+            // CRITICAL: Không được xóa đơn đã chấp thuận hoặc bị từ chối (Audit compliance)
+            if (don.TrangThai == TrangThaiDon.DaChapThuan)
+            {
+                throw new InvalidOperationException(
+                    "Không thể xóa đơn đã được chấp thuận. Đây là chứng từ có giá trị pháp lý và cần được lưu trữ theo quy định.");
+            }
+
+            if (don.TrangThai == TrangThaiDon.BiTuChoi)
+            {
+                throw new InvalidOperationException(
+                    "Không thể xóa đơn đã bị từ chối. Lịch sử này cần được lưu trữ để audit và phân tích.");
+            }
+
+            // Nhân viên: Chỉ xóa được đơn của mình khi DangChoDuyet hoặc DaHuy
             if (!isGiamDoc)
             {
                 if (don.NhanVienId != userId)
                     throw new UnauthorizedAccessException("Bạn không có quyền xóa đơn này");
 
-                if (don.TrangThai != TrangThaiDon.DangChoDuyet)
-                    throw new InvalidOperationException("Chỉ có thể xóa đơn đang chờ duyệt");
+                // Nhân viên chỉ xóa đơn chưa duyệt hoặc đã hủy
+                if (don.TrangThai != TrangThaiDon.DangChoDuyet && 
+                    don.TrangThai != TrangThaiDon.DaHuy)
+                    throw new InvalidOperationException("Chỉ có thể xóa đơn đang chờ duyệt hoặc đã hủy");
+            }
+            else
+            {
+                // Giám Đốc/Trưởng Phòng: Có thể xóa DangChoDuyet và DaHuy
+                // ĐÃ CHECK: Không xóa DaChapThuan và BiTuChoi ở trên
             }
 
             return await _donYeuCauRepo.DeleteAsync(donId);

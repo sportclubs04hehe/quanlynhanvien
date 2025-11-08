@@ -79,6 +79,16 @@ export function canCancelDon(trangThai: TrangThaiDon): boolean {
   return trangThai === TrangThaiDon.DangChoDuyet;
 }
 
+/**
+ * Kiểm tra đơn có thể xóa không
+ * - Chỉ cho phép xóa đơn: DangChoDuyet và DaHuy
+ * - KHÔNG cho phép xóa: DaChapThuan (audit compliance) và BiTuChoi (lưu lịch sử)
+ */
+export function canDeleteDon(trangThai: TrangThaiDon): boolean {
+  return trangThai === TrangThaiDon.DangChoDuyet || 
+         trangThai === TrangThaiDon.DaHuy;
+}
+
 ////////////////////////////////////////////////////////////////////////////
 // DTOs
 ////////////////////////////////////////////////////////////////////////////
