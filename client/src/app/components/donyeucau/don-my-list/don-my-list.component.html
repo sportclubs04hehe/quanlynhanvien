@@ -9,13 +9,13 @@
           </label>
           <select 
             class="form-select"
-            [value]="selectedLoaiDon() ?? ''"
-            (change)="selectedLoaiDon.set($any($event.target).value || null); onFilterChange()">
-            <option value="">-- Tất cả --</option>
-            <option [value]="LoaiDonYeuCau.NghiPhep">Nghỉ Phép</option>
-            <option [value]="LoaiDonYeuCau.LamThemGio">Làm Thêm Giờ</option>
-            <option [value]="LoaiDonYeuCau.DiMuon">Đi Muộn</option>
-            <option [value]="LoaiDonYeuCau.CongTac">Công Tác</option>
+            [(ngModel)]="selectedLoaiDon"
+            (ngModelChange)="onFilterChange()">
+            <option [ngValue]="null">-- Tất cả --</option>
+            <option [ngValue]="LoaiDonYeuCau.NghiPhep">Nghỉ Phép</option>
+            <option [ngValue]="LoaiDonYeuCau.LamThemGio">Làm Thêm Giờ</option>
+            <option [ngValue]="LoaiDonYeuCau.DiMuon">Đi Muộn</option>
+            <option [ngValue]="LoaiDonYeuCau.CongTac">Công Tác</option>
           </select>
         </div>
         
@@ -25,13 +25,13 @@
           </label>
           <select 
             class="form-select"
-            [value]="selectedTrangThai() ?? ''"
-            (change)="selectedTrangThai.set($any($event.target).value || null); onFilterChange()">
-            <option value="">-- Tất cả --</option>
-            <option [value]="TrangThaiDon.DangChoDuyet">Đang Chờ Duyệt</option>
-            <option [value]="TrangThaiDon.DaChapThuan">Đã Chấp Thuận</option>
-            <option [value]="TrangThaiDon.BiTuChoi">Bị Từ Chối</option>
-            <option [value]="TrangThaiDon.DaHuy">Đã Hủy</option>
+            [(ngModel)]="selectedTrangThai"
+            (ngModelChange)="onFilterChange()">
+            <option [ngValue]="null">-- Tất cả --</option>
+            <option [ngValue]="TrangThaiDon.DangChoDuyet">Đang Chờ Duyệt</option>
+            <option [ngValue]="TrangThaiDon.DaChapThuan">Đã Chấp Thuận</option>
+            <option [ngValue]="TrangThaiDon.BiTuChoi">Bị Từ Chối</option>
+            <option [ngValue]="TrangThaiDon.DaHuy">Đã Hủy</option>
           </select>
         </div>
         

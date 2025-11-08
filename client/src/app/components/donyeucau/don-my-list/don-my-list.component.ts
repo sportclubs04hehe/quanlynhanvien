@@ -47,7 +47,7 @@ export class DonMyListComponent implements OnInit, OnDestroy, OnChanges {
   totalCount = signal(0);
   totalPages = signal(0);
   
-  // Filter
+  // Filter - Using writable signals for ngModel compatibility
   selectedLoaiDon = signal<LoaiDonYeuCau | null>(null);
   selectedTrangThai = signal<TrangThaiDon | null>(null);
   
