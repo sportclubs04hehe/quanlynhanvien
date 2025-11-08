@@ -65,21 +65,21 @@ export class DonyeucauComponent implements OnInit {
     {
       id: 'approve',
       label: 'Duyệt Đơn',
-      icon: 'bi-clipboard-check',
+      icon: 'bi-clipboard-check-fill',
       component: DonApproveListComponent,
       roles: [APP_ROLES.TRUONG_PHONG, APP_ROLES.GIAM_DOC]
     },
     {
       id: 'admin',
       label: 'Quản Lý Đơn',
-      icon: 'bi-shield-lock',
+      icon: 'bi-shield-lock-fill',
       component: DonAdminListComponent,
       roles: [APP_ROLES.GIAM_DOC]
     },
     {
       id: 'my-dons',
       label: 'Đơn Của Tôi',
-      icon: 'bi-file-earmark-text',
+      icon: 'bi-file-earmark-text-fill',
       component: DonMyListComponent
     }
   ];

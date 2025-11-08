@@ -9,6 +9,8 @@ import { registerLocaleData } from '@angular/common';
 import localeVi from '@angular/common/locales/vi';
 import { provideToastr } from 'ngx-toastr';
 import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
+import { NgbDateParserFormatter } from '@ng-bootstrap/ng-bootstrap';
+import { CustomDateParserFormatter } from './shared/datepicker-i18n.config';
 
 // Đăng ký locale data cho tiếng Việt
 registerLocaleData(localeVi);
@@ -23,6 +25,8 @@ export const appConfig: ApplicationConfig = {
     ),
     provideAnimations(),
     provideToastr(),
-    provideCharts(withDefaultRegisterables())
+    provideCharts(withDefaultRegisterables()),
+    // Cấu hình datepicker format dd/MM/yyyy
+    { provide: NgbDateParserFormatter, useClass: CustomDateParserFormatter }
   ]
 };
