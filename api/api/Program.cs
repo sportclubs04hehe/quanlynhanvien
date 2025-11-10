@@ -25,6 +25,9 @@ builder.Services.AddAutoMapper(typeof(Program));
 // Application Services (Repositories & Services)
 builder.Services.AddApplicationServices();
 
+// Telegram Bot Service
+builder.Services.AddTelegramBot();
+
 // Database (PostgreSQL + Entity Framework)
 builder.Services.AddApplicationDatabase(builder.Configuration);
 
@@ -45,6 +48,9 @@ var app = builder.Build();
 
 // Seed database (Roles và Admin user)
 await app.SeedDatabaseAsync();
+
+// Kiểm tra kết nối Telegram Bot
+await app.UseTelegramBotAsync();
 
 // Development-only middleware
 if (app.Environment.IsDevelopment())

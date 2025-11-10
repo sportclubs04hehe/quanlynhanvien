@@ -1,0 +1,209 @@
+<div class="telegram-settings-container">
+  <h3 class="section-title">
+    <i class="bi bi-telegram"></i>
+    Cài đặt Telegram
+  </h3>
+
+  <!-- Loading Spinner -->
+  @if (loading) {
+    <div class="text-center py-4">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Đang tải...</span>
+      </div>
+    </div>
+  }
+
+  <!-- Error Alert -->
+  @if (error) {
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      {{ error }}
+      <button type="button" class="btn-close" (click)="error = null"></button>
+    </div>
+  }
+
+  <!-- Success Alert -->
+  @if (successMessage) {
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <i class="bi bi-check-circle-fill me-2"></i>
+      {{ successMessage }}
+      <button type="button" class="btn-close" (click)="successMessage = null"></button>
+    </div>
+  }
+
+  <!-- Link Status -->
+  @if (!loading && linkStatus) {
+    <div class="card">
+      <div class="card-body">
+        <!-- Trạng thái: Đã liên kết -->
+        @if (linkStatus.isLinked) {
+          <div class="linked-status">
+            <div class="status-badge success">
+              <i class="bi bi-check-circle-fill"></i>
+              Đã liên kết
+            </div>
+            <p class="text-muted mt-3 mb-3">
+              Tài khoản của bạn đã được liên kết với Telegram. Bạn sẽ nhận được thông báo về đơn xin nghỉ qua Telegram.
+            </p>
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline-danger" (click)="unlinkTelegram()" [disabled]="loading">
+                <i class="bi bi-x-circle me-2"></i>
+                Hủy liên kết
+              </button>
+              <button class="btn btn-outline-secondary" (click)="loadLinkStatus()" [disabled]="loading">
+                <i class="bi bi-arrow-clockwise me-2"></i>
+                Làm mới
+              </button>
+            </div>
+          </div>
+        }
+
+        <!-- Trạng thái: Chưa liên kết -->
+        @if (!linkStatus.isLinked) {
+          <div class="unlinked-status">
+            <div class="status-badge warning">
+              <i class="bi bi-exclamation-circle-fill"></i>
+              Chưa liên kết
+            </div>
+            <p class="text-muted mt-3 mb-3">
+              Liên kết tài khoản với Telegram để nhận thông báo tức thời về đơn xin nghỉ.
+            </p>
+
+            <!-- Nút tạo link -->
+            @if (!showDeepLink) {
+              <div>
+                <button class="btn btn-primary" (click)="generateDeepLink()" [disabled]="loading">
+                  <i class="bi bi-telegram me-2"></i>
+                  Liên kết với Telegram
+                </button>
+              </div>
+            }
+
+            <!-- Deep Link Modal -->
+            @if (showDeepLink && generatedLink) {
+              <div class="deep-link-modal mt-3">
+                <div class="modal-content-box">
+                  <div class="modal-header-custom">
+                    <h5 class="modal-title-custom">
+                      <i class="bi bi-qr-code me-2"></i>
+                      Quét mã hoặc nhấn nút bên dưới
+                    </h5>
+                    <button type="button" class="btn-close-custom" (click)="closeDeepLink()">
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </div>
+
+                  <div class="modal-body-custom">
+                    <!-- Countdown Timer -->
+                    <div class="countdown-timer">
+                      <i class="bi bi-clock-fill me-2"></i>
+                      Link hết hạn sau: <strong>{{ getFormattedCountdown() }}</strong>
+                    </div>
+
+                    <!-- Tabs Navigation -->
+                    <ul class="nav nav-tabs mb-3">
+                      <li class="nav-item">
+                        <button 
+                          class="nav-link" 
+                          [class.active]="activeTab === 'qr'"
+                          (click)="switchTab('qr')">
+                          <i class="bi bi-qr-code me-1"></i>
+                          QR Code
+                        </button>
+                      </li>
+                      <li class="nav-item">
+                        <button 
+                          class="nav-link" 
+                          [class.active]="activeTab === 'link'"
+                          (click)="switchTab('link')">
+                          <i class="bi bi-link-45deg me-1"></i>
+                          Link
+                        </button>
+                      </li>
+                    </ul>
+
+                    <!-- Tab Content: QR Code -->
+                    @if (activeTab === 'qr') {
+                      <div class="tab-pane-qr">
+                        @if (qrCodeDataUrl) {
+                          <div class="qr-code-container">
+                            <img [src]="qrCodeDataUrl" alt="Telegram QR Code" class="qr-code-image" />
+                            <p class="qr-instruction">
+                              <i class="bi bi-phone me-1"></i>
+                              Mở Telegram trên điện thoại → Quét mã QR này
+                            </p>
+                          </div>
+                        } @else {
+                          <div class="text-center py-3">
+                            <div class="spinner-border text-primary" role="status">
+                              <span class="visually-hidden">Đang tạo QR code...</span>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    }
+
+                    <!-- Tab Content: Link -->
+                    @if (activeTab === 'link') {
+                      <div class="tab-pane-link">
+                        <!-- Instructions -->
+                        <div class="instructions">
+                          <h6>Hướng dẫn:</h6>
+                          <ol>
+                            <li>Nhấn nút "Mở Telegram" bên dưới</li>
+                            <li>Telegram sẽ mở và bot sẽ gửi tin nhắn xác nhận</li>
+                            <li>Liên kết sẽ tự động hoàn tất trong vài giây</li>
+                          </ol>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex gap-2 mb-3">
+                          <button class="btn btn-primary flex-fill" (click)="openDeepLink()">
+                            <i class="bi bi-telegram me-2"></i>
+                            Mở Telegram
+                          </button>
+                          <button class="btn btn-outline-secondary" (click)="copyDeepLink()" title="Copy link">
+                            <i class="bi bi-clipboard"></i>
+                          </button>
+                        </div>
+
+                        <!-- Direct Link (cho mobile hoặc copy) -->
+                        <div class="link-display">
+                          <input 
+                            type="text" 
+                            class="form-control form-control-sm" 
+                            [value]="generatedLink.deepLink" 
+                            readonly
+                            (click)="selectInputText($event)"
+                          />
+                        </div>
+                      </div>
+                    }
+
+                    <!-- Polling Indicator (hiển thị ở cả 2 tabs) -->
+                    <div class="polling-indicator mt-3">
+                      <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                      </div>
+                      <small class="text-muted">Đang chờ xác nhận từ Telegram...</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Info Box -->
+  <div class="info-box mt-3">
+    <i class="bi bi-info-circle me-2"></i>
+    <small class="text-muted">
+      Bot Telegram: <strong>company_manager_sp_bot</strong>
+      <br>
+      Link liên kết có hiệu lực trong 10 phút và chỉ sử dụng được 1 lần.
+    </small>
+  </div>
+</div>

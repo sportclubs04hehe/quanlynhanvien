@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace api.Migrations
 {
     /// <inheritdoc />
-    public partial class DatabaseAdded : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -75,6 +75,24 @@ namespace api.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_PhongBans", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TelegramConfigs",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    BotToken = table.Column<string>(type: "text", nullable: false),
+                    GroupChatId = table.Column<string>(type: "text", nullable: true),
+                    WebhookUrl = table.Column<string>(type: "text", nullable: true),
+                    IsEnabled = table.Column<bool>(type: "boolean", nullable: false),
+                    DonNghiPhepTemplate = table.Column<string>(type: "text", nullable: true),
+                    NgayTao = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    NgayCapNhat = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TelegramConfigs", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -270,6 +288,10 @@ namespace api.Migrations
                     DuocChapThuanBoi = table.Column<Guid>(type: "uuid", nullable: true),
                     GhiChuNguoiDuyet = table.Column<string>(type: "text", nullable: true),
                     NgayDuyet = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    DaGuiTelegram = table.Column<bool>(type: "boolean", nullable: false),
+                    ThoiGianGuiTelegram = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    TelegramMessageIds = table.Column<string>(type: "text", nullable: true),
+                    TelegramError = table.Column<string>(type: "text", nullable: true),
                     NgayTao = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     NgayCapNhat = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
@@ -291,6 +313,31 @@ namespace api.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "TelegramLinkTokens",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Token = table.Column<string>(type: "text", nullable: false),
+                    NhanVienId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamptz", nullable: false),
+                    ExpiresAt = table.Column<DateTime>(type: "timestamptz", nullable: false),
+                    IsUsed = table.Column<bool>(type: "boolean", nullable: false),
+                    UsedAt = table.Column<DateTime>(type: "timestamptz", nullable: true),
+                    TelegramChatId = table.Column<long>(type: "bigint", nullable: true),
+                    IpAddress = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TelegramLinkTokens", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TelegramLinkTokens_NhanViens_NhanVienId",
+                        column: x => x.NhanVienId,
+                        principalTable: "NhanViens",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ThongBaos",
                 columns: table => new
                 {
@@ -303,7 +350,9 @@ namespace api.Migrations
                     ThoiGianGui = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DaDoc = table.Column<bool>(type: "boolean", nullable: false),
                     ThoiGianDoc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Link = table.Column<string>(type: "text", nullable: true)
+                    Link = table.Column<string>(type: "text", nullable: true),
+                    GuiQuaTelegram = table.Column<bool>(type: "boolean", nullable: false),
+                    TelegramMessageId = table.Column<long>(type: "bigint", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -396,6 +445,17 @@ namespace api.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_TelegramLinkTokens_NhanVienId",
+                table: "TelegramLinkTokens",
+                column: "NhanVienId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TelegramLinkTokens_Token",
+                table: "TelegramLinkTokens",
+                column: "Token",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ThongBaos_DonYeuCauId",
                 table: "ThongBaos",
                 column: "DonYeuCauId");
@@ -426,6 +486,12 @@ namespace api.Migrations
 
             migrationBuilder.DropTable(
                 name: "RefreshTokens");
+
+            migrationBuilder.DropTable(
+                name: "TelegramConfigs");
+
+            migrationBuilder.DropTable(
+                name: "TelegramLinkTokens");
 
             migrationBuilder.DropTable(
                 name: "ThongBaos");

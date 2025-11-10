@@ -57,6 +57,20 @@ namespace api.Model
         /// </summary>
         public string? Link { get; set; }
 
+        #region Telegram Integration
+
+        /// <summary>
+        /// Có gửi qua Telegram không (ngoài thông báo trong hệ thống)
+        /// </summary>
+        public bool GuiQuaTelegram { get; set; } = false;
+
+        /// <summary>
+        /// Telegram Message ID (để có thể edit/delete message)
+        /// </summary>
+        public long? TelegramMessageId { get; set; }
+
+        #endregion
+
         #region Navigation Properties
 
         [ForeignKey(nameof(NhanVienId))]

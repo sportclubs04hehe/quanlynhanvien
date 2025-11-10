@@ -109,6 +109,31 @@ namespace api.Model
 
         #endregion
 
+        #region Telegram Notification Tracking
+
+        /// <summary>
+        /// Đã gửi thông báo Telegram chưa
+        /// </summary>
+        public bool DaGuiTelegram { get; set; } = false;
+
+        /// <summary>
+        /// Thời gian gửi Telegram
+        /// </summary>
+        public DateTime? ThoiGianGuiTelegram { get; set; }
+
+        /// <summary>
+        /// Message ID từ Telegram (để có thể edit/reply sau)
+        /// Lưu dưới dạng JSON nếu gửi nhiều người: {"giamdoc": 123, "truongphong": 456}
+        /// </summary>
+        public string? TelegramMessageIds { get; set; }
+
+        /// <summary>
+        /// Lỗi khi gửi Telegram (nếu có)
+        /// </summary>
+        public string? TelegramError { get; set; }
+
+        #endregion
+
         #region Audit fields
 
         public DateTime NgayTao { get; set; } = DateTime.UtcNow;

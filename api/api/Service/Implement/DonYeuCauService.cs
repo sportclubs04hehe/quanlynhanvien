@@ -4,6 +4,7 @@ using api.Model.Enums;
 using api.Repository.Interface;
 using api.Service.Interface;
 using AutoMapper;
+using System.Text.Json;
 
 namespace api.Service.Implement
 {
@@ -12,15 +13,24 @@ namespace api.Service.Implement
         private readonly IDonYeuCauRepository _donYeuCauRepo;
         private readonly INhanVienRepository _nhanVienRepo;
         private readonly IMapper _mapper;
+        private readonly ITelegramService _telegramService;
+        private readonly ILogger<DonYeuCauService> _logger;
+        private readonly IServiceScopeFactory _serviceScopeFactory;
 
         public DonYeuCauService(
             IDonYeuCauRepository donYeuCauRepo,
             INhanVienRepository nhanVienRepo,
-            IMapper mapper)
+            IMapper mapper,
+            ITelegramService telegramService,
+            ILogger<DonYeuCauService> logger,
+            IServiceScopeFactory serviceScopeFactory)
         {
             _donYeuCauRepo = donYeuCauRepo;
             _nhanVienRepo = nhanVienRepo;
             _mapper = mapper;
+            _telegramService = telegramService;
+            _logger = logger;
+            _serviceScopeFactory = serviceScopeFactory;
         }
 
         #region CRUD Operations
@@ -101,7 +111,10 @@ namespace api.Service.Implement
             // 4. Tạo đơn
             var created = await _donYeuCauRepo.CreateAsync(don);
 
-            // 5. Return DTO
+            // 5. Gửi thông báo Telegram (fire-and-forget)
+            _ = Task.Run(async () => await GuiThongBaoTelegramAsync(created, nhanVien));
+
+            // 6. Return DTO
             return _mapper.Map<DonYeuCauDto>(created);
         }
 
@@ -256,6 +269,43 @@ namespace api.Service.Implement
             var approvedDon = await _donYeuCauRepo.DuyetDonAsync(
                 donId, nguoiDuyetId, TrangThaiDon.DaChapThuan, ghiChu);
 
+            // Lưu IDs để dùng trong background task
+            var donIdCopy = approvedDon.Id;
+            var nguoiDuyetIdCopy = nguoiDuyet.Id;
+            var serviceScopeFactory = _serviceScopeFactory;
+
+            // Cập nhật Telegram message (fire-and-forget với scope mới)
+            _ = Task.Run(async () => 
+            {
+                try
+                {
+                    using var scope = serviceScopeFactory.CreateScope();
+                    var nhanVienRepo = scope.ServiceProvider.GetRequiredService<INhanVienRepository>();
+                    var donYeuCauRepo = scope.ServiceProvider.GetRequiredService<IDonYeuCauRepository>();
+                    var telegramService = scope.ServiceProvider.GetRequiredService<ITelegramService>();
+                    var logger = scope.ServiceProvider.GetRequiredService<ILogger<DonYeuCauService>>();
+
+                    // Lấy lại data từ DB
+                    var don = await donYeuCauRepo.GetByIdAsync(donIdCopy);
+                    var nguoiDuyetData = await nhanVienRepo.GetByIdAsync(nguoiDuyetIdCopy);
+
+                    if (don != null && nguoiDuyetData != null)
+                    {
+                        // 1. Cập nhật message cũ của Giám đốc
+                        await telegramService.CapNhatTrangThaiDonAsync(don, nguoiDuyetData);
+
+                        // 2. Gửi thông báo MỚI cho nhân viên
+                        await GuiThongBaoKetQuaDuyetChoNhanVienWithRepoAsync(
+                            don, nguoiDuyetData, nhanVienRepo, telegramService, logger);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    var scopedLogger = serviceScopeFactory.CreateScope().ServiceProvider.GetRequiredService<ILogger<DonYeuCauService>>();
+                    scopedLogger.LogError(ex, $"❌ Lỗi cập nhật Telegram: {ex.Message}");
+                }
+            });
+
             return _mapper.Map<DonYeuCauDto>(approvedDon);
         }
 
@@ -280,6 +330,38 @@ namespace api.Service.Implement
 
             var rejectedDon = await _donYeuCauRepo.DuyetDonAsync(
                 donId, nguoiDuyetId, TrangThaiDon.BiTuChoi, ghiChu);
+
+            // Cập nhật Telegram message (fire-and-forget)
+            var serviceScopeFactory = _serviceScopeFactory;
+            var donIdCopy = rejectedDon.Id;
+            var nguoiDuyetIdCopy = nguoiDuyet.Id;
+            
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    using var scope = serviceScopeFactory.CreateScope();
+                    var nhanVienRepo = scope.ServiceProvider.GetRequiredService<INhanVienRepository>();
+                    var donYeuCauRepo = scope.ServiceProvider.GetRequiredService<IDonYeuCauRepository>();
+                    var telegramService = scope.ServiceProvider.GetRequiredService<ITelegramService>();
+                    var logger = scope.ServiceProvider.GetRequiredService<ILogger<DonYeuCauService>>();
+                    
+                    // Lấy lại data từ DB
+                    var don = await donYeuCauRepo.GetByIdAsync(donIdCopy);
+                    var nguoiDuyetData = await nhanVienRepo.GetByIdAsync(nguoiDuyetIdCopy);
+                    
+                    if (don == null || nguoiDuyetData == null)
+                        return;
+                    
+                    await telegramService.CapNhatTrangThaiDonAsync(don, nguoiDuyetData);
+                    await GuiThongBaoKetQuaDuyetChoNhanVienWithRepoAsync(don, nguoiDuyetData, nhanVienRepo, telegramService, logger);
+                }
+                catch (Exception ex)
+                {
+                    var scopedLogger = serviceScopeFactory.CreateScope().ServiceProvider.GetRequiredService<ILogger<DonYeuCauService>>();
+                    scopedLogger.LogError(ex, $"❌ Lỗi cập nhật Telegram: {ex.Message}");
+                }
+            });
 
             return _mapper.Map<DonYeuCauDto>(rejectedDon);
         }
@@ -520,6 +602,101 @@ namespace api.Service.Implement
 
             // NgayTao luôn là UTC từ default value trong model
             don.NgayTao = DateTime.SpecifyKind(don.NgayTao, DateTimeKind.Utc);
+        }
+
+        #endregion
+
+        #region Telegram Helper Methods
+
+        /// <summary>
+        /// Gửi thông báo Telegram khi tạo đơn mới
+        /// </summary>
+        private async Task GuiThongBaoTelegramAsync(DonYeuCau don, NhanVien nguoiGui)
+        {
+            try
+            {
+                var messageIds = await _telegramService.GuiThongBaoDonXinNghiAsync(don, nguoiGui);
+
+                if (messageIds.Any())
+                {
+                    don.DaGuiTelegram = true;
+                    don.ThoiGianGuiTelegram = DateTime.UtcNow;
+                    don.TelegramMessageIds = JsonSerializer.Serialize(messageIds);
+                    await _donYeuCauRepo.UpdateAsync(don);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Lỗi gửi thông báo Telegram");
+                don.TelegramError = ex.Message;
+                await _donYeuCauRepo.UpdateAsync(don);
+            }
+        }
+
+        /// <summary>
+        /// Gửi thông báo kết quả duyệt cho nhân viên (dùng trong background task với scoped services)
+        /// </summary>
+        private static async Task GuiThongBaoKetQuaDuyetChoNhanVienWithRepoAsync(
+            DonYeuCau don, 
+            NhanVien nguoiDuyet,
+            INhanVienRepository nhanVienRepo,
+            ITelegramService telegramService,
+            ILogger<DonYeuCauService> logger)
+        {
+            try
+            {
+                var nhanVien = await nhanVienRepo.GetByIdAsync(don.NhanVienId);
+                
+                if (nhanVien == null || string.IsNullOrEmpty(nhanVien.TelegramChatId))
+                    return;
+
+                // Tạo nội dung thông báo
+                var trangThaiIcon = don.TrangThai switch
+                {
+                    TrangThaiDon.DaChapThuan => "✅",
+                    TrangThaiDon.BiTuChoi => "❌",
+                    _ => "ℹ️"
+                };
+
+                var trangThaiText = don.TrangThai switch
+                {
+                    TrangThaiDon.DaChapThuan => "ĐÃ ĐƯỢC CHẤP THUẬN",
+                    TrangThaiDon.BiTuChoi => "BỊ TỪ CHỐI",
+                    _ => "ĐÃ CẬP NHẬT"
+                };
+
+                var loaiDonText = don.LoaiDon switch
+                {
+                    LoaiDonYeuCau.NghiPhep => "nghỉ phép",
+                    LoaiDonYeuCau.LamThemGio => "làm thêm giờ",
+                    LoaiDonYeuCau.DiMuon => "đi muộn",
+                    LoaiDonYeuCau.CongTac => "công tác",
+                    _ => "yêu cầu"
+                };
+
+                var message = $"{trangThaiIcon} <b>ĐƠN {loaiDonText.ToUpper()} {trangThaiText}</b>\n\n";
+                message += $"<b>👤 Người duyệt:</b> {nguoiDuyet.TenDayDu}\n";
+                message += $"<b>📅 Ngày duyệt:</b> {DateTime.UtcNow:dd/MM/yyyy HH:mm}\n";
+
+                // Thêm thông tin chi tiết đơn
+                if (don.LoaiDon == LoaiDonYeuCau.NghiPhep)
+                {
+                    message += $"<b>📅Từ:</b> {don.NgayBatDau:dd/MM/yyyy} - <b>Đến:</b> {don.NgayKetThuc:dd/MM/yyyy}\n";
+                }
+
+                message += $"\n<b>📝 Lý do của bạn:</b> {don.LyDo}\n";
+
+                if (!string.IsNullOrEmpty(don.GhiChuNguoiDuyet))
+                {
+                    message += $"\n<b>💬 Ghi chú từ người duyệt:</b>\n{don.GhiChuNguoiDuyet}\n";
+                }
+
+                await telegramService.GuiTinNhanAsync(nhanVien.TelegramChatId, message);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "❌ Lỗi gửi thông báo kết quả duyệt");
+            }
         }
 
         #endregion

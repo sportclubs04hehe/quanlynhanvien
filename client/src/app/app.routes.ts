@@ -9,6 +9,7 @@ import { QuanlynhanvienComponent } from './components/quanlynhanvien/quanlynhanv
 import { DonyeucauComponent } from './components/donyeucau/donyeucau.component';
 import { APP_ROLES } from './constants/roles.constants';
 import { ActiveSessionsComponent } from './components/account/active-sessions/active-sessions.component';
+import { TelegramSettingsComponent } from './components/account/telegram-settings/telegram-settings.component';
 
 export const routes: Routes = [
   {
@@ -48,6 +49,12 @@ export const routes: Routes = [
   {
     path: 'don-yeu-cau',
     component: DonyeucauComponent,
+    canActivate: [authGuard]
+  },
+
+  {
+    path: 'telegram',
+    component: TelegramSettingsComponent,
     canActivate: [authGuard]
   },
 

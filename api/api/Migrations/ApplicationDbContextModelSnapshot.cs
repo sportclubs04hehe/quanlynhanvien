@@ -176,6 +176,9 @@ namespace api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("DaGuiTelegram")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("DiaDiemCongTac")
                         .HasColumnType("text");
 
@@ -224,6 +227,15 @@ namespace api.Migrations
 
                     b.Property<decimal?>("SoGioLamThem")
                         .HasColumnType("numeric");
+
+                    b.Property<string>("TelegramError")
+                        .HasColumnType("text");
+
+                    b.Property<string>("TelegramMessageIds")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ThoiGianGuiTelegram")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("TrangThai")
                         .HasColumnType("integer");
@@ -344,6 +356,80 @@ namespace api.Migrations
                     b.ToTable("RefreshTokens");
                 });
 
+            modelBuilder.Entity("api.Model.TelegramConfig", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BotToken")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("DonNghiPhepTemplate")
+                        .HasColumnType("text");
+
+                    b.Property<string>("GroupChatId")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("NgayCapNhat")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("NgayTao")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("WebhookUrl")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TelegramConfigs");
+                });
+
+            modelBuilder.Entity("api.Model.TelegramLinkToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("IpAddress")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsUsed")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("NhanVienId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long?>("TelegramChatId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UsedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NhanVienId");
+
+                    b.HasIndex("Token")
+                        .IsUnique();
+
+                    b.ToTable("TelegramLinkTokens");
+                });
+
             modelBuilder.Entity("api.Model.ThongBao", b =>
                 {
                     b.Property<Guid>("Id")
@@ -356,6 +442,9 @@ namespace api.Migrations
                     b.Property<Guid?>("DonYeuCauId")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("GuiQuaTelegram")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Link")
                         .HasColumnType("text");
 
@@ -364,6 +453,9 @@ namespace api.Migrations
 
                     b.Property<string>("NoiDung")
                         .HasColumnType("text");
+
+                    b.Property<long?>("TelegramMessageId")
+                        .HasColumnType("bigint");
 
                     b.Property<DateTime?>("ThoiGianDoc")
                         .HasColumnType("timestamp with time zone");
@@ -561,6 +653,17 @@ namespace api.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("api.Model.TelegramLinkToken", b =>
+                {
+                    b.HasOne("api.Model.NhanVien", "NhanVien")
+                        .WithMany()
+                        .HasForeignKey("NhanVienId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("NhanVien");
                 });
 
             modelBuilder.Entity("api.Model.ThongBao", b =>

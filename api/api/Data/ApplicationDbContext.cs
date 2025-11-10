@@ -19,6 +19,8 @@ namespace api.Data
         public DbSet<DonYeuCau> DonYeuCaus => Set<DonYeuCau>();
         public DbSet<ThongBao> ThongBaos => Set<ThongBao>();
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+        public DbSet<TelegramConfig> TelegramConfigs => Set<TelegramConfig>();
+        public DbSet<TelegramLinkToken> TelegramLinkTokens => Set<TelegramLinkToken>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -77,6 +79,29 @@ namespace api.Data
 
             builder.Entity<RefreshToken>()
                 .Property(rt => rt.RevokedAt)
+                .HasColumnType("timestamptz");
+
+            // TelegramLinkToken configuration
+            builder.Entity<TelegramLinkToken>()
+                .HasIndex(t => t.Token)
+                .IsUnique();
+
+            builder.Entity<TelegramLinkToken>()
+                .HasOne(t => t.NhanVien)
+                .WithMany()
+                .HasForeignKey(t => t.NhanVienId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<TelegramLinkToken>()
+                .Property(t => t.CreatedAt)
+                .HasColumnType("timestamptz");
+
+            builder.Entity<TelegramLinkToken>()
+                .Property(t => t.ExpiresAt)
+                .HasColumnType("timestamptz");
+
+            builder.Entity<TelegramLinkToken>()
+                .Property(t => t.UsedAt)
                 .HasColumnType("timestamptz");
         }
     }
