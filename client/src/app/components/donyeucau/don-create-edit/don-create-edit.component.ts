@@ -43,6 +43,8 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
   hoveredDate: NgbDate | null = null;
   fromDate: NgbDate | null = null;
   toDate: NgbDate | null = null;
+  minDate!: NgbDate; // Minimum date = today (không chọn quá khứ)
+  requestedLeaveDates: Set<string> = new Set(); // Ngày đã nghỉ (format: yyyy-MM-dd)
   
   // Expose enum to template
   readonly LoaiDonYeuCau = LoaiDonYeuCau;
@@ -52,6 +54,15 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
   }));
   
   ngOnInit(): void {
+    // Set minDate to today
+    const today = new Date();
+    this.minDate = new NgbDate(today.getFullYear(), today.getMonth() + 1, today.getDate());
+    
+    // Load ngày đã nghỉ (chỉ cho loại Nghỉ Phép và mode create)
+    if (this.mode === 'create') {
+      this.loadRequestedLeaveDates();
+    }
+    
     this.initForm();
     
     if (this.mode === 'edit' && this.donId) {
@@ -74,6 +85,32 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
    */
   canDeactivate(): boolean {
     return !this.isDirty;
+  }
+  
+  /**
+   * Load danh sách ngày đã nghỉ để highlight
+   */
+  private loadRequestedLeaveDates(): void {
+    // Load 1 năm tới (đủ để hiển thị trên datepicker)
+    const fromDate = new Date();
+    const toDate = new Date();
+    toDate.setFullYear(toDate.getFullYear() + 1);
+    
+    this.donService.getNgayDaNghi(fromDate, toDate)
+      .subscribe({
+        next: (dates) => {
+          // Convert to Set for fast lookup
+          this.requestedLeaveDates = new Set(
+            dates.map(d => {
+              const date = new Date(d);
+              return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+            })
+          );
+        },
+        error: (error) => {
+          console.error('Error loading requested leave dates:', error);
+        }
+      });
   }
   
   /**
@@ -250,7 +287,9 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
           }, 0);
         },
         error: (error) => {
-          this.errorMessage.set('Không thể tạo đơn. Vui lòng thử lại.');
+          // Extract error message from backend
+          const message = error.error?.message || 'Không thể tạo đơn. Vui lòng thử lại.';
+          this.errorMessage.set(message);
           console.error('Error creating don:', error);
         }
       });
@@ -280,7 +319,9 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
           }, 0);
         },
         error: (error) => {
-          this.errorMessage.set('Không thể cập nhật đơn. Vui lòng thử lại.');
+          // Extract error message from backend
+          const message = error.error?.message || 'Không thể cập nhật đơn. Vui lòng thử lại.';
+          this.errorMessage.set(message);
           console.error('Error updating don:', error);
         }
       });
@@ -470,6 +511,23 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
       this.isInside(date) ||
       this.isHovered(date)
     );
+  }
+  
+  /**
+   * Mark dates as disabled (for ngbDatepicker)
+   * Currently not used but available for future enhancements
+   */
+  isDisabled = (date: NgbDate, current?: { month: number; year: number }) => {
+    // Can be used to disable specific dates (e.g., already requested leave days)
+    return false;
+  }
+  
+  /**
+   * Check if a date is already requested for leave
+   */
+  isRequestedLeaveDate(date: NgbDate): boolean {
+    const dateKey = `${date.year}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`;
+    return this.requestedLeaveDates.has(dateKey);
   }
 
   validateInput(currentValue: NgbDate | null, input: string): NgbDate | null {

@@ -9,7 +9,7 @@ import { TelegramSettingsComponent } from '../account/telegram-settings/telegram
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [RouterLinkActive, RouterLink, CommonModule, HasRoleDirective, TelegramSettingsComponent],
+  imports: [RouterLinkActive, RouterLink, CommonModule, HasRoleDirective],
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.css'
 })

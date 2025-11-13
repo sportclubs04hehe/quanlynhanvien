@@ -326,6 +326,27 @@ namespace api.Controllers
             }
         }
 
+        /// <summary>
+        /// Lấy danh sách ngày đã nghỉ phép (đã được chấp thuận)
+        /// Dùng để highlight trên datepicker
+        /// </summary>
+        [HttpGet("ngay-da-nghi")]
+        public async Task<ActionResult<List<DateTime>>> GetNgayDaNghi(
+            [FromQuery] DateTime? fromDate = null,
+            [FromQuery] DateTime? toDate = null)
+        {
+            try
+            {
+                var currentUserId = GetCurrentUserId();
+                var dates = await _donYeuCauService.GetNgayDaNghiAsync(currentUserId, fromDate, toDate);
+                return Ok(dates);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi", error = ex.Message });
+            }
+        }
+
         #endregion
 
         #region Thống kê

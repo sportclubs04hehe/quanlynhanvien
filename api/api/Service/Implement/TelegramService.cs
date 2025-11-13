@@ -59,24 +59,45 @@ namespace api.Service.Implement
         {
             var messageIds = new Dictionary<string, long>();
 
+            _logger.LogInformation("🔔 [TELEGRAM] Bắt đầu gửi thông báo đơn ID: {DonId}, Người gửi: {NguoiGui}",
+                donYeuCau.Id, nguoiGui.TenDayDu);
+
             if (_botClient == null || !_isEnabled)
             {
-                _logger.LogWarning("⚠️ Telegram không được bật hoặc chưa cấu hình");
+                _logger.LogWarning("⚠️ [TELEGRAM] Bot không được bật hoặc chưa cấu hình. IsEnabled: {IsEnabled}, BotClient: {BotClient}",
+                    _isEnabled, _botClient != null);
                 return messageIds;
             }
 
             try
             {
                 // Tìm giám đốc (hoặc trưởng phòng) để gửi thông báo
+                _logger.LogInformation("🔍 [TELEGRAM] Đang tìm người duyệt...");
                 var nguoiNhanThongBao = await TimNguoiDuyetDonAsync(donYeuCau, nguoiGui);
 
-                if (nguoiNhanThongBao == null || string.IsNullOrEmpty(nguoiNhanThongBao.TelegramChatId))
+                if (nguoiNhanThongBao == null)
+                {
+                    _logger.LogWarning("⚠️ [TELEGRAM] Không tìm thấy người duyệt (Giám Đốc hoặc Trưởng Phòng) cho đơn ID: {DonId}", donYeuCau.Id);
                     return messageIds;
+                }
+
+                if (string.IsNullOrEmpty(nguoiNhanThongBao.TelegramChatId))
+                {
+                    _logger.LogWarning("⚠️ [TELEGRAM] Người duyệt {NguoiDuyet} chưa liên kết Telegram", nguoiNhanThongBao.TenDayDu);
+                    return messageIds;
+                }
+
+                _logger.LogInformation("✅ [TELEGRAM] Tìm thấy người duyệt: {NguoiDuyet}, ChatId: {ChatId}",
+                    nguoiNhanThongBao.TenDayDu, nguoiNhanThongBao.TelegramChatId);
+
+                _logger.LogInformation("✅ [TELEGRAM] Tìm thấy người duyệt: {NguoiDuyet}, ChatId: {ChatId}",
+                    nguoiNhanThongBao.TenDayDu, nguoiNhanThongBao.TelegramChatId);
 
                 // Tạo nội dung tin nhắn
                 var message = TaoNoiDungThongBao(donYeuCau, nguoiGui);
 
                 // Gửi tin nhắn
+                _logger.LogInformation("📤 [TELEGRAM] Đang gửi message tới ChatId: {ChatId}...", nguoiNhanThongBao.TelegramChatId);
                 var sentMessage = await _botClient.SendMessage(
                     chatId: nguoiNhanThongBao.TelegramChatId,
                     text: message,
@@ -84,16 +105,18 @@ namespace api.Service.Implement
                 );
 
                 messageIds.Add(nguoiNhanThongBao.TelegramChatId, sentMessage.MessageId);
+                _logger.LogInformation("✅ [TELEGRAM] Gửi thành công! MessageId: {MessageId}", sentMessage.MessageId);
+
                 return messageIds;
             }
             catch (ApiRequestException ex)
             {
-                _logger.LogError(ex, $"❌ Lỗi API Telegram: {ex.Message}");
+                _logger.LogError(ex, "❌ [TELEGRAM] Lỗi API Telegram: {ErrorCode} - {Message}", ex.ErrorCode, ex.Message);
                 throw;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Lỗi gửi thông báo Telegram");
+                _logger.LogError(ex, "❌ [TELEGRAM] Lỗi gửi thông báo Telegram");
                 throw;
             }
         }
@@ -197,26 +220,54 @@ namespace api.Service.Implement
         /// </summary>
         private async Task<NhanVien?> TimNguoiDuyetDonAsync(DonYeuCau donYeuCau, NhanVien nguoiGui)
         {
-            // Ưu tiên 1: Tìm Giám Đốc (role = GiamDoc)
-            var giamDoc = await _context.NhanViens
-                .Include(nv => nv.User)
-                .Include(nv => nv.ChucVu)
-                .Where(nv => nv.ChucVu != null && nv.ChucVu.TenChucVu.Contains("Giám Đốc"))
-                .FirstOrDefaultAsync();
+            _logger.LogInformation("🔍 [TELEGRAM] Tìm Giám Đốc có role '{Role}' và đã liên kết Telegram...",
+                AppRolesExtensions.GiamDoc);
 
-            if (giamDoc != null && !string.IsNullOrEmpty(giamDoc.TelegramChatId))
-                return giamDoc;
+            // Ưu tiên 1: Tìm Giám Đốc (role = GiamDoc trong AspNetUserRoles)
+            var giamDoc = await (from nv in _context.NhanViens
+                                 join user in _context.Users on nv.Id equals user.Id
+                                 join userRole in _context.UserRoles on user.Id equals userRole.UserId
+                                 join role in _context.Roles on userRole.RoleId equals role.Id
+                                 where role.Name == AppRolesExtensions.GiamDoc
+                                    && !string.IsNullOrEmpty(nv.TelegramChatId)
+                                 select nv)
+                                 .FirstOrDefaultAsync();
 
-            // Ưu tiên 2: Tìm Trưởng phòng của người gửi
-            if (nguoiGui.QuanLyId.HasValue)
+            if (giamDoc != null)
             {
-                var truongPhong = await _context.NhanViens
-                    .FirstOrDefaultAsync(nv => nv.Id == nguoiGui.QuanLyId.Value);
-
-                if (truongPhong != null && !string.IsNullOrEmpty(truongPhong.TelegramChatId))
-                    return truongPhong;
+                _logger.LogInformation("✅ [TELEGRAM] Tìm thấy Giám Đốc: {TenGiamDoc}, ChatId: {ChatId}",
+                    giamDoc.TenDayDu, giamDoc.TelegramChatId);
+                return giamDoc;
             }
 
+            _logger.LogWarning("⚠️ [TELEGRAM] Không tìm thấy Giám Đốc có role '{Role}' và đã liên kết Telegram",
+                AppRolesExtensions.GiamDoc);
+
+            // Ưu tiên 2: Tìm Trưởng phòng của người gửi (người quản lý trực tiếp)
+            if (nguoiGui.QuanLyId.HasValue)
+            {
+                _logger.LogInformation("🔍 [TELEGRAM] Tìm Trưởng Phòng (QuanLyId: {QuanLyId})...", nguoiGui.QuanLyId.Value);
+
+                var truongPhong = await _context.NhanViens
+                    .FirstOrDefaultAsync(nv => nv.Id == nguoiGui.QuanLyId.Value
+                                             && !string.IsNullOrEmpty(nv.TelegramChatId));
+
+                if (truongPhong != null)
+                {
+                    _logger.LogInformation("✅ [TELEGRAM] Tìm thấy Trưởng Phòng: {TenTruongPhong}, ChatId: {ChatId}",
+                        truongPhong.TenDayDu, truongPhong.TelegramChatId);
+                    return truongPhong;
+                }
+
+                _logger.LogWarning("⚠️ [TELEGRAM] Trưởng Phòng (ID: {QuanLyId}) chưa liên kết Telegram", nguoiGui.QuanLyId.Value);
+            }
+            else
+            {
+                _logger.LogWarning("⚠️ [TELEGRAM] Nhân viên {NhanVien} không có QuanLyId (không có trưởng phòng)",
+                    nguoiGui.TenDayDu);
+            }
+
+            _logger.LogError("❌ [TELEGRAM] Không tìm thấy người duyệt nào (Giám Đốc hoặc Trưởng Phòng) có Telegram");
             return null;
         }
 
@@ -227,10 +278,10 @@ namespace api.Service.Implement
         {
             var loaiDon = donYeuCau.LoaiDon switch
             {
-                LoaiDonYeuCau.NghiPhep => "🏖️ NGHỈ PHÉP",
-                LoaiDonYeuCau.LamThemGio => "⏰ LÀM THÊM GIỜ",
-                LoaiDonYeuCau.DiMuon => "🕐 ĐI MUỘN",
-                LoaiDonYeuCau.CongTac => "✈️ CÔNG TÁC",
+                LoaiDonYeuCau.NghiPhep => "ĐƠN XIN NGHỈ PHÉP",
+                LoaiDonYeuCau.LamThemGio => "ĐƠN LÀM THÊM GIỜ",
+                LoaiDonYeuCau.DiMuon => "ĐƠN ĐI MUỘN",
+                LoaiDonYeuCau.CongTac => "ĐƠN CÔNG TÁC",
                 _ => "📋 ĐƠN YÊU CẦU"
             };
 
@@ -242,25 +293,27 @@ namespace api.Service.Implement
             switch (donYeuCau.LoaiDon)
             {
                 case LoaiDonYeuCau.NghiPhep:
-                    message += $"<b>📅 Từ ngày:</b> {donYeuCau.NgayBatDau:dd/MM/yyyy}\n";
-                    message += $"<b>📅 Đến ngày:</b> {donYeuCau.NgayKetThuc:dd/MM/yyyy}\n";
+                    message += $"<b>📄 Loại đơn:</b> Nghỉ phép\n";
+                    message += $"<b>📅 Thời gian nghỉ:</b> {donYeuCau.NgayBatDau:dd/MM/yyyy} → {donYeuCau.NgayKetThuc:dd/MM/yyyy}\n";
                     var soNgay = (donYeuCau.NgayKetThuc!.Value - donYeuCau.NgayBatDau!.Value).Days + 1;
-                    message += $"<b>⏳ Số ngày:</b> {soNgay} ngày\n";
+                    message += $"<b>⏳ Tổng số ngày:</b> {soNgay} ngày\n";
                     break;
 
                 case LoaiDonYeuCau.LamThemGio:
-                    message += $"<b>📅 Ngày:</b> {donYeuCau.NgayLamThem:dd/MM/yyyy}\n";
-                    message += $"<b>⏱️ Số giờ:</b> {donYeuCau.SoGioLamThem} giờ\n";
+                    message += $"<b>📄 Loại đơn:</b> Làm thêm giờ\n";
+                    message += $"<b>📅 Ngày làm thêm:</b> {donYeuCau.NgayLamThem:dd/MM/yyyy}\n";
+                    message += $"<b>⏱️ Số giờ làm thêm:</b> {donYeuCau.SoGioLamThem} giờ\n";
                     break;
 
                 case LoaiDonYeuCau.DiMuon:
+                    message += $"<b>📄 Loại đơn:</b> Xin đi muộn\n";
                     message += $"<b>📅 Ngày:</b> {donYeuCau.NgayDiMuon:dd/MM/yyyy}\n";
                     message += $"<b>🕐 Giờ dự kiến đến:</b> {donYeuCau.GioDuKienDen:HH:mm}\n";
                     break;
 
                 case LoaiDonYeuCau.CongTac:
-                    message += $"<b>📅 Từ ngày:</b> {donYeuCau.NgayBatDau:dd/MM/yyyy}\n";
-                    message += $"<b>📅 Đến ngày:</b> {donYeuCau.NgayKetThuc:dd/MM/yyyy}\n";
+                    message += $"<b>📄 Loại đơn:</b> Công tác\n";
+                    message += $"<b>📅 Thời gian:</b> {donYeuCau.NgayBatDau:dd/MM/yyyy} → {donYeuCau.NgayKetThuc:dd/MM/yyyy}\n";
                     message += $"<b>📍 Địa điểm:</b> {donYeuCau.DiaDiemCongTac}\n";
                     message += $"<b>🎯 Mục đích:</b> {donYeuCau.MucDichCongTac}\n";
                     break;
@@ -376,7 +429,7 @@ namespace api.Service.Implement
             if (messageText.StartsWith("/start"))
             {
                 var parts = messageText.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                
+
                 if (parts.Length > 1)
                 {
                     // /start TOKEN - Deep link authentication
@@ -391,29 +444,20 @@ namespace api.Service.Implement
                 return;
             }
 
-            // Kiểm tra user đang ở bước nào (email flow - fallback)
-            if (_userStates.TryGetValue(chatId, out var state))
-            {
-                if (state.CurrentStep == TelegramConversationSteps.AwaitingEmail)
-                {
-                    await HandleEmailInputAsync(chatId, messageText, cancellationToken);
-                }
-            }
-            else
-            {
-                await _botClient!.SendMessage(
-                    chatId: chatId,
-                    text: "👋 Chào bạn!\n\n" +
-                          "Để liên kết tài khoản, vui lòng:\n" +
-                          "1️⃣ Đăng nhập vào hệ thống web\n" +
-                          "2️⃣ Vào phần Cài đặt → Telegram\n" +
-                          "3️⃣ Click nút \"Liên kết Telegram\"\n" +
-                          "4️⃣ Click vào link được tạo ra\n\n" +
-                          "<i>Hoặc gửi /start nếu bạn muốn liên kết bằng email.</i>",
-                    parseMode: ParseMode.Html,
-                    cancellationToken: cancellationToken
-                );
-            }
+            // ❌ Email flow đã bị XÓA vì lý do bảo mật
+            // Chỉ hỗ trợ Deep Link authentication
+            await _botClient!.SendMessage(
+                chatId: chatId,
+                text: "👋 <b>Chào bạn!</b>\n\n" +
+                      "🔗 <b>Để liên kết tài khoản, vui lòng:</b>\n\n" +
+                      "1️⃣ Đăng nhập vào hệ thống web\n" +
+                      "2️⃣ Vào phần <b>Cài đặt</b> → <b>Telegram</b>\n" +
+                      "3️⃣ Click nút <b>\"Liên kết Telegram\"</b>\n" +
+                      "4️⃣ Click vào link được tạo ra\n\n" +
+                      "🔒 Chỉ sử dụng link từ hệ thống web để đảm bảo bảo mật.",
+                parseMode: ParseMode.Html,
+                cancellationToken: cancellationToken
+            );
         }
 
         /// <summary>
@@ -486,8 +530,9 @@ namespace api.Service.Implement
                     return;
                 }
 
-                // Kiểm tra tài khoản đã liên kết với Telegram khác chưa
-                if (!string.IsNullOrEmpty(nhanVien.TelegramChatId) && 
+                // ✅ KIỂM TRA 2 CHIỀU:
+                // 1. Tài khoản này đã liên kết với Telegram khác chưa?
+                if (!string.IsNullOrEmpty(nhanVien.TelegramChatId) &&
                     nhanVien.TelegramChatId != chatId.ToString())
                 {
                     await _botClient!.SendMessage(
@@ -500,6 +545,27 @@ namespace api.Service.Implement
                         parseMode: ParseMode.Html,
                         cancellationToken: cancellationToken
                     );
+                    return;
+                }
+
+                // 2. ChatId này đã liên kết với tài khoản khác chưa?
+                var existingLink = await dbContext.NhanViens
+                    .FirstOrDefaultAsync(n => n.TelegramChatId == chatId.ToString() && n.Id != nhanVien.Id, cancellationToken);
+
+                if (existingLink != null)
+                {
+                    await _botClient!.SendMessage(
+                        chatId: chatId,
+                        text: $"⚠️ <b>Telegram này đã được liên kết</b>\n\n" +
+                              $"Tài khoản Telegram của bạn đã được liên kết với tài khoản: <b>{existingLink.TenDayDu}</b>\n\n" +
+                              "Mỗi Telegram chỉ có thể liên kết với 1 tài khoản duy nhất.\n\n" +
+                              "Nếu bạn muốn liên kết tài khoản mới:\n" +
+                              "1️⃣ Đăng nhập tài khoản cũ và hủy liên kết\n" +
+                              "2️⃣ Sau đó thử lại với tài khoản mới",
+                        parseMode: ParseMode.Html,
+                        cancellationToken: cancellationToken
+                    );
+                    _logger.LogWarning($"⚠️ ChatId {chatId} đã liên kết với nhân viên {existingLink.TenDayDu}, không thể link với {nhanVien.TenDayDu}");
                     return;
                 }
 
@@ -559,8 +625,10 @@ namespace api.Service.Implement
                                 "3️⃣ Click nút <b>\"Liên kết Telegram\"</b>\n" +
                                 "4️⃣ Click vào link được tạo ra\n\n" +
                                 "━━━━━━━━━━━━━━━━━━━\n\n" +
-                                "📧 <i>Hoặc bạn có thể liên kết bằng email (không khuyến nghị):</i>\n" +
-                                "Nhập email đăng nhập của bạn vào đây.";
+                                "🔒 <b>Lưu ý bảo mật:</b>\n" +
+                                "• Link chỉ có hiệu lực 10 phút\n" +
+                                "• Mỗi link chỉ sử dụng được 1 lần\n" +
+                                "• Không chia sẻ link với người khác";
 
             await _botClient!.SendMessage(
                 chatId: chatId,
@@ -569,17 +637,15 @@ namespace api.Service.Implement
                 cancellationToken: cancellationToken
             );
 
-            // Tạo state cho email fallback (optional)
-            _userStates[chatId] = new TelegramUserState
-            {
-                ChatId = chatId,
-                CurrentStep = TelegramConversationSteps.AwaitingEmail
-            };
+            // ❌ Không tạo state cho email flow nữa - chỉ dùng Deep Link
         }
 
         /// <summary>
         /// Xử lý khi user nhập email
+        /// ⚠️ DEPRECATED: Đã bị vô hiệu hóa vì lý do bảo mật
+        /// Chỉ cho phép Deep Link authentication
         /// </summary>
+        [Obsolete("Email authentication is disabled due to security concerns. Use Deep Link only.")]
         private async Task HandleEmailInputAsync(long chatId, string email, CancellationToken cancellationToken)
         {
             email = email.Trim().ToLower();
@@ -618,16 +684,40 @@ namespace api.Service.Implement
                 return;
             }
 
-            // Kiểm tra đã liên kết chưa
+            // ✅ KIỂM TRA 2 CHIỀU:
+            // 1. Tài khoản này đã liên kết với Telegram khác chưa?
             if (!string.IsNullOrEmpty(nhanVien.TelegramChatId) && nhanVien.TelegramChatId != chatId.ToString())
             {
                 await _botClient!.SendMessage(
                     chatId: chatId,
                     text: "⚠️ <b>Tài khoản này đã được liên kết với Telegram khác.</b>\n\n" +
-                          "Nếu bạn muốn liên kết lại, vui lòng liên hệ HR để được hỗ trợ.",
+                          "Nếu bạn muốn liên kết lại, vui lòng:\n" +
+                          "1️⃣ Đăng nhập hệ thống web và hủy liên kết cũ\n" +
+                          "2️⃣ Sau đó thử lại",
                     parseMode: ParseMode.Html,
                     cancellationToken: cancellationToken
                 );
+                return;
+            }
+
+            // 2. ChatId này đã liên kết với tài khoản khác chưa?
+            var existingLink = await dbContext.NhanViens
+                .FirstOrDefaultAsync(n => n.TelegramChatId == chatId.ToString() && n.Id != nhanVien.Id, cancellationToken);
+
+            if (existingLink != null)
+            {
+                await _botClient!.SendMessage(
+                    chatId: chatId,
+                    text: $"⚠️ <b>Telegram này đã được liên kết</b>\n\n" +
+                          $"Tài khoản Telegram của bạn đã được liên kết với: <b>{existingLink.TenDayDu}</b>\n\n" +
+                          "Mỗi Telegram chỉ có thể liên kết với 1 tài khoản duy nhất.\n\n" +
+                          "Nếu bạn muốn liên kết tài khoản <b>{nhanVien.TenDayDu}</b>:\n" +
+                          "1️⃣ Đăng nhập tài khoản cũ và hủy liên kết\n" +
+                          "2️⃣ Sau đó thử lại",
+                    parseMode: ParseMode.Html,
+                    cancellationToken: cancellationToken
+                );
+                _logger.LogWarning($"⚠️ [EMAIL] ChatId {chatId} đã liên kết với {existingLink.TenDayDu}, không thể link với {nhanVien.TenDayDu}");
                 return;
             }
 

@@ -20,12 +20,14 @@ namespace api.Extensions
             services.AddScoped<IChucVuRepository, ChucVuRepository>();
             services.AddScoped<INhanVienRepository, NhanVienRepository>();
             services.AddScoped<IDonYeuCauRepository, DonYeuCauRepository>();
+            services.AddScoped<ITelegramLinkRepository, TelegramLinkRepository>();
 
             // Services
             services.AddScoped<IPhongBanService, PhongBanService>();
             services.AddScoped<IChucVuService, ChucVuService>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IDonYeuCauService, DonYeuCauService>();
+            services.AddScoped<ITelegramLinkService, TelegramLinkService>();
 
             return services;
         }

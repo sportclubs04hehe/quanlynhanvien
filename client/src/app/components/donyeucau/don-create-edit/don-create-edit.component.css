@@ -53,6 +53,31 @@
   color: white;
 }
 
+/* Disabled past dates */
+.custom-day.disabled-past {
+  color: #ccc;
+  cursor: not-allowed;
+  background-color: #f8f9fa;
+  text-decoration: line-through;
+}
+
+.custom-day.disabled-past:hover {
+  background-color: #f8f9fa;
+  color: #ccc;
+}
+
+/* Already requested leave dates (to be implemented) */
+.custom-day.already-requested {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffc107;
+}
+
+.custom-day.already-requested:hover {
+  background-color: #ffc107;
+  color: #000;
+}
+
 /* Field Sections */
 .field-section {
   background: #f8f9fa;

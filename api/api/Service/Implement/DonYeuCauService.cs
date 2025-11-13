@@ -111,8 +111,33 @@ namespace api.Service.Implement
             // 4. Tạo đơn
             var created = await _donYeuCauRepo.CreateAsync(don);
 
-            // 5. Gửi thông báo Telegram (fire-and-forget)
-            _ = Task.Run(async () => await GuiThongBaoTelegramAsync(created, nhanVien));
+            // 5. Gửi thông báo Telegram (fire-and-forget với scope riêng)
+            var donId = created.Id;
+            var nhanVienId_ForTask = nhanVien.Id;
+            _ = Task.Run(async () =>
+            {
+                using var scope = _serviceScopeFactory.CreateScope();
+                var telegramService = scope.ServiceProvider.GetRequiredService<ITelegramService>();
+                var nhanVienRepo = scope.ServiceProvider.GetRequiredService<INhanVienRepository>();
+                var donYeuCauRepo = scope.ServiceProvider.GetRequiredService<IDonYeuCauRepository>();
+                var logger = scope.ServiceProvider.GetRequiredService<ILogger<DonYeuCauService>>();
+
+                try
+                {
+                    var donData = await donYeuCauRepo.GetByIdAsync(donId);
+                    var nhanVienData = await nhanVienRepo.GetByIdAsync(nhanVienId_ForTask);
+
+                    if (donData != null && nhanVienData != null)
+                    {
+                        await GuiThongBaoTelegramWithScopeAsync(donData, nhanVienData, 
+                            telegramService, donYeuCauRepo, logger);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "❌ [BACKGROUND] Lỗi gửi thông báo Telegram cho đơn ID: {DonId}", donId);
+                }
+            });
 
             // 6. Return DTO
             return _mapper.Map<DonYeuCauDto>(created);
@@ -403,6 +428,56 @@ namespace api.Service.Implement
             return await _donYeuCauRepo.CountDonChoDuyetAsync(nguoiDuyetId);
         }
 
+        public async Task<List<DateTime>> GetNgayDaNghiAsync(
+            Guid nhanVienId, 
+            DateTime? fromDate = null, 
+            DateTime? toDate = null)
+        {
+            // Lấy tất cả đơn nghỉ phép đã được chấp thuận của nhân viên
+            // KHÔNG filter theo TuNgay/DenNgay vì đó là filter cho ngày tạo đơn, không phải ngày nghỉ
+            var filter = new FilterDonYeuCauDto
+            {
+                NhanVienId = nhanVienId,
+                LoaiDon = LoaiDonYeuCau.NghiPhep,
+                TrangThai = TrangThaiDon.DaChapThuan,
+                PageNumber = 1,
+                PageSize = 1000 // Large enough to get all approved leaves
+            };
+
+            var (dons, _) = await _donYeuCauRepo.GetAllAsync(filter);
+            
+            _logger.LogInformation($"GetNgayDaNghi: Found {dons.Count} approved leave requests for user {nhanVienId}");
+
+            // Tạo danh sách tất cả các ngày đã nghỉ
+            var ngayDaNghi = new List<DateTime>();
+            foreach (var don in dons)
+            {
+                if (don.NgayBatDau.HasValue && don.NgayKetThuc.HasValue)
+                {
+                    _logger.LogInformation($"Processing leave: {don.NgayBatDau:yyyy-MM-dd} to {don.NgayKetThuc:yyyy-MM-dd}");
+                    
+                    var current = don.NgayBatDau.Value.Date;
+                    var end = don.NgayKetThuc.Value.Date;
+
+                    // Chỉ thêm các ngày nằm trong khoảng fromDate - toDate (nếu có)
+                    while (current <= end)
+                    {
+                        // Filter theo khoảng thời gian mong muốn
+                        if ((!fromDate.HasValue || current >= fromDate.Value.Date) &&
+                            (!toDate.HasValue || current <= toDate.Value.Date))
+                        {
+                            ngayDaNghi.Add(current);
+                        }
+                        current = current.AddDays(1);
+                    }
+                }
+            }
+            
+            _logger.LogInformation($"GetNgayDaNghi: Returning {ngayDaNghi.Count} dates");
+
+            return ngayDaNghi.Distinct().OrderBy(d => d).ToList();
+        }
+
         #endregion
 
         #region Private Validation Methods
@@ -609,12 +684,53 @@ namespace api.Service.Implement
         #region Telegram Helper Methods
 
         /// <summary>
-        /// Gửi thông báo Telegram khi tạo đơn mới
+        /// Gửi thông báo Telegram trong background task với scope riêng
         /// </summary>
+        private static async Task GuiThongBaoTelegramWithScopeAsync(
+            DonYeuCau don, 
+            NhanVien nguoiGui,
+            ITelegramService telegramService,
+            IDonYeuCauRepository donYeuCauRepo,
+            ILogger<DonYeuCauService> logger)
+        {
+            try
+            {
+                logger.LogInformation("📲 [DON] Bắt đầu gửi thông báo Telegram cho đơn ID: {DonId}", don.Id);
+                
+                var messageIds = await telegramService.GuiThongBaoDonXinNghiAsync(don, nguoiGui);
+
+                if (messageIds.Any())
+                {
+                    don.DaGuiTelegram = true;
+                    don.ThoiGianGuiTelegram = DateTime.UtcNow;
+                    don.TelegramMessageIds = JsonSerializer.Serialize(messageIds);
+                    await donYeuCauRepo.UpdateAsync(don);
+                    
+                    logger.LogInformation("✅ [DON] Đã gửi thông báo Telegram thành công cho đơn ID: {DonId}, Số message: {Count}", 
+                        don.Id, messageIds.Count);
+                }
+                else
+                {
+                    logger.LogWarning("⚠️ [DON] Không gửi được Telegram cho đơn ID: {DonId} - Không có người nhận", don.Id);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "❌ [DON] Lỗi gửi thông báo Telegram cho đơn ID: {DonId}", don.Id);
+                // Không throw để không ảnh hưởng tới việc tạo đơn
+            }
+        }
+
+        /// <summary>
+        /// Gửi thông báo Telegram khi tạo đơn mới (DEPRECATED - dùng GuiThongBaoTelegramWithScopeAsync)
+        /// </summary>
+        [Obsolete("Use GuiThongBaoTelegramWithScopeAsync instead")]
         private async Task GuiThongBaoTelegramAsync(DonYeuCau don, NhanVien nguoiGui)
         {
             try
             {
+                _logger.LogInformation("📲 [DON] Bắt đầu gửi thông báo Telegram cho đơn ID: {DonId}", don.Id);
+                
                 var messageIds = await _telegramService.GuiThongBaoDonXinNghiAsync(don, nguoiGui);
 
                 if (messageIds.Any())
@@ -623,13 +739,19 @@ namespace api.Service.Implement
                     don.ThoiGianGuiTelegram = DateTime.UtcNow;
                     don.TelegramMessageIds = JsonSerializer.Serialize(messageIds);
                     await _donYeuCauRepo.UpdateAsync(don);
+                    
+                    _logger.LogInformation("✅ [DON] Đã gửi thông báo Telegram thành công cho đơn ID: {DonId}, Số message: {Count}", 
+                        don.Id, messageIds.Count);
+                }
+                else
+                {
+                    _logger.LogWarning("⚠️ [DON] Không gửi được Telegram cho đơn ID: {DonId} - Không có người nhận", don.Id);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Lỗi gửi thông báo Telegram");
-                don.TelegramError = ex.Message;
-                await _donYeuCauRepo.UpdateAsync(don);
+                _logger.LogError(ex, "❌ [DON] Lỗi gửi thông báo Telegram cho đơn ID: {DonId}", don.Id);
+                // Không throw để không ảnh hưởng tới việc tạo đơn
             }
         }
 

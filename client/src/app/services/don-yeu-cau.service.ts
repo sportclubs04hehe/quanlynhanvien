@@ -200,6 +200,19 @@ export class DonYeuCauService {
     return this.http.get<{ count: number }>(`${this.baseUrl}/count-cho-duyet`);
   }
 
+  /**
+   * Lấy danh sách ngày đã nghỉ phép (đã được chấp thuận)
+   * Dùng để highlight trên datepicker
+   * GET /api/DonYeuCaus/ngay-da-nghi
+   */
+  getNgayDaNghi(fromDate?: Date | string, toDate?: Date | string): Observable<string[]> {
+    let params = new HttpParams();
+    if (fromDate) params = params.set('fromDate', this.formatDate(fromDate));
+    if (toDate) params = params.set('toDate', this.formatDate(toDate));
+
+    return this.http.get<string[]>(`${this.baseUrl}/ngay-da-nghi`, { params });
+  }
+
   // ============================================================================
   // Thống kê
   // ============================================================================

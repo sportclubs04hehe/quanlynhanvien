@@ -26,4 +26,29 @@ namespace api.DTO
         /// </summary>
         public int ExpiresInSeconds { get; set; }
     }
+
+     /// <summary>
+    /// DTO cho trạng thái liên kết Telegram
+    /// </summary>
+    public class TelegramLinkStatusDto
+    {
+        public bool IsLinked { get; set; }
+        public string? ChatId { get; set; }
+        public bool HasPendingToken { get; set; }
+        public DateTime? PendingTokenExpiresAt { get; set; }
+        public int PendingTokenExpiresInSeconds { get; set; }
+    }
+
+    /// <summary>
+    /// DTO cho kết quả xác thực token
+    /// </summary>
+    public class TokenVerificationDto
+    {
+        public bool Valid { get; set; }
+        public string Message { get; set; } = string.Empty;
+        public string? NhanVienName { get; set; }
+        public DateTime? ExpiresAt { get; set; }
+        public int? ExpiresInSeconds { get; set; }
+        public DateTime? UsedAt { get; set; }
+    }
 }

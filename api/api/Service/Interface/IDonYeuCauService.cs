@@ -109,6 +109,12 @@ namespace api.Service.Interface
         /// </summary>
         Task<int> CountDonChoDuyetAsync(Guid nguoiDuyetId);
 
+        /// <summary>
+        /// Lấy danh sách ngày đã nghỉ phép (đã được chấp thuận) của nhân viên
+        /// Dùng để highlight trên datepicker
+        /// </summary>
+        Task<List<DateTime>> GetNgayDaNghiAsync(Guid nhanVienId, DateTime? fromDate = null, DateTime? toDate = null);
+
         #endregion
     }
 }

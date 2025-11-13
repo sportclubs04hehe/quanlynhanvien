@@ -73,6 +73,16 @@
           <i class="bi bi-calendar-range me-2"></i>Thông Tin Thời Gian
         </h6>
         
+        <!-- Date picker legend -->
+        <div class="alert alert-sm alert-info mb-3">
+          <small>
+            <i class="bi bi-info-circle me-1"></i>
+            <strong>Hướng dẫn:</strong> 
+            <span class="badge bg-secondary ms-1">Xám</span> = Quá khứ (không chọn được),
+            <span class="badge bg-warning text-dark ms-1">Vàng</span> = Đã nghỉ phép
+          </small>
+        </div>
+        
         <!-- Hidden datepicker for range selection -->
         <div class="dp-hidden position-absolute">
           <div class="input-group">
@@ -85,6 +95,8 @@
               (dateSelect)="onDateSelection($event)"
               [displayMonths]="2"
               [dayTemplate]="dayTemplate"
+              [minDate]="minDate"
+              [markDisabled]="isDisabled"
               outsideDays="hidden"
               [startDate]="fromDate!"
               tabindex="-1"
@@ -95,6 +107,8 @@
                 [class.focused]="focused"
                 [class.range]="isRange(date)"
                 [class.faded]="isHovered(date) || isInside(date)"
+                [class.disabled-past]="date.before(minDate)"
+                [class.already-requested]="isRequestedLeaveDate(date)"
                 (mouseenter)="hoveredDate = date"
                 (mouseleave)="hoveredDate = null"
               >
@@ -178,6 +192,7 @@
                 formControlName="ngayLamThem"
                 ngbDatepicker 
                 #dNgayLamThem="ngbDatepicker"
+                [minDate]="minDate"
                 [class.is-invalid]="hasError('ngayLamThem')">
               <button 
                 class="btn btn-outline-secondary" 
@@ -237,6 +252,7 @@
                 formControlName="ngayDiMuon"
                 ngbDatepicker 
                 #dNgayDiMuon="ngbDatepicker"
+                [minDate]="minDate"
                 [class.is-invalid]="hasError('ngayDiMuon')">
               <button 
                 class="btn btn-outline-secondary" 
