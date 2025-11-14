@@ -3,13 +3,12 @@
     <div class="card-body">
       <!-- Toolbar: Filters & Actions -->
       <div class="row mb-3 g-3">
-        <!-- Loại Đơn -->
-        <div class="col-md-2">
+        <div class="col-md-3">
           <label class="form-label fw-semibold">
             <i class="bi bi-funnel"></i> Loại Đơn
           </label>
           <select 
-            class="form-select form-select-sm"
+            class="form-select"
             [(ngModel)]="selectedLoaiDon"
             (ngModelChange)="onFilterChange()">
             <option [ngValue]="null">-- Tất cả --</option>
@@ -20,132 +19,39 @@
           </select>
         </div>
         
-        <!-- Trạng Thái -->
-        <div class="col-md-2">
+        <div class="col-md-3">
           <label class="form-label fw-semibold">
             <i class="bi bi-flag"></i> Trạng Thái
           </label>
           <select 
-            class="form-select form-select-sm"
+            class="form-select"
             [(ngModel)]="selectedTrangThai"
             (ngModelChange)="onFilterChange()">
             <option [ngValue]="null">-- Tất cả --</option>
-            <option [ngValue]="TrangThaiDon.DangChoDuyet">Chờ Duyệt</option>
-            <option [ngValue]="TrangThaiDon.DaChapThuan">Đã Duyệt</option>
-            <option [ngValue]="TrangThaiDon.BiTuChoi">Từ Chối</option>
+            <option [ngValue]="TrangThaiDon.DangChoDuyet">Đang Chờ Duyệt</option>
+            <option [ngValue]="TrangThaiDon.DaChapThuan">Đã Chấp Thuận</option>
+            <option [ngValue]="TrangThaiDon.BiTuChoi">Bị Từ Chối</option>
             <option [ngValue]="TrangThaiDon.DaHuy">Đã Hủy</option>
           </select>
         </div>
-
-        <!-- Tìm kiếm -->
-        <div class="col-md-3">
-          <label class="form-label fw-semibold">
-            <i class="bi bi-search"></i> Tìm kiếm
-          </label>
-          <input 
-            type="text"
-            class="form-control form-control-sm"
-            [(ngModel)]="searchTerm"
-            (ngModelChange)="onSearchChange()"
-            placeholder="Tìm theo lý do hoặc mã đơn...">
-        </div>
-
-        <!-- Từ ngày -->
-        <div class="col-md-2">
-          <label class="form-label fw-semibold">
-            <i class="bi bi-calendar"></i> Từ ngày
-          </label>
-          <div class="input-group input-group-sm">
-            <input 
-              class="form-control" 
-              placeholder="dd/mm/yyyy"
-              [(ngModel)]="fromDate"
-              ngbDatepicker 
-              #fromDatePicker="ngbDatepicker"
-              (ngModelChange)="onFilterChange()"
-              [firstDayOfWeek]="1"
-            />
-            <button 
-              class="btn btn-outline-secondary" 
-              type="button"
-              (click)="fromDatePicker.toggle()">
-              <i class="bi bi-calendar3"></i>
-            </button>
-          </div>
-        </div>
-
-        <!-- Đến ngày -->
-        <div class="col-md-2">
-          <label class="form-label fw-semibold">
-            <i class="bi bi-calendar"></i> Đến ngày
-          </label>
-          <div class="input-group input-group-sm">
-            <input 
-              class="form-control" 
-              placeholder="dd/mm/yyyy"
-              [(ngModel)]="toDate"
-              ngbDatepicker 
-              #toDatePicker="ngbDatepicker"
-              (ngModelChange)="onFilterChange()"
-              [firstDayOfWeek]="1"
-            />
-            <button 
-              class="btn btn-outline-secondary" 
-              type="button"
-              (click)="toDatePicker.toggle()">
-              <i class="bi bi-calendar3"></i>
-            </button>
-          </div>
-        </div>
-
-        <!-- Nút Xóa Lọc & Tạo Đơn -->
-        <div class="col-md-1">
-          <label class="form-label fw-semibold">&nbsp;</label>
+        
+        <div class="col-md-3 d-flex align-items-end">
           @if (hasActiveFilters()) {
             <button 
-              class="btn btn-outline-secondary btn-sm w-100"
-              (click)="clearFilters()"
-              title="Xóa bộ lọc">
-              <i class="bi bi-x-circle"></i>
+              class="btn btn-outline-secondary w-100"
+              (click)="clearFilters()">
+              <i class="bi bi-x-circle"></i> Xóa Lọc
             </button>
           }
         </div>
-      </div>
-
-      <!-- Quick Filters -->
-      <div class="mb-3">
-        <div class="btn-group btn-group-sm" role="group">
+        
+        <div class="col-md-3 d-flex align-items-end">
           <button 
-            type="button" 
-            class="btn btn-outline-primary"
-            (click)="applyQuickFilter('thisWeek')">
-            <i class="bi bi-calendar-week"></i> Tuần này
-          </button>
-          <button 
-            type="button" 
-            class="btn btn-outline-primary"
-            (click)="applyQuickFilter('thisMonth')">
-            <i class="bi bi-calendar-month"></i> Tháng này
-          </button>
-          <button 
-            type="button" 
-            class="btn btn-outline-warning"
-            (click)="applyQuickFilter('pending')">
-            <i class="bi bi-hourglass-split"></i> Chờ duyệt
-          </button>
-          <button 
-            type="button" 
-            class="btn btn-outline-danger"
-            (click)="applyQuickFilter('rejected')">
-            <i class="bi bi-x-circle"></i> Bị từ chối
+            class="btn btn-success w-100"
+            (click)="createDon()">
+            <i class="bi bi-plus-circle me-1"></i>Tạo Đơn Mới
           </button>
         </div>
-        
-        <button 
-          class="btn btn-success btn-sm float-end"
-          (click)="createDon()">
-          <i class="bi bi-plus-circle me-1"></i>Tạo Đơn Mới
-        </button>
       </div>
 
       <!-- Error Message -->
@@ -164,117 +70,46 @@
         </div>
       } @else if (dons().length > 0) {
         <div class="table-responsive">
-          <table class="table table-hover table-sm align-middle">
+          <table class="table table-hover align-middle">
             <thead class="table-light">
               <tr>
-                <th style="width: 7%;">Mã Đơn</th>
-                <th style="width: 10%;">Loại Đơn</th>
-                <th style="width: 18%;">Chi Tiết Đơn</th>
-                <th style="width: 20%;">Lý Do</th>
-                <th style="width: 10%;">Người Duyệt</th>
-                <th style="width: 9%;">Ngày Tạo</th>
-                <th style="width: 10%;">Trạng Thái</th>
-                <th style="width: 16%;" class="text-center">Thao Tác</th>
+                <th style="width: 8%;">Mã Đơn</th>
+                <th style="width: 15%;">Loại Đơn</th>
+                <th style="width: 30%;">Lý Do</th>
+                <th style="width: 12%;">Ngày Tạo</th>
+                <th style="width: 13%;">Trạng Thái</th>
+                <th style="width: 25%;" class="text-center">Thao Tác</th>
               </tr>
             </thead>
             <tbody>
-              @for (don of dons(); track don.id) {
+              @for (don of dons(); track don.id; let idx = $index) {
                 <tr>
-                  <!-- Mã Đơn -->
                   <td>
                     <span class="badge bg-dark">{{ don.maDon }}</span>
                   </td>
-                  
-                  <!-- Loại Đơn -->
                   <td>
                     <span class="badge bg-info">
                       <i class="bi bi-file-earmark-text"></i>
                       {{ don.loaiDonText }}
                     </span>
                   </td>
-                  
-                  <!-- Chi Tiết Đơn (Dynamic theo loại) -->
                   <td>
-                    @if (don.loaiDon === LoaiDonYeuCau.NghiPhep || don.loaiDon === LoaiDonYeuCau.CongTac) {
-                      <div class="small">
-                        <i class="bi bi-calendar-range text-primary"></i>
-                        <strong>{{ formatDateRange(don.ngayBatDau, don.ngayKetThuc, don.soNgay) }}</strong>
-                      </div>
-                      @if (don.loaiDon === LoaiDonYeuCau.CongTac && don.diaDiemCongTac) {
-                        <div class="small text-muted">
-                          <i class="bi bi-geo-alt"></i> {{ don.diaDiemCongTac }}
-                        </div>
-                      }
-                    }
-                    @if (don.loaiDon === LoaiDonYeuCau.LamThemGio) {
-                      <div class="small">
-                        <i class="bi bi-clock text-warning"></i>
-                        <strong>{{ don.soGioLamThem }} giờ</strong>
-                      </div>
-                      <div class="small text-muted">
-                        {{ don.ngayLamThem | localDate }}
-                      </div>
-                    }
-                    @if (don.loaiDon === LoaiDonYeuCau.DiMuon) {
-                      <div class="small">
-                        <i class="bi bi-alarm text-danger"></i>
-                        <strong>{{ formatTime(don.gioDuKienDen) }}</strong>
-                      </div>
-                      <div class="small text-muted">
-                        {{ don.ngayDiMuon | localDate }}
-                      </div>
-                    }
-                  </td>
-                  
-                  <!-- Lý Do -->
-                  <td>
-                    <span 
-                      class="text-truncate d-inline-block" 
-                      style="max-width: 200px;" 
-                      [title]="don.lyDo">
+                    <span class="text-truncate d-inline-block" style="max-width: 300px;" [title]="don.lyDo">
                       {{ don.lyDo }}
                     </span>
-                    @if (don.ghiChuNguoiDuyet) {
-                      <i 
-                        class="bi bi-chat-left-text text-info ms-1" 
-                        [title]="'Ghi chú: ' + don.ghiChuNguoiDuyet"
-                        style="cursor: help;"></i>
-                    }
                   </td>
-                  
-                  <!-- Người Duyệt -->
-                  <td>
-                    @if (don.tenNguoiDuyet) {
-                      <div class="small">
-                        <i class="bi bi-person-check text-success"></i>
-                        {{ don.tenNguoiDuyet }}
-                      </div>
-                      @if (don.ngayDuyet) {
-                        <div class="small text-muted">
-                          {{ don.ngayDuyet | localDate }}
-                        </div>
-                      }
-                    } @else {
-                      <span class="text-muted">-</span>
-                    }
-                  </td>
-                  
-                  <!-- Ngày Tạo -->
                   <td>
                     <small class="text-muted">
                       <i class="bi bi-calendar3"></i>
                       {{ don.ngayTao | localDate }}
                     </small>
                   </td>
-                  
-                  <!-- Trạng Thái -->
                   <td>
                     <app-don-status-badge [trangThai]="don.trangThai" />
                   </td>
-                  
-                  <!-- Thao Tác -->
                   <td class="text-center">
                     <div class="btn-group btn-group-sm" role="group">
+                      <!-- View Detail -->
                       <button 
                         class="btn btn-outline-primary"
                         (click)="viewDetail(don)"
@@ -282,6 +117,7 @@
                         <i class="bi bi-eye"></i>
                       </button>
                       
+                      <!-- Edit -->
                       @if (canEdit(don)) {
                         <button 
                           class="btn btn-outline-warning"
@@ -291,9 +127,10 @@
                         </button>
                       }
                       
+                      <!-- Cancel (Hủy đơn - changes status to DaHuy) -->
                       @if (canCancel(don)) {
                         <button 
-                          class="btn btn-outline-danger"
+                          class="btn btn-outline-warning"
                           (click)="cancelDon(don)"
                           title="Hủy đơn">
                           <i class="bi bi-x-circle"></i>
