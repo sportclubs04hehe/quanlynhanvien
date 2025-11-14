@@ -121,14 +121,19 @@ export class DonYeuCauService {
   // ============================================================================
 
   /**
-   * Lấy danh sách đơn của tôi
+   * Lấy danh sách đơn của tôi - CẢI TIẾN
    * GET /api/DonYeuCaus/my-dons
    */
   getMyDons(
     pageNumber: number = 1,
     pageSize: number = 10,
     loaiDon?: LoaiDonYeuCau,
-    trangThai?: TrangThaiDon
+    trangThai?: TrangThaiDon,
+    searchTerm?: string,
+    fromDate?: Date | string,
+    toDate?: Date | string,
+    ngayBatDauFrom?: Date | string,
+    ngayBatDauTo?: Date | string
   ): Observable<PagedResult<DonYeuCauDto>> {
     let params = new HttpParams()
       .set('pageNumber', pageNumber.toString())
@@ -136,6 +141,11 @@ export class DonYeuCauService {
 
     if (loaiDon !== undefined) params = params.set('loaiDon', loaiDon.toString());
     if (trangThai !== undefined) params = params.set('trangThai', trangThai.toString());
+    if (searchTerm) params = params.set('searchTerm', searchTerm);
+    if (fromDate) params = params.set('fromDate', this.formatDate(fromDate));
+    if (toDate) params = params.set('toDate', this.formatDate(toDate));
+    if (ngayBatDauFrom) params = params.set('ngayBatDauFrom', this.formatDate(ngayBatDauFrom));
+    if (ngayBatDauTo) params = params.set('ngayBatDauTo', this.formatDate(ngayBatDauTo));
 
     return this.http.get<PagedResult<DonYeuCauDto>>(`${this.baseUrl}/my-dons`, { params });
   }

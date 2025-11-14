@@ -1,8 +1,8 @@
 import { Component, inject, OnInit, signal, OnDestroy, NgZone, input, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { NgbModal, NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
-import { Subject, takeUntil, finalize } from 'rxjs';
+import { NgbModal, NgbPaginationModule, NgbDatepickerModule, NgbDateStruct } from '@ng-bootstrap/ng-bootstrap';
+import { Subject, takeUntil, finalize, debounceTime } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { DonYeuCauService } from '../../../services/don-yeu-cau.service';
 import { SpinnerService } from '../../../services/spinner.service';
@@ -20,6 +20,7 @@ import { DonCreateEditComponent } from '../don-create-edit/don-create-edit.compo
     CommonModule, 
     FormsModule, 
     NgbPaginationModule,
+    NgbDatepickerModule,
     DonStatusBadgeComponent,
     LocalDatePipe
   ],
@@ -50,6 +51,12 @@ export class DonMyListComponent implements OnInit, OnDestroy, OnChanges {
   // Filter - Using writable signals for ngModel compatibility
   selectedLoaiDon = signal<LoaiDonYeuCau | null>(null);
   selectedTrangThai = signal<TrangThaiDon | null>(null);
+  searchTerm = signal<string>('');
+  fromDate = signal<NgbDateStruct | null>(null);
+  toDate = signal<NgbDateStruct | null>(null);
+  
+  // Search debounce
+  private searchSubject$ = new Subject<string>();
   
   // Expose enums to template
   readonly LoaiDonYeuCau = LoaiDonYeuCau;
@@ -64,6 +71,18 @@ export class DonMyListComponent implements OnInit, OnDestroy, OnChanges {
     if (initialFilter !== null) {
       this.selectedTrangThai.set(initialFilter);
     }
+    
+    // Setup search debounce
+    this.searchSubject$
+      .pipe(
+        debounceTime(500),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(() => {
+        this.pageNumber.set(1);
+        this.loadDons();
+      });
+    
     this.loadDons();
   }
   
@@ -96,11 +115,18 @@ export class DonMyListComponent implements OnInit, OnDestroy, OnChanges {
     this.isLoading.set(true);
     this.spinner.show('Đang tải danh sách đơn...');
     
+    // Convert NgbDateStruct to Date
+    const fromDateValue = this.fromDate() ? this.ngbDateStructToDate(this.fromDate()!) : undefined;
+    const toDateValue = this.toDate() ? this.ngbDateStructToDate(this.toDate()!) : undefined;
+    
     this.donService.getMyDons(
       this.pageNumber(),
       this.pageSize(),
       this.selectedLoaiDon() || undefined,
-      this.selectedTrangThai() || undefined
+      this.selectedTrangThai() || undefined,
+      this.searchTerm() || undefined,
+      fromDateValue,
+      toDateValue
     )
       .pipe(
         takeUntil(this.destroy$),
@@ -123,9 +149,55 @@ export class DonMyListComponent implements OnInit, OnDestroy, OnChanges {
   }
   
   /**
+   * Search change (debounced)
+   */
+  onSearchChange(): void {
+    this.searchSubject$.next(this.searchTerm());
+  }
+  
+  /**
    * Filter thay đổi
    */
   onFilterChange(): void {
+    this.pageNumber.set(1);
+    this.loadDons();
+  }
+  
+  /**
+   * Apply quick filters
+   */
+  applyQuickFilter(type: 'thisWeek' | 'thisMonth' | 'pending' | 'rejected'): void {
+    const now = new Date();
+    
+    switch (type) {
+      case 'thisWeek':
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay() + 1); // Monday
+        this.fromDate.set(this.dateToNgbDateStruct(startOfWeek));
+        this.toDate.set(this.dateToNgbDateStruct(now));
+        this.selectedTrangThai.set(null);
+        break;
+        
+      case 'thisMonth':
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        this.fromDate.set(this.dateToNgbDateStruct(startOfMonth));
+        this.toDate.set(this.dateToNgbDateStruct(now));
+        this.selectedTrangThai.set(null);
+        break;
+        
+      case 'pending':
+        this.selectedTrangThai.set(TrangThaiDon.DangChoDuyet);
+        this.fromDate.set(null);
+        this.toDate.set(null);
+        break;
+        
+      case 'rejected':
+        this.selectedTrangThai.set(TrangThaiDon.BiTuChoi);
+        this.fromDate.set(null);
+        this.toDate.set(null);
+        break;
+    }
+    
     this.pageNumber.set(1);
     this.loadDons();
   }
@@ -136,6 +208,9 @@ export class DonMyListComponent implements OnInit, OnDestroy, OnChanges {
   clearFilters(): void {
     this.selectedLoaiDon.set(null);
     this.selectedTrangThai.set(null);
+    this.searchTerm.set('');
+    this.fromDate.set(null);
+    this.toDate.set(null);
     this.pageNumber.set(1);
     this.loadDons();
   }
@@ -294,6 +369,62 @@ export class DonMyListComponent implements OnInit, OnDestroy, OnChanges {
    * Check if any filter is active
    */
   hasActiveFilters(): boolean {
-    return this.selectedLoaiDon() !== null || this.selectedTrangThai() !== null;
+    return this.selectedLoaiDon() !== null || 
+           this.selectedTrangThai() !== null ||
+           this.searchTerm() !== '' ||
+           this.fromDate() !== null ||
+           this.toDate() !== null;
+  }
+  
+  /**
+   * Format date range for Nghỉ Phép/Công Tác
+   * Format: 01/12 - 05/12 (5 ngày)
+   */
+  formatDateRange(ngayBatDau?: Date | string, ngayKetThuc?: Date | string, soNgay?: number): string {
+    if (!ngayBatDau || !ngayKetThuc) return '-';
+    
+    const start = typeof ngayBatDau === 'string' ? new Date(ngayBatDau) : ngayBatDau;
+    const end = typeof ngayKetThuc === 'string' ? new Date(ngayKetThuc) : ngayKetThuc;
+    
+    const startStr = `${this.padZero(start.getDate())}/${this.padZero(start.getMonth() + 1)}`;
+    const endStr = `${this.padZero(end.getDate())}/${this.padZero(end.getMonth() + 1)}`;
+    
+    return `${startStr} - ${endStr}${soNgay ? ` (${soNgay} ngày)` : ''}`;
+  }
+  
+  /**
+   * Format time for Đi Muộn
+   * Format: 09:30
+   */
+  formatTime(datetime?: Date | string): string {
+    if (!datetime) return '-';
+    
+    const date = typeof datetime === 'string' ? new Date(datetime) : datetime;
+    return `${this.padZero(date.getHours())}:${this.padZero(date.getMinutes())}`;
+  }
+  
+  /**
+   * Helper: Pad zero
+   */
+  private padZero(num: number): string {
+    return num < 10 ? `0${num}` : `${num}`;
+  }
+  
+  /**
+   * Convert NgbDateStruct to Date
+   */
+  private ngbDateStructToDate(dateStruct: NgbDateStruct): Date {
+    return new Date(dateStruct.year, dateStruct.month - 1, dateStruct.day);
+  }
+  
+  /**
+   * Convert Date to NgbDateStruct
+   */
+  private dateToNgbDateStruct(date: Date): NgbDateStruct {
+    return {
+      year: date.getFullYear(),
+      month: date.getMonth() + 1,
+      day: date.getDate()
+    };
   }
 }

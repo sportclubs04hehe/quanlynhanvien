@@ -18,7 +18,6 @@ export interface RegisterUserDto {
   quanLyId?: string;
   ngaySinh?: Date;
   ngayVaoLam?: Date;
-  telegramChatId?: string;
 }
 
 export interface UserDto {
@@ -29,7 +28,6 @@ export interface UserDto {
   status: NhanVienStatus;
   ngaySinh?: string | Date;  // API trả về string ISO, có thể parse thành Date
   ngayVaoLam?: string | Date; // API trả về string ISO, có thể parse thành Date
-  telegramChatId?: string;
   
   // IDs
   phongBanId?: string;
@@ -52,7 +50,6 @@ export interface UpdateUserDto {
   quanLyId?: string;
   ngaySinh?: Date;
   ngayVaoLam?: Date;
-  telegramChatId?: string;
   status?: NhanVienStatus;
   role?: string;  // Role để cập nhật (chỉ Giám Đốc mới được đổi)
 }

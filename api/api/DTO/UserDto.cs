@@ -36,8 +36,6 @@ namespace api.DTO
 
         [DataType(DataType.Date)]
         public DateTime? NgayVaoLam { get; set; }
-
-        public string? TelegramChatId { get; set; }
     }
 
     /// <summary>
@@ -52,7 +50,6 @@ namespace api.DTO
         public NhanVienStatus Status { get; set; }
         public DateTime? NgaySinh { get; set; }
         public DateTime? NgayVaoLam { get; set; }
-        public string? TelegramChatId { get; set; }
 
         // Thông tin liên quan
         public Guid? PhongBanId { get; set; }
@@ -90,7 +87,6 @@ namespace api.DTO
         [DataType(DataType.Date)]
         public DateTime? NgayVaoLam { get; set; }
 
-        public string? TelegramChatId { get; set; }
         public NhanVienStatus? Status { get; set; }
         
         /// <summary>

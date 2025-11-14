@@ -92,8 +92,7 @@ export class ThemSuaNhanvienComponent implements OnInit, CanComponentDeactivate 
         chucVuId: [''],
         quanLyId: [''],
         ngaySinh: [null],
-        ngayVaoLam: [null],
-        telegramChatId: ['']
+        ngayVaoLam: [null]
       });
     } else {
       this.userForm = this.fb.group({
@@ -104,7 +103,6 @@ export class ThemSuaNhanvienComponent implements OnInit, CanComponentDeactivate 
         quanLyId: [''],
         ngaySinh: [null],
         ngayVaoLam: [null],
-        telegramChatId: [''],
         status: [''],
         role: [''] // Thêm role cho edit mode
       });
@@ -133,7 +131,6 @@ export class ThemSuaNhanvienComponent implements OnInit, CanComponentDeactivate 
             quanLyId: user.quanLyId || '',
             ngaySinh: ngaySinhStruct,
             ngayVaoLam: ngayVaoLamStruct,
-            telegramChatId: user.telegramChatId,
             status: user.status ?? '',
             role: currentRole
           });
@@ -160,7 +157,7 @@ export class ThemSuaNhanvienComponent implements OnInit, CanComponentDeactivate 
       error: (err: any) => console.error('Error loading chuc vus:', err)
     });
 
-    this.nhanVienService.getAll(1, 1000).subscribe({
+    this.nhanVienService.getAll(1, 100).subscribe({
       next: (result: PagedResult<UserDto>) => this.quanLys.set(result.items),
       error: (err: any) => console.error('Error loading quan lys:', err)
     });
@@ -185,8 +182,7 @@ export class ThemSuaNhanvienComponent implements OnInit, CanComponentDeactivate 
         chucVuId: formValue.chucVuId || undefined,
         quanLyId: formValue.quanLyId || undefined,
         ngaySinh: formValue.ngaySinh ? this.ngbDateStructToDate(formValue.ngaySinh) : undefined,
-        ngayVaoLam: formValue.ngayVaoLam ? this.ngbDateStructToDate(formValue.ngayVaoLam) : undefined,
-        telegramChatId: formValue.telegramChatId || undefined
+        ngayVaoLam: formValue.ngayVaoLam ? this.ngbDateStructToDate(formValue.ngayVaoLam) : undefined
       };
 
       this.spinner.show('Đang tạo nhân viên...');
@@ -211,7 +207,6 @@ export class ThemSuaNhanvienComponent implements OnInit, CanComponentDeactivate 
         quanLyId: formValue.quanLyId || undefined,
         ngaySinh: formValue.ngaySinh ? this.ngbDateStructToDate(formValue.ngaySinh) : undefined,
         ngayVaoLam: formValue.ngayVaoLam ? this.ngbDateStructToDate(formValue.ngayVaoLam) : undefined,
-        telegramChatId: formValue.telegramChatId || undefined,
         status: formValue.status !== '' && formValue.status !== null && formValue.status !== undefined 
           ? formValue.status 
           : undefined,
