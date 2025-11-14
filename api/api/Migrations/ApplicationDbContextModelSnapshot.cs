@@ -198,6 +198,9 @@ namespace api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("MaDon")
+                        .HasColumnType("text");
+
                     b.Property<string>("MucDichCongTac")
                         .HasColumnType("text");
 

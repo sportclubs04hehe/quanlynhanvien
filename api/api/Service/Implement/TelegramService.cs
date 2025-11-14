@@ -90,18 +90,19 @@ namespace api.Service.Implement
                 _logger.LogInformation("✅ [TELEGRAM] Tìm thấy người duyệt: {NguoiDuyet}, ChatId: {ChatId}",
                     nguoiNhanThongBao.TenDayDu, nguoiNhanThongBao.TelegramChatId);
 
-                _logger.LogInformation("✅ [TELEGRAM] Tìm thấy người duyệt: {NguoiDuyet}, ChatId: {ChatId}",
-                    nguoiNhanThongBao.TenDayDu, nguoiNhanThongBao.TelegramChatId);
-
                 // Tạo nội dung tin nhắn
                 var message = TaoNoiDungThongBao(donYeuCau, nguoiGui);
 
-                // Gửi tin nhắn
-                _logger.LogInformation("📤 [TELEGRAM] Đang gửi message tới ChatId: {ChatId}...", nguoiNhanThongBao.TelegramChatId);
+                // Tạo Inline Keyboard với buttons Chấp thuận/Từ chối
+                var inlineKeyboard = TaoInlineKeyboardChoDon(donYeuCau.Id);
+
+                // Gửi tin nhắn với Inline Buttons
+                _logger.LogInformation("📤 [TELEGRAM] Đang gửi message với Inline Buttons tới ChatId: {ChatId}...", nguoiNhanThongBao.TelegramChatId);
                 var sentMessage = await _botClient.SendMessage(
                     chatId: nguoiNhanThongBao.TelegramChatId,
                     text: message,
-                    parseMode: ParseMode.Html
+                    parseMode: ParseMode.Html,
+                    replyMarkup: inlineKeyboard
                 );
 
                 messageIds.Add(nguoiNhanThongBao.TelegramChatId, sentMessage.MessageId);
@@ -143,7 +144,7 @@ namespace api.Service.Implement
                 var nguoiGui = await _context.NhanViens.FindAsync(donYeuCau.NhanVienId);
                 var message = TaoNoiDungThongBao(donYeuCau, nguoiGui!, true);
 
-                // Cập nhật từng message
+                // Cập nhật từng message (disable buttons)
                 foreach (var (chatId, messageId) in messageIds)
                 {
                     try
@@ -152,18 +153,22 @@ namespace api.Service.Implement
                             chatId: chatId,
                             messageId: (int)messageId,
                             text: message,
-                            parseMode: ParseMode.Html
+                            parseMode: ParseMode.Html,
+                            replyMarkup: null // Xóa buttons
                         );
+                        
+                        _logger.LogInformation("✅ [TELEGRAM] Đã disable buttons cho message {MessageId} trong chat {ChatId}", messageId, chatId);
                     }
                     catch (ApiRequestException ex) when (ex.Message.Contains("message is not modified"))
                     {
                         // Message không thay đổi, bỏ qua
+                        _logger.LogWarning("⚠️ [TELEGRAM] Message {MessageId} không có thay đổi", messageId);
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Lỗi cập nhật message Telegram");
+                _logger.LogError(ex, "❌ [TELEGRAM] Lỗi cập nhật message Telegram");
             }
         }
 
@@ -272,85 +277,34 @@ namespace api.Service.Implement
         }
 
         /// <summary>
-        /// Tạo nội dung thông báo format HTML cho Telegram
+        /// Tạo nội dung thông báo format HTML cho Telegram (wrapper for MessageBuilder)
         /// </summary>
         private string TaoNoiDungThongBao(DonYeuCau donYeuCau, NhanVien nguoiGui, bool daDuyet = false)
         {
-            var loaiDon = donYeuCau.LoaiDon switch
+            return daDuyet 
+                ? TelegramMessageBuilder.BuildApprovedMessage(donYeuCau, nguoiGui)
+                : TelegramMessageBuilder.BuildApprovalRequest(donYeuCau, nguoiGui);
+        }
+
+        /// <summary>
+        /// Tạo Inline Keyboard cho đơn yêu cầu
+        /// </summary>
+        private InlineKeyboardMarkup TaoInlineKeyboardChoDon(Guid donId)
+        {
+            var keyboard = new[]
             {
-                LoaiDonYeuCau.NghiPhep => "ĐƠN XIN NGHỈ PHÉP",
-                LoaiDonYeuCau.LamThemGio => "ĐƠN LÀM THÊM GIỜ",
-                LoaiDonYeuCau.DiMuon => "ĐƠN ĐI MUỘN",
-                LoaiDonYeuCau.CongTac => "ĐƠN CÔNG TÁC",
-                _ => "📋 ĐƠN YÊU CẦU"
+                new[]
+                {
+                    InlineKeyboardButton.WithCallbackData("✅ Chấp thuận", $"approve_{donId}"),
+                    InlineKeyboardButton.WithCallbackData("❌ Từ chối", $"reject_{donId}")
+                },
+                new[]
+                {
+                    InlineKeyboardButton.WithCallbackData("📄 Chi tiết", $"details_{donId}")
+                }
             };
 
-            var message = $"<b>🔔 {loaiDon}</b>\n\n";
-            message += $"<b>👤 Nhân viên:</b> {nguoiGui.TenDayDu}\n";
-            message += $"<b>📅 Ngày tạo:</b> {donYeuCau.NgayTao:dd/MM/yyyy HH:mm}\n\n";
-
-            // Thông tin chi tiết theo loại đơn
-            switch (donYeuCau.LoaiDon)
-            {
-                case LoaiDonYeuCau.NghiPhep:
-                    message += $"<b>📄 Loại đơn:</b> Nghỉ phép\n";
-                    message += $"<b>📅 Thời gian nghỉ:</b> {donYeuCau.NgayBatDau:dd/MM/yyyy} → {donYeuCau.NgayKetThuc:dd/MM/yyyy}\n";
-                    var soNgay = (donYeuCau.NgayKetThuc!.Value - donYeuCau.NgayBatDau!.Value).Days + 1;
-                    message += $"<b>⏳ Tổng số ngày:</b> {soNgay} ngày\n";
-                    break;
-
-                case LoaiDonYeuCau.LamThemGio:
-                    message += $"<b>📄 Loại đơn:</b> Làm thêm giờ\n";
-                    message += $"<b>📅 Ngày làm thêm:</b> {donYeuCau.NgayLamThem:dd/MM/yyyy}\n";
-                    message += $"<b>⏱️ Số giờ làm thêm:</b> {donYeuCau.SoGioLamThem} giờ\n";
-                    break;
-
-                case LoaiDonYeuCau.DiMuon:
-                    message += $"<b>📄 Loại đơn:</b> Xin đi muộn\n";
-                    message += $"<b>📅 Ngày:</b> {donYeuCau.NgayDiMuon:dd/MM/yyyy}\n";
-                    message += $"<b>🕐 Giờ dự kiến đến:</b> {donYeuCau.GioDuKienDen:HH:mm}\n";
-                    break;
-
-                case LoaiDonYeuCau.CongTac:
-                    message += $"<b>📄 Loại đơn:</b> Công tác\n";
-                    message += $"<b>📅 Thời gian:</b> {donYeuCau.NgayBatDau:dd/MM/yyyy} → {donYeuCau.NgayKetThuc:dd/MM/yyyy}\n";
-                    message += $"<b>📍 Địa điểm:</b> {donYeuCau.DiaDiemCongTac}\n";
-                    message += $"<b>🎯 Mục đích:</b> {donYeuCau.MucDichCongTac}\n";
-                    break;
-            }
-
-            message += $"\n<b>📝 Lý do:</b> {donYeuCau.LyDo}\n\n";
-
-            // Trạng thái
-            if (daDuyet)
-            {
-                var trangThai = donYeuCau.TrangThai switch
-                {
-                    TrangThaiDon.DaChapThuan => "✅ ĐÃ CHẤP THUẬN",
-                    TrangThaiDon.BiTuChoi => "❌ BỊ TỪ CHỐI",
-                    TrangThaiDon.DaHuy => "🚫 ĐÃ HỦY",
-                    _ => "⏳ ĐANG CHỜ DUYỆT"
-                };
-
-                message += $"<b>🔖 Trạng thái:</b> {trangThai}\n";
-
-                if (!string.IsNullOrEmpty(donYeuCau.GhiChuNguoiDuyet))
-                {
-                    message += $"<b>💬 Ghi chú:</b> {donYeuCau.GhiChuNguoiDuyet}\n";
-                }
-
-                if (donYeuCau.NgayDuyet.HasValue)
-                {
-                    message += $"<b>📅 Ngày duyệt:</b> {donYeuCau.NgayDuyet:dd/MM/yyyy HH:mm}\n";
-                }
-            }
-            else
-            {
-                message += "<b>⏳ Trạng thái:</b> ĐANG CHỜ DUYỆT\n\n";
-                message += "👉 Vui lòng vào hệ thống để duyệt đơn";
-            }
-
-            return message;
+            return new InlineKeyboardMarkup(keyboard);
         }
 
         #endregion
@@ -441,6 +395,13 @@ namespace api.Service.Implement
                     // /start thông thường - Fallback sang email method (hoặc hiển thị hướng dẫn)
                     await HandleStartCommandAsync(chatId, cancellationToken);
                 }
+                return;
+            }
+
+            // Kiểm tra state: đang chờ nhập lý do từ chối?
+            if (_userStates.TryGetValue(chatId, out var state) && state.State == "WAITING_REJECT_REASON" && state.DonIdToReject.HasValue)
+            {
+                await XuLyTuChoiDonAsync(chatId, state.DonIdToReject.Value, messageText, cancellationToken);
                 return;
             }
 
@@ -580,8 +541,18 @@ namespace api.Service.Implement
                 // Xóa state nếu có
                 _userStates.TryRemove(chatId, out _);
 
-                var successMessage = "✅ <b>Liên kết thành công!</b>\n\n" +
-                                    $"👤 <b>Tài khoản:</b> {nhanVien.TenDayDu}\n" +
+                // Lấy role của nhân viên
+                var userRoles = await dbContext.UserRoles
+                    .Where(ur => ur.UserId == nhanVien.Id)
+                    .Join(dbContext.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name)
+                    .ToListAsync(cancellationToken);
+
+                var isGiamDoc = userRoles.Contains(AppRolesExtensions.GiamDoc);
+                var isTruongPhong = userRoles.Contains(AppRolesExtensions.TruongPhong);
+
+                // Tạo message chào mừng cá nhân hóa
+                var successMessage = $"✅ <b>Xin chào {nhanVien.TenDayDu}!</b>\n\n" +
+                                    "🎉 <b>Liên kết Telegram thành công!</b>\n\n" +
                                     $"📧 <b>Email:</b> {nhanVien.User?.Email}\n";
 
                 if (nhanVien.ChucVu != null)
@@ -589,9 +560,54 @@ namespace api.Service.Implement
                     successMessage += $"💼 <b>Chức vụ:</b> {nhanVien.ChucVu.TenChucVu}\n";
                 }
 
-                successMessage += "\n🔔 <b>Bạn sẽ nhận được thông báo qua Telegram khi:</b>\n" +
-                                 "• Có đơn yêu cầu cần duyệt (nếu bạn là Giám đốc/Trưởng phòng)\n" +
-                                 "• Đơn của bạn được duyệt/từ chối";
+                if (nhanVien.PhongBan != null)
+                {
+                    successMessage += $"🏢 <b>Phòng ban:</b> {nhanVien.PhongBan.TenPhongBan}\n";
+                }
+
+                // Thông báo chức năng dựa trên role
+                successMessage += "\n━━━━━━━━━━━━━━━━━━━\n";
+
+                if (isGiamDoc)
+                {
+                    successMessage += "\n👔 <b>Với vai trò Giám Đốc, bạn sẽ nhận được:</b>\n\n" +
+                                     "🔔 <b>Thông báo đơn yêu cầu</b>\n" +
+                                     "   • Khi có đơn xin nghỉ phép mới\n" +
+                                     "   • Khi có đơn làm thêm giờ\n" +
+                                     "   • Khi có đơn xin đi muộn\n" +
+                                     "   • Khi có đơn công tác\n\n" +
+                                     "✅ <b>Duyệt đơn trực tiếp trên Telegram</b>\n" +
+                                     "   • Chấp thuận đơn ngay lập tức\n" +
+                                     "   • Từ chối đơn với lý do cụ thể\n" +
+                                     "   • Xem chi tiết đơn yêu cầu\n\n" +
+                                     "📊 Toàn quyền quản lý tất cả đơn trong công ty";
+                }
+                else if (isTruongPhong)
+                {
+                    successMessage += "\n👨‍💼 <b>Với vai trò Trưởng Phòng, bạn sẽ nhận được:</b>\n\n" +
+                                     "🔔 <b>Thông báo đơn yêu cầu</b>\n" +
+                                     "   • Đơn của nhân viên trong phòng ban\n" +
+                                     "   • Đơn nghỉ phép, làm thêm giờ, đi muộn, công tác\n\n" +
+                                     "✅ <b>Duyệt đơn trực tiếp trên Telegram</b>\n" +
+                                     "   • Chấp thuận đơn của nhân viên\n" +
+                                     "   • Từ chối đơn với lý do cụ thể\n" +
+                                     "   • Xem chi tiết đơn yêu cầu\n\n" +
+                                     "📋 <b>Thông báo kết quả</b>\n" +
+                                     "   • Khi đơn của bạn được duyệt/từ chối\n\n" +
+                                     "🏢 Quản lý đơn của phòng ban bạn phụ trách";
+                }
+                else
+                {
+                    successMessage += "\n👤 <b>Với vai trò Nhân Viên, bạn sẽ nhận được:</b>\n\n" +
+                                     "📋 <b>Thông báo kết quả duyệt đơn</b>\n" +
+                                     "   • ✅ Khi đơn của bạn được chấp thuận\n" +
+                                     "   • ❌ Khi đơn của bạn bị từ chối (kèm lý do)\n" +
+                                     "   • 📝 Chi tiết về người duyệt và thời gian\n\n" +
+                                     "📊 Theo dõi trạng thái đơn của bạn real-time";
+                }
+
+                successMessage += "\n\n━━━━━━━━━━━━━━━━━━━\n" +
+                                 "\n💡 <b>Lưu ý:</b> Giữ Telegram mở để nhận thông báo kịp thời!";
 
                 await _botClient!.SendMessage(
                     chatId: chatId,
@@ -600,7 +616,8 @@ namespace api.Service.Implement
                     cancellationToken: cancellationToken
                 );
 
-                _logger.LogInformation($"✅ Deep link: Đã liên kết ChatId {chatId} với nhân viên {nhanVien.TenDayDu}");
+                var roleName = isGiamDoc ? "Giám Đốc" : (isTruongPhong ? "Trưởng Phòng" : "Nhân Viên");
+                _logger.LogInformation($"✅ Deep link: Đã liên kết ChatId {chatId} với {roleName} {nhanVien.TenDayDu}");
             }
             catch (Exception ex)
             {
@@ -641,122 +658,290 @@ namespace api.Service.Implement
         }
 
         /// <summary>
-        /// Xử lý khi user nhập email
-        /// ⚠️ DEPRECATED: Đã bị vô hiệu hóa vì lý do bảo mật
-        /// Chỉ cho phép Deep Link authentication
-        /// </summary>
-        [Obsolete("Email authentication is disabled due to security concerns. Use Deep Link only.")]
-        private async Task HandleEmailInputAsync(long chatId, string email, CancellationToken cancellationToken)
-        {
-            email = email.Trim().ToLower();
-
-            // Validate email format
-            if (!IsValidEmail(email))
-            {
-                await _botClient!.SendMessage(
-                    chatId: chatId,
-                    text: "❌ Email không hợp lệ. Vui lòng nhập lại email của bạn:",
-                    cancellationToken: cancellationToken
-                );
-                return;
-            }
-
-            // Tạo scope mới để truy cập DB (vì polling chạy background)
-            using var scope = _serviceScopeFactory.CreateScope();
-            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
-            // Tìm nhân viên trong DB
-            var nhanVien = await dbContext.NhanViens
-                .Include(n => n.User)
-                .Include(n => n.ChucVu)
-                .FirstOrDefaultAsync(n => n.User.Email!.ToLower() == email, cancellationToken);
-
-            if (nhanVien == null)
-            {
-                await _botClient!.SendMessage(
-                    chatId: chatId,
-                    text: "❌ <b>Không tìm thấy tài khoản với email này.</b>\n\n" +
-                          "Vui lòng kiểm tra lại email hoặc liên hệ HR để được hỗ trợ.\n\n" +
-                          "Nhập lại email hoặc gửi /start để bắt đầu lại.",
-                    parseMode: ParseMode.Html,
-                    cancellationToken: cancellationToken
-                );
-                return;
-            }
-
-            // ✅ KIỂM TRA 2 CHIỀU:
-            // 1. Tài khoản này đã liên kết với Telegram khác chưa?
-            if (!string.IsNullOrEmpty(nhanVien.TelegramChatId) && nhanVien.TelegramChatId != chatId.ToString())
-            {
-                await _botClient!.SendMessage(
-                    chatId: chatId,
-                    text: "⚠️ <b>Tài khoản này đã được liên kết với Telegram khác.</b>\n\n" +
-                          "Nếu bạn muốn liên kết lại, vui lòng:\n" +
-                          "1️⃣ Đăng nhập hệ thống web và hủy liên kết cũ\n" +
-                          "2️⃣ Sau đó thử lại",
-                    parseMode: ParseMode.Html,
-                    cancellationToken: cancellationToken
-                );
-                return;
-            }
-
-            // 2. ChatId này đã liên kết với tài khoản khác chưa?
-            var existingLink = await dbContext.NhanViens
-                .FirstOrDefaultAsync(n => n.TelegramChatId == chatId.ToString() && n.Id != nhanVien.Id, cancellationToken);
-
-            if (existingLink != null)
-            {
-                await _botClient!.SendMessage(
-                    chatId: chatId,
-                    text: $"⚠️ <b>Telegram này đã được liên kết</b>\n\n" +
-                          $"Tài khoản Telegram của bạn đã được liên kết với: <b>{existingLink.TenDayDu}</b>\n\n" +
-                          "Mỗi Telegram chỉ có thể liên kết với 1 tài khoản duy nhất.\n\n" +
-                          "Nếu bạn muốn liên kết tài khoản <b>{nhanVien.TenDayDu}</b>:\n" +
-                          "1️⃣ Đăng nhập tài khoản cũ và hủy liên kết\n" +
-                          "2️⃣ Sau đó thử lại",
-                    parseMode: ParseMode.Html,
-                    cancellationToken: cancellationToken
-                );
-                _logger.LogWarning($"⚠️ [EMAIL] ChatId {chatId} đã liên kết với {existingLink.TenDayDu}, không thể link với {nhanVien.TenDayDu}");
-                return;
-            }
-
-            // ✅ Liên kết thành công
-            nhanVien.TelegramChatId = chatId.ToString();
-            await dbContext.SaveChangesAsync(cancellationToken);
-
-            // Xóa state
-            _userStates.TryRemove(chatId, out _);
-
-            var successMessage = "✅ <b>Liên kết thành công!</b>\n\n" +
-                                $"👤 <b>Tài khoản:</b> {nhanVien.TenDayDu}\n" +
-                                $"📧 <b>Email:</b> {nhanVien.User.Email}\n";
-
-            if (nhanVien.ChucVu != null)
-            {
-                successMessage += $"💼 <b>Chức vụ:</b> {nhanVien.ChucVu.TenChucVu}\n";
-            }
-
-            successMessage += "\n🔔 Bạn sẽ nhận được thông báo qua Telegram khi có đơn yêu cầu cần duyệt.";
-
-            await _botClient!.SendMessage(
-                chatId: chatId,
-                text: successMessage,
-                parseMode: ParseMode.Html,
-                cancellationToken: cancellationToken
-            );
-        }
-
-        /// <summary>
         /// Xử lý callback queries (cho buttons)
         /// </summary>
         private async Task HandleCallbackQueryAsync(CallbackQuery callbackQuery, CancellationToken cancellationToken)
         {
-            // Implement sau nếu cần thêm buttons
-            await _botClient!.AnswerCallbackQuery(
-                callbackQueryId: callbackQuery.Id,
+            if (_botClient == null || callbackQuery.Data == null || callbackQuery.Message == null)
+                return;
+
+            var chatId = callbackQuery.Message.Chat.Id;
+            var data = callbackQuery.Data;
+
+            try
+            {
+                // Answer callback query ngay để Telegram không hiển thị loading
+                await _botClient.AnswerCallbackQuery(callbackQuery.Id, cancellationToken: cancellationToken);
+
+                _logger.LogInformation("🔘 [TELEGRAM] Callback nhận được: {Data} từ ChatId: {ChatId}", data, chatId);
+
+                // Parse callback data: format "action_donId"
+                var parts = data.Split('_');
+                if (parts.Length != 2)
+                {
+                    await _botClient.SendMessage(chatId, "❌ Dữ liệu không hợp lệ", cancellationToken: cancellationToken);
+                    return;
+                }
+
+                var action = parts[0];
+                if (!Guid.TryParse(parts[1], out var donId))
+                {
+                    await _botClient.SendMessage(chatId, "❌ Mã đơn không hợp lệ", cancellationToken: cancellationToken);
+                    return;
+                }
+
+                // Xử lý theo action
+                switch (action)
+                {
+                    case "approve":
+                        await XuLyChapThuanDonAsync(chatId, donId, callbackQuery.Message.MessageId, cancellationToken);
+                        break;
+
+                    case "reject":
+                        await XuLyYeuCauNhapLyDoTuChoiAsync(chatId, donId, cancellationToken);
+                        break;
+
+                    case "details":
+                        await XuLyXemChiTietDonAsync(chatId, donId, cancellationToken);
+                        break;
+
+                    default:
+                        await _botClient.SendMessage(chatId, "❌ Hành động không được hỗ trợ", cancellationToken: cancellationToken);
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ [TELEGRAM] Lỗi xử lý callback query");
+                await _botClient.SendMessage(chatId, "❌ Đã xảy ra lỗi khi xử lý yêu cầu", cancellationToken: cancellationToken);
+            }
+        }
+
+        /// <summary>
+        /// Xử lý chấp thuận đơn qua Telegram
+        /// </summary>
+        private async Task XuLyChapThuanDonAsync(long chatId, Guid donId, int messageId, CancellationToken cancellationToken)
+        {
+            // Tạo scope mới để tránh ObjectDisposedException
+            using var scope = _serviceScopeFactory.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            try
+            {
+                // Tìm nhân viên duyệt dựa trên Telegram ChatId
+                var nguoiDuyet = await context.NhanViens
+                    .FirstOrDefaultAsync(nv => nv.TelegramChatId == chatId.ToString());
+
+                if (nguoiDuyet == null)
+                {
+                    await _botClient!.SendMessage(chatId, 
+                        "❌ Không tìm thấy tài khoản liên kết với Telegram này", 
+                        cancellationToken: cancellationToken);
+                    return;
+                }
+
+                // Lấy thông tin đơn
+                var don = await context.DonYeuCaus
+                    .Include(d => d.NhanVien)
+                    .FirstOrDefaultAsync(d => d.Id == donId);
+
+                if (don == null)
+                {
+                    await _botClient!.SendMessage(chatId, 
+                        "❌ Không tìm thấy đơn này", 
+                        cancellationToken: cancellationToken);
+                    return;
+                }
+
+                // Kiểm tra trạng thái đơn
+                if (don.TrangThai != TrangThaiDon.DangChoDuyet)
+                {
+                    await _botClient!.SendMessage(chatId, 
+                        $"⚠️ Đơn này đã được xử lý ({don.TrangThai})", 
+                        cancellationToken: cancellationToken);
+                    return;
+                }
+
+                // Cập nhật trạng thái đơn
+                don.TrangThai = TrangThaiDon.DaChapThuan;
+                don.DuocChapThuanBoi = nguoiDuyet.Id;
+                don.NgayDuyet = DateTime.UtcNow;
+                don.GhiChuNguoiDuyet = "Đã duyệt qua Telegram";
+
+                await context.SaveChangesAsync(cancellationToken);
+
+                _logger.LogInformation("✅ [TELEGRAM] Đơn {DonId} đã được chấp thuận bởi {NguoiDuyet}", donId, nguoiDuyet.TenDayDu);
+
+                // Edit message gốc - disable buttons
+                var updatedMessage = TaoNoiDungThongBao(don, don.NhanVien, daDuyet: true);
+                await _botClient!.EditMessageText(
+                    chatId: chatId,
+                    messageId: messageId,
+                    text: updatedMessage,
+                    parseMode: ParseMode.Html,
+                    cancellationToken: cancellationToken
+                );
+
+                // Gửi thông báo cho nhân viên (nếu có Telegram)
+                if (!string.IsNullOrEmpty(don.NhanVien.TelegramChatId))
+                {
+                    var notificationMessage = TelegramMessageBuilder.BuildEmployeeNotification(don, nguoiDuyet);
+
+                    await _botClient!.SendMessage(
+                        chatId: don.NhanVien.TelegramChatId,
+                        text: notificationMessage,
+                        parseMode: ParseMode.Html,
+                        cancellationToken: cancellationToken
+                    );
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ [TELEGRAM] Lỗi chấp thuận đơn {DonId}", donId);
+                await _botClient!.SendMessage(chatId, "❌ Đã xảy ra lỗi khi chấp thuận đơn", cancellationToken: cancellationToken);
+            }
+        }
+
+        /// <summary>
+        /// Yêu cầu nhập lý do từ chối
+        /// </summary>
+        private async Task XuLyYeuCauNhapLyDoTuChoiAsync(long chatId, Guid donId, CancellationToken cancellationToken)
+        {
+            // Set state: đang chờ nhập lý do từ chối
+            _userStates[chatId] = new TelegramUserState
+            {
+                State = "WAITING_REJECT_REASON",
+                DonIdToReject = donId
+            };
+
+            await _botClient!.SendMessage(
+                chatId: chatId,
+                text: "📝 Vui lòng nhập lý do từ chối đơn này:",
                 cancellationToken: cancellationToken
             );
+
+            _logger.LogInformation("📝 [TELEGRAM] Yêu cầu nhập lý do từ chối đơn {DonId} từ ChatId: {ChatId}", donId, chatId);
+        }
+
+        /// <summary>
+        /// Xử lý khi user nhập lý do từ chối
+        /// </summary>
+        private async Task XuLyTuChoiDonAsync(long chatId, Guid donId, string lyDoTuChoi, CancellationToken cancellationToken)
+        {
+            // Tạo scope mới để tránh ObjectDisposedException
+            using var scope = _serviceScopeFactory.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            try
+            {
+                // Tìm nhân viên duyệt
+                var nguoiDuyet = await context.NhanViens
+                    .FirstOrDefaultAsync(nv => nv.TelegramChatId == chatId.ToString());
+
+                if (nguoiDuyet == null)
+                {
+                    await _botClient!.SendMessage(chatId, "❌ Không tìm thấy tài khoản", cancellationToken: cancellationToken);
+                    return;
+                }
+
+                // Lấy thông tin đơn
+                var don = await context.DonYeuCaus
+                    .Include(d => d.NhanVien)
+                    .FirstOrDefaultAsync(d => d.Id == donId);
+
+                if (don == null)
+                {
+                    await _botClient!.SendMessage(chatId, "❌ Không tìm thấy đơn này", cancellationToken: cancellationToken);
+                    return;
+                }
+
+                // Kiểm tra trạng thái
+                if (don.TrangThai != TrangThaiDon.DangChoDuyet)
+                {
+                    await _botClient!.SendMessage(chatId, $"⚠️ Đơn này đã được xử lý ({don.TrangThai})", cancellationToken: cancellationToken);
+                    return;
+                }
+
+                // Cập nhật trạng thái
+                don.TrangThai = TrangThaiDon.BiTuChoi;
+                don.DuocChapThuanBoi = nguoiDuyet.Id;
+                don.NgayDuyet = DateTime.UtcNow;
+                don.GhiChuNguoiDuyet = lyDoTuChoi;
+
+                await context.SaveChangesAsync(cancellationToken);
+
+                _logger.LogInformation("❌ [TELEGRAM] Đơn {DonId} đã bị từ chối bởi {NguoiDuyet}", donId, nguoiDuyet.TenDayDu);
+
+                // Thông báo thành công
+                await _botClient!.SendMessage(
+                    chatId: chatId,
+                    text: $"✅ Đã từ chối đơn thành công\n\n📝 Lý do: {lyDoTuChoi}",
+                    cancellationToken: cancellationToken
+                );
+
+                // Gửi thông báo cho nhân viên
+                if (!string.IsNullOrEmpty(don.NhanVien.TelegramChatId))
+                {
+                    var notificationMessage = TelegramMessageBuilder.BuildEmployeeNotification(don, nguoiDuyet);
+
+                    await _botClient!.SendMessage(
+                        chatId: don.NhanVien.TelegramChatId,
+                        text: notificationMessage,
+                        parseMode: ParseMode.Html,
+                        cancellationToken: cancellationToken
+                    );
+                }
+
+                // Clear state
+                _userStates.TryRemove(chatId, out _);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ [TELEGRAM] Lỗi từ chối đơn {DonId}", donId);
+                await _botClient!.SendMessage(chatId, "❌ Đã xảy ra lỗi khi từ chối đơn", cancellationToken: cancellationToken);
+            }
+        }
+
+        /// <summary>
+        /// Xem chi tiết đơn
+        /// </summary>
+        private async Task XuLyXemChiTietDonAsync(long chatId, Guid donId, CancellationToken cancellationToken)
+        {
+            // Tạo scope mới để tránh ObjectDisposedException
+            using var scope = _serviceScopeFactory.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            try
+            {
+                var don = await context.DonYeuCaus
+                    .Include(d => d.NhanVien)
+                        .ThenInclude(nv => nv.User)
+                    .Include(d => d.NhanVien)
+                        .ThenInclude(nv => nv.PhongBan)
+                    .Include(d => d.NhanVien)
+                        .ThenInclude(nv => nv.ChucVu)
+                    .FirstOrDefaultAsync(d => d.Id == donId);
+
+                if (don == null)
+                {
+                    await _botClient!.SendMessage(chatId, "❌ Không tìm thấy đơn này", cancellationToken: cancellationToken);
+                    return;
+                }
+
+                var detailMessage = TelegramMessageBuilder.BuildDetailMessage(don);
+
+                await _botClient!.SendMessage(
+                    chatId: chatId,
+                    text: detailMessage,
+                    parseMode: ParseMode.Html,
+                    cancellationToken: cancellationToken
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ [TELEGRAM] Lỗi xem chi tiết đơn {DonId}", donId);
+                await _botClient!.SendMessage(chatId, "❌ Đã xảy ra lỗi khi xem chi tiết", cancellationToken: cancellationToken);
+            }
         }
 
         /// <summary>
@@ -773,21 +958,166 @@ namespace api.Service.Implement
             _logger.LogError(exception, $"❌ Telegram Polling Error: {errorMessage}");
             return Task.CompletedTask;
         }
+        #endregion
+
+        #region Message Builder
 
         /// <summary>
-        /// Validate email format
+        /// Utility class để tạo Telegram messages với format nhất quán
+        /// Giảm duplicate code và dễ maintain
         /// </summary>
-        private bool IsValidEmail(string email)
+        private static class TelegramMessageBuilder
         {
-            try
+            /// <summary>
+            /// Tạo message cho yêu cầu duyệt đơn (gửi cho giám đốc/trưởng phòng)
+            /// </summary>
+            public static string BuildApprovalRequest(DonYeuCau don, NhanVien nguoiGui)
             {
-                var addr = new System.Net.Mail.MailAddress(email);
-                return addr.Address == email;
+                var header = GetLoaiDonHeader(don.LoaiDon);
+                var message = $"<b>🔔 {header}</b>\n\n";
+                message += $"<b>👤 Nhân viên:</b> {nguoiGui.TenDayDu}\n";
+                message += $"<b>📅 Ngày tạo:</b> {don.NgayTao:dd/MM/yyyy HH:mm}\n\n";
+                
+                message += BuildDonDetails(don);
+                message += $"\n<b>📝 Lý do:</b> {don.LyDo}\n\n";
+                message += "<b>⏳ Trạng thái:</b> ĐANG CHỜ DUYỆT\n\n";
+                message += "👉 Vui lòng vào hệ thống để duyệt đơn";
+                
+                return message;
             }
-            catch
+
+            /// <summary>
+            /// Tạo message khi đơn đã được duyệt/từ chối (update message gốc)
+            /// </summary>
+            public static string BuildApprovedMessage(DonYeuCau don, NhanVien nguoiGui)
             {
-                return false;
+                var header = GetLoaiDonHeader(don.LoaiDon);
+                var message = $"<b>🔔 {header}</b>\n\n";
+                message += $"<b>👤 Nhân viên:</b> {nguoiGui.TenDayDu}\n";
+                message += $"<b>📅 Ngày tạo:</b> {don.NgayTao:dd/MM/yyyy HH:mm}\n\n";
+                
+                message += BuildDonDetails(don);
+                message += $"\n<b>📝 Lý do:</b> {don.LyDo}\n\n";
+                message += BuildApprovalStatus(don);
+                
+                return message;
             }
+
+            /// <summary>
+            /// Tạo message thông báo cho nhân viên khi đơn được duyệt/từ chối
+            /// </summary>
+            public static string BuildEmployeeNotification(DonYeuCau don, NhanVien nguoiDuyet)
+            {
+                var (icon, status) = don.TrangThai == TrangThaiDon.DaChapThuan 
+                    ? ("✅", "đã được chấp thuận!") 
+                    : ("❌", "đã bị từ chối");
+
+                var message = $"{icon} <b>Đơn của bạn {status}</b>\n\n";
+                message += $"<b>Loại đơn:</b> {don.LoaiDon.ToDisplayName()}\n";
+                message += $"<b>Người duyệt:</b> {nguoiDuyet.TenDayDu}\n";
+                
+                if (!string.IsNullOrEmpty(don.GhiChuNguoiDuyet))
+                    message += $"<b>Lý do từ chối:</b> {don.GhiChuNguoiDuyet}\n";
+                
+                message += $"<b>Ngày duyệt:</b> {don.NgayDuyet:dd/MM/yyyy HH:mm}";
+                
+                return message;
+            }
+
+            /// <summary>
+            /// Tạo message chi tiết đơn (khi click button "Chi tiết")
+            /// </summary>
+            public static string BuildDetailMessage(DonYeuCau don)
+            {
+                var message = "<b>📋 CHI TIẾT ĐƠN YÊU CẦU</b>\n\n";
+                message += $"<b>🆔 Mã đơn:</b> {don.MaDon ?? don.Id.ToString()[..8]}\n";
+                message += $"<b>📄 Loại:</b> {don.LoaiDon.ToDisplayName()}\n";
+                message += $"<b>🔖 Trạng thái:</b> {don.TrangThai.ToDisplayName()}\n\n";
+                message += $"<b>👤 Nhân viên:</b> {don.NhanVien.TenDayDu}\n";
+                message += $"<b>📧 Email:</b> {don.NhanVien.User.Email}\n";
+                message += $"<b>🏢 Phòng ban:</b> {don.NhanVien.PhongBan?.TenPhongBan ?? "Chưa có"}\n";
+                message += $"<b>💼 Chức vụ:</b> {don.NhanVien.ChucVu?.TenChucVu ?? "Chưa có"}\n\n";
+                message += $"<b>📝 Lý do:</b> {don.LyDo}\n";
+                message += $"<b>📅 Ngày tạo:</b> {don.NgayTao:dd/MM/yyyy HH:mm}";
+                
+                return message;
+            }
+
+            #region Private Helpers
+
+            private static string GetLoaiDonHeader(LoaiDonYeuCau loaiDon) => loaiDon switch
+            {
+                LoaiDonYeuCau.NghiPhep => "ĐƠN XIN NGHỈ PHÉP",
+                LoaiDonYeuCau.LamThemGio => "ĐƠN LÀM THÊM GIỜ",
+                LoaiDonYeuCau.DiMuon => "ĐƠN ĐI MUỘN",
+                LoaiDonYeuCau.CongTac => "ĐƠN CÔNG TÁC",
+                _ => "📋 ĐƠN YÊU CẦU"
+            };
+
+            private static string BuildDonDetails(DonYeuCau don)
+            {
+                return don.LoaiDon switch
+                {
+                    LoaiDonYeuCau.NghiPhep => BuildNghiPhepDetails(don),
+                    LoaiDonYeuCau.LamThemGio => BuildLamThemGioDetails(don),
+                    LoaiDonYeuCau.DiMuon => BuildDiMuonDetails(don),
+                    LoaiDonYeuCau.CongTac => BuildCongTacDetails(don),
+                    _ => ""
+                };
+            }
+
+            private static string BuildNghiPhepDetails(DonYeuCau don)
+            {
+                var soNgay = (don.NgayKetThuc!.Value - don.NgayBatDau!.Value).Days + 1;
+                return $"<b>📄 Loại đơn:</b> Nghỉ phép\n" +
+                       $"<b>📅 Thời gian nghỉ:</b> {don.NgayBatDau:dd/MM/yyyy} → {don.NgayKetThuc:dd/MM/yyyy}\n" +
+                       $"<b>⏳ Tổng số ngày:</b> {soNgay} ngày\n";
+            }
+
+            private static string BuildLamThemGioDetails(DonYeuCau don)
+            {
+                return $"<b>📄 Loại đơn:</b> Làm thêm giờ\n" +
+                       $"<b>📅 Ngày làm thêm:</b> {don.NgayLamThem:dd/MM/yyyy}\n" +
+                       $"<b>⏱️ Số giờ làm thêm:</b> {don.SoGioLamThem} giờ\n";
+            }
+
+            private static string BuildDiMuonDetails(DonYeuCau don)
+            {
+                return $"<b>📄 Loại đơn:</b> Xin đi muộn\n" +
+                       $"<b>📅 Ngày:</b> {don.NgayDiMuon:dd/MM/yyyy}\n" +
+                       $"<b>🕐 Giờ dự kiến đến:</b> {don.GioDuKienDen:HH:mm}\n";
+            }
+
+            private static string BuildCongTacDetails(DonYeuCau don)
+            {
+                return $"<b>📄 Loại đơn:</b> Công tác\n" +
+                       $"<b>📅 Thời gian:</b> {don.NgayBatDau:dd/MM/yyyy} → {don.NgayKetThuc:dd/MM/yyyy}\n" +
+                       $"<b>📍 Địa điểm:</b> {don.DiaDiemCongTac}\n" +
+                       $"<b>🎯 Mục đích:</b> {don.MucDichCongTac}\n";
+            }
+
+            private static string BuildApprovalStatus(DonYeuCau don)
+            {
+                var trangThai = don.TrangThai switch
+                {
+                    TrangThaiDon.DaChapThuan => "✅ ĐÃ CHẤP THUẬN",
+                    TrangThaiDon.BiTuChoi => "❌ BỊ TỪ CHỐI",
+                    TrangThaiDon.DaHuy => "🚫 ĐÃ HỦY",
+                    _ => "⏳ ĐANG CHỜ DUYỆT"
+                };
+
+                var message = $"<b>🔖 Trạng thái:</b> {trangThai}\n";
+
+                if (!string.IsNullOrEmpty(don.GhiChuNguoiDuyet))
+                    message += $"<b>💬 Ghi chú:</b> {don.GhiChuNguoiDuyet}\n";
+
+                if (don.NgayDuyet.HasValue)
+                    message += $"<b>📅 Ngày duyệt:</b> {don.NgayDuyet:dd/MM/yyyy HH:mm}\n";
+
+                return message;
+            }
+
+            #endregion
         }
 
         #endregion

@@ -30,21 +30,5 @@ namespace api.Model.Enums
                 _ => "Unknown"
             };
         }
-
-        /// <summary>
-        /// Kiểm tra đơn có thể chỉnh sửa không
-        /// </summary>
-        public static bool CoTheChinhSua(this TrangThaiDon trangThai)
-        {
-            return trangThai == TrangThaiDon.DangChoDuyet;
-        }
-
-        /// <summary>
-        /// Kiểm tra đơn có thể hủy không
-        /// </summary>
-        public static bool CoTheHuy(this TrangThaiDon trangThai)
-        {
-            return trangThai == TrangThaiDon.DangChoDuyet;
-        }
     }
 }

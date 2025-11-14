@@ -12,8 +12,8 @@ using api.Data;
 namespace api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251110085228_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20251113172514_AddedDatabase")]
+    partial class AddedDatabase
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -199,6 +199,9 @@ namespace api.Migrations
 
                     b.Property<string>("LyDo")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("MaDon")
                         .HasColumnType("text");
 
                     b.Property<string>("MucDichCongTac")

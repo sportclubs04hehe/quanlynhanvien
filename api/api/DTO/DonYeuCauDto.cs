@@ -88,6 +88,7 @@ namespace api.DTO
     public class DonYeuCauDto
     {
         public Guid Id { get; set; }
+        public string? MaDon { get; set; }
         public LoaiDonYeuCau LoaiDon { get; set; }
         public string LoaiDonText { get; set; } = string.Empty; // Tên hiển thị
         public TrangThaiDon TrangThai { get; set; }

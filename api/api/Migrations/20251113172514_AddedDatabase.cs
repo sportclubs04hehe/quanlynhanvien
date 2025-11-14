@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace api.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class AddedDatabase : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -273,6 +273,7 @@ namespace api.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    MaDon = table.Column<string>(type: "text", nullable: true),
                     LoaiDon = table.Column<int>(type: "integer", nullable: false),
                     NhanVienId = table.Column<Guid>(type: "uuid", nullable: false),
                     TrangThai = table.Column<int>(type: "integer", nullable: false),

@@ -15,6 +15,11 @@ namespace api.Model
         public Guid Id { get; set; }
 
         /// <summary>
+        /// Mã đơn duy nhất để dễ nhận diện (VD: DON-2025-001)
+        /// </summary>
+        public string? MaDon { get; set; }
+
+        /// <summary>
         /// Loại đơn: NghiPhep, LamThemGio, DiMuon, CongTac
         /// </summary>
         public LoaiDonYeuCau LoaiDon { get; set; }
