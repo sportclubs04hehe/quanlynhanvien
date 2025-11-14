@@ -1,3 +1,4 @@
+using api.Common;
 using api.Data;
 using api.Model;
 using api.Model.Enums;
@@ -1000,8 +1001,7 @@ namespace api.Service.Implement
             /// </summary>
             private static DateTime ToVietnamTime(DateTime utcDateTime)
             {
-                var vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
-                return TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, vietnamTimeZone);
+                return DateTimeHelper.ToVietnamTime(utcDateTime);
             }
 
             private static string GetLoaiDonHeader(LoaiDonYeuCau loaiDon) => loaiDon switch

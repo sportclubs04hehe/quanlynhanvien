@@ -1,4 +1,5 @@
-﻿using api.Data;
+﻿using api.Common;
+using api.Data;
 using api.DTO;
 using api.Model;
 using api.Model.Enums;
@@ -75,15 +76,16 @@ namespace api.Repository.Implement
             }
 
             // Filter by date range
+            // Frontend gửi date-only (VD: 2025-11-14), cần convert sang UTC+7 rồi sang UTC để match với database
             if (filter.TuNgay.HasValue)
             {
-                var tuNgay = DateTime.SpecifyKind(filter.TuNgay.Value.Date, DateTimeKind.Utc);
+                var tuNgay = DateTimeHelper.ToUtcFromVietnam(filter.TuNgay.Value.Date);
                 query = query.Where(d => d.NgayTao >= tuNgay);
             }
 
             if (filter.DenNgay.HasValue)
             {
-                var denNgay = DateTime.SpecifyKind(filter.DenNgay.Value.Date.AddDays(1), DateTimeKind.Utc);
+                var denNgay = DateTimeHelper.ToUtcFromVietnam(filter.DenNgay.Value.Date.AddDays(1));
                 query = query.Where(d => d.NgayTao < denNgay);
             }
 
