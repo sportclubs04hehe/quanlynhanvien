@@ -89,12 +89,12 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
   
   /**
    * Load danh sách ngày đã nghỉ để highlight
+   * Chỉ load 3 tháng tiếp theo để tối ưu performance
    */
   private loadRequestedLeaveDates(): void {
-    // Load 1 năm tới (đủ để hiển thị trên datepicker)
     const fromDate = new Date();
     const toDate = new Date();
-    toDate.setFullYear(toDate.getFullYear() + 1);
+    toDate.setMonth(toDate.getMonth() + 3); // Chỉ load 3 tháng tới
     
     this.donService.getNgayDaNghi(fromDate, toDate)
       .subscribe({
@@ -515,11 +515,10 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
   
   /**
    * Mark dates as disabled (for ngbDatepicker)
-   * Currently not used but available for future enhancements
+   * Disable dates that are already requested for leave
    */
   isDisabled = (date: NgbDate, current?: { month: number; year: number }) => {
-    // Can be used to disable specific dates (e.g., already requested leave days)
-    return false;
+    return this.isRequestedLeaveDate(date);
   }
   
   /**

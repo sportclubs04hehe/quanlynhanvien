@@ -436,40 +436,54 @@ namespace api.Service.Implement
             DateTime? fromDate = null, 
             DateTime? toDate = null)
         {
-            // Lấy tất cả đơn nghỉ phép đã được chấp thuận của nhân viên
-            // KHÔNG filter theo TuNgay/DenNgay vì đó là filter cho ngày tạo đơn, không phải ngày nghỉ
-            var filter = new FilterDonYeuCauDto
-            {
-                NhanVienId = nhanVienId,
-                LoaiDon = LoaiDonYeuCau.NghiPhep,
-                TrangThai = TrangThaiDon.DaChapThuan,
-                PageNumber = 1,
-                PageSize = 1000 // Large enough to get all approved leaves
-            };
-
-            var (dons, _) = await _donYeuCauRepo.GetAllAsync(filter);
-
-            // Tạo danh sách tất cả các ngày đã nghỉ
             var ngayDaNghi = new List<DateTime>();
-            foreach (var don in dons)
+            var pageNumber = 1;
+            const int pageSize = 100; // Reasonable page size
+            
+            while (true)
             {
-                if (don.NgayBatDau.HasValue && don.NgayKetThuc.HasValue)
+                // Lấy đơn nghỉ phép đã được chấp thuận theo từng batch
+                var filter = new FilterDonYeuCauDto
                 {
-                    var current = don.NgayBatDau.Value.Date;
-                    var end = don.NgayKetThuc.Value.Date;
+                    NhanVienId = nhanVienId,
+                    LoaiDon = LoaiDonYeuCau.NghiPhep,
+                    TrangThai = TrangThaiDon.DaChapThuan,
+                    PageNumber = pageNumber,
+                    PageSize = pageSize
+                };
 
-                    // Chỉ thêm các ngày nằm trong khoảng fromDate - toDate (nếu có)
-                    while (current <= end)
+                var (dons, totalCount) = await _donYeuCauRepo.GetAllAsync(filter);
+                
+                // Nếu không còn dữ liệu thì dừng
+                if (!dons.Any())
+                    break;
+
+                // Xử lý từng đơn trong batch hiện tại
+                foreach (var don in dons)
+                {
+                    if (don.NgayBatDau.HasValue && don.NgayKetThuc.HasValue)
                     {
-                        // Filter theo khoảng thời gian mong muốn
-                        if ((!fromDate.HasValue || current >= fromDate.Value.Date) &&
-                            (!toDate.HasValue || current <= toDate.Value.Date))
+                        var current = don.NgayBatDau.Value.Date;
+                        var end = don.NgayKetThuc.Value.Date;
+
+                        // Chỉ thêm các ngày nằm trong khoảng fromDate - toDate (nếu có)
+                        while (current <= end)
                         {
-                            ngayDaNghi.Add(current);
+                            if ((!fromDate.HasValue || current >= fromDate.Value.Date) &&
+                                (!toDate.HasValue || current <= toDate.Value.Date))
+                            {
+                                ngayDaNghi.Add(current);
+                            }
+                            current = current.AddDays(1);
                         }
-                        current = current.AddDays(1);
                     }
                 }
+
+                // Nếu đã load hết tất cả records thì dừng
+                if (pageNumber * pageSize >= totalCount)
+                    break;
+
+                pageNumber++;
             }
 
             return ngayDaNghi.Distinct().OrderBy(d => d).ToList();
