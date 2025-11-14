@@ -22,9 +22,11 @@ export class DonFilterComponent implements OnInit, OnDestroy, OnChanges {
   @Input() initialTrangThai?: TrangThaiDon | null;
   @Output() filterChange = new EventEmitter<FilterDonYeuCauDto>();
   @Output() resetFilter = new EventEmitter<void>();
+  @Output() refreshData = new EventEmitter<void>();
   
   // Filter model
   searchTerm: string = '';
+  maDon: string = '';
   selectedLoaiDon: LoaiDonYeuCau | '' = '';
   selectedTrangThai: TrangThaiDon | '' = '';
   tuNgay: NgbDateStruct | null = null;
@@ -108,6 +110,7 @@ export class DonFilterComponent implements OnInit, OnDestroy, OnChanges {
   private emitFilterChange(): void {
     const filter: FilterDonYeuCauDto = {
       searchTerm: this.searchTerm.trim() || undefined,
+      maDon: this.maDon.trim() || undefined,
       loaiDon: this.selectedLoaiDon || undefined,
       trangThai: this.selectedTrangThai || undefined,
       tuNgay: this.dateStructToString(this.tuNgay),
@@ -129,6 +132,7 @@ export class DonFilterComponent implements OnInit, OnDestroy, OnChanges {
    */
   onReset(): void {
     this.searchTerm = '';
+    this.maDon = '';
     this.selectedLoaiDon = '';
     this.selectedTrangThai = '';
     this.tuNgay = null;
@@ -139,11 +143,19 @@ export class DonFilterComponent implements OnInit, OnDestroy, OnChanges {
   }
   
   /**
+   * Refresh data
+   */
+  onRefresh(): void {
+    this.refreshData.emit();
+  }
+  
+  /**
    * Check if any filter is active
    */
   hasActiveFilters(): boolean {
     return !!(
       this.searchTerm.trim() ||
+      this.maDon.trim() ||
       this.selectedLoaiDon ||
       this.selectedTrangThai ||
       this.tuNgay ||

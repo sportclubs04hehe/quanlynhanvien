@@ -38,6 +38,12 @@ namespace api.Repository.Implement
                 );
             }
 
+            // Filter by MaDon
+            if (!string.IsNullOrWhiteSpace(filter.MaDon))
+            {
+                query = query.Where(d => d.MaDon != null && d.MaDon.ToLower().Contains(filter.MaDon.ToLower()));
+            }
+
             // Filter by LoaiDon
             if (filter.LoaiDon.HasValue)
             {
@@ -71,13 +77,13 @@ namespace api.Repository.Implement
             // Filter by date range
             if (filter.TuNgay.HasValue)
             {
-                var tuNgay = DateTime.SpecifyKind(filter.TuNgay.Value, DateTimeKind.Utc);
+                var tuNgay = DateTime.SpecifyKind(filter.TuNgay.Value.Date, DateTimeKind.Utc);
                 query = query.Where(d => d.NgayTao >= tuNgay);
             }
 
             if (filter.DenNgay.HasValue)
             {
-                var denNgay = DateTime.SpecifyKind(filter.DenNgay.Value, DateTimeKind.Utc).AddDays(1); // Include toàn bộ ngày
+                var denNgay = DateTime.SpecifyKind(filter.DenNgay.Value.Date.AddDays(1), DateTimeKind.Utc);
                 query = query.Where(d => d.NgayTao < denNgay);
             }
 

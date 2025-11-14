@@ -73,7 +73,7 @@
           <table class="table table-hover align-middle">
             <thead class="table-light">
               <tr>
-                <th style="width: 5%;">#</th>
+                <th style="width: 8%;">Mã Đơn</th>
                 <th style="width: 15%;">Loại Đơn</th>
                 <th style="width: 30%;">Lý Do</th>
                 <th style="width: 12%;">Ngày Tạo</th>
@@ -84,7 +84,9 @@
             <tbody>
               @for (don of dons(); track don.id; let idx = $index) {
                 <tr>
-                  <td>{{ (pageNumber() - 1) * pageSize() + idx + 1 }}</td>
+                  <td>
+                    <span class="badge bg-dark">{{ don.maDon }}</span>
+                  </td>
                   <td>
                     <span class="badge bg-info">
                       <i class="bi bi-file-earmark-text"></i>

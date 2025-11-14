@@ -148,6 +148,7 @@ export interface UpdateDonYeuCauDto {
  */
 export interface DonYeuCauDto {
   id: string;
+  maDon?: string;
   loaiDon: LoaiDonYeuCau;
   loaiDonText: string;         // Tên hiển thị
   trangThai: TrangThaiDon;
@@ -209,6 +210,7 @@ export interface FilterDonYeuCauDto {
   
   // Search
   searchTerm?: string;          // Tìm theo tên nhân viên, lý do
+  maDon?: string;               // Lọc theo mã đơn
   
   // Filter
   loaiDon?: LoaiDonYeuCau;

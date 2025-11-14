@@ -4,19 +4,42 @@
       <h6 class="mb-0">
         <i class="bi bi-funnel"></i> Bộ Lọc
       </h6>
-      @if (hasActiveFilters()) {
+      <div class="btn-group btn-group-sm">
+        @if (hasActiveFilters()) {
+          <button 
+            type="button" 
+            class="btn btn-outline-secondary"
+            (click)="onReset()">
+            <i class="bi bi-x-circle"></i> Xóa Lọc
+          </button>
+        }
         <button 
           type="button" 
-          class="btn btn-sm btn-outline-secondary"
-          (click)="onReset()">
-          <i class="bi bi-x-circle"></i> Xóa Lọc
+          class="btn btn-outline-primary"
+          (click)="onRefresh()">
+          <i class="bi bi-arrow-clockwise"></i> Làm Mới
         </button>
-      }
+      </div>
     </div>
     
     <div class="row g-3">
+      
+      <!-- Mã Đơn -->
+      <div class="col-md-2">
+        <label for="maDon" class="form-label">
+          <i class="bi bi-tag"></i> Mã Đơn
+        </label>
+        <input 
+          type="text" 
+          class="form-control" 
+          id="maDon"
+          placeholder="VD: NP-2025-001"
+          [(ngModel)]="maDon"
+          (ngModelChange)="onSearchChange()">
+      </div>
+
       <!-- Search Term -->
-      <div class="col-md-6">
+      <div class="col-md-4">
         <label for="searchTerm" class="form-label">
           <i class="bi bi-search"></i> Tìm Kiếm
         </label>

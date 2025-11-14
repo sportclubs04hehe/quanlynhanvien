@@ -4,29 +4,9 @@
       <!-- Filter Component -->
       <app-don-filter
         [initialTrangThai]="initialTrangThai()"
-        (filterChange)="onFilterChange($event)">
+        (filterChange)="onFilterChange($event)"
+        (refreshData)="refresh()">
       </app-don-filter>
-      
-      <!-- Toolbar -->
-      <div class="row mb-3 g-3 align-items-center">
-        <div class="col-md-6">
-          @if (hasActiveFilters()) {
-            <button 
-              class="btn btn-outline-secondary btn-sm"
-              (click)="clearFilters()">
-              <i class="bi bi-x-circle me-1"></i>Xóa Bộ Lọc
-            </button>
-          }
-        </div>
-        <div class="col-md-6 text-end">
-          <button 
-            class="btn btn-outline-primary"
-            (click)="refresh()"
-            [disabled]="isLoading()">
-            <i class="bi bi-arrow-clockwise me-1"></i>Làm Mới
-          </button>
-        </div>
-      </div>
 
       <!-- Error Message -->
       @if (errorMessage()) {
@@ -50,7 +30,7 @@
           <table class="table table-hover align-middle">
             <thead class="table-light">
               <tr>
-                <th style="width: 3%;">#</th>
+                <th style="width: 8%;">Mã Đơn</th>
                 <th style="width: 15%;">Nhân Viên</th>
                 <th style="width: 10%;">Phòng Ban</th>
                 <th style="width: 10%;">Loại Đơn</th>
@@ -64,7 +44,9 @@
             <tbody>
               @for (don of dons(); track don.id; let idx = $index) {
                 <tr>
-                  <td>{{ (pageNumber() - 1) * pageSize() + idx + 1 }}</td>
+                  <td>
+                    <span class="badge bg-dark">{{ don.maDon }}</span>
+                  </td>
                   
                   <!-- Nhân viên -->
                   <td>
@@ -181,11 +163,6 @@
           <p class="mt-3 text-muted fs-5">
             Không tìm thấy đơn yêu cầu nào
           </p>
-          @if (hasActiveFilters()) {
-            <button class="btn btn-outline-secondary" (click)="clearFilters()">
-              <i class="bi bi-x-circle me-1"></i>Xóa Bộ Lọc
-            </button>
-          }
         </div>
       }
     </div>

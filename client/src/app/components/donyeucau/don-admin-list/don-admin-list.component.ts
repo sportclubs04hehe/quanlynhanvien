@@ -121,18 +121,6 @@ export class DonAdminListComponent implements OnInit, OnDestroy {
   }
   
   /**
-   * Clear all filters
-   */
-  clearFilters(): void {
-    this.filter.set({
-      pageNumber: 1,
-      pageSize: 10
-    });
-    this.pageNumber.set(1);
-    this.loadDons();
-  }
-  
-  /**
    * Pagination change
    */
   onPageChange(page: number): void {
@@ -247,22 +235,5 @@ export class DonAdminListComponent implements OnInit, OnDestroy {
       default:
         return 'bg-secondary';
     }
-  }
-  
-  /**
-   * Check if filter is active
-   */
-  hasActiveFilters(): boolean {
-    const f = this.filter();
-    return !!(
-      f.searchTerm ||
-      f.loaiDon !== undefined ||
-      f.trangThai !== undefined ||
-      f.nhanVienId ||
-      f.nguoiDuyetId ||
-      f.phongBanId ||
-      f.tuNgay ||
-      f.denNgay
-    );
   }
 }

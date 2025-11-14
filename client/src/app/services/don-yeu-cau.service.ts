@@ -45,6 +45,7 @@ export class DonYeuCauService {
       .set('pageSize', (filter.pageSize || 10).toString());
 
     if (filter.searchTerm) params = params.set('searchTerm', filter.searchTerm);
+    if (filter.maDon) params = params.set('maDon', filter.maDon);
     if (filter.loaiDon !== undefined) params = params.set('loaiDon', filter.loaiDon.toString());
     if (filter.trangThai !== undefined) params = params.set('trangThai', filter.trangThai.toString());
     if (filter.nhanVienId) params = params.set('nhanVienId', filter.nhanVienId);
@@ -68,6 +69,7 @@ export class DonYeuCauService {
       .set('pageSize', (filter.pageSize || 10).toString());
 
     if (filter.searchTerm) params = params.set('searchTerm', filter.searchTerm);
+    if (filter.maDon) params = params.set('maDon', filter.maDon);
     if (filter.loaiDon !== undefined) params = params.set('loaiDon', filter.loaiDon.toString());
     if (filter.trangThai !== undefined) params = params.set('trangThai', filter.trangThai.toString());
     if (filter.nhanVienId) params = params.set('nhanVienId', filter.nhanVienId);

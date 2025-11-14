@@ -153,6 +153,7 @@ namespace api.DTO
 
         // Search
         public string? SearchTerm { get; set; } // Tìm theo tên nhân viên, lý do
+        public string? MaDon { get; set; } // Lọc theo mã đơn
 
         // Filter
         public LoaiDonYeuCau? LoaiDon { get; set; }

@@ -43,7 +43,7 @@
           <table class="table table-hover align-middle">
             <thead class="table-light">
               <tr>
-                <th style="width: 4%;">#</th>
+                <th style="width: 8%;">Mã Đơn</th>
                 <th style="width: 18%;">Nhân Viên</th>
                 <th style="width: 12%;">Loại Đơn</th>
                 <th style="width: 25%;">Lý Do</th>
@@ -55,7 +55,9 @@
             <tbody>
               @for (don of dons(); track don.id; let idx = $index) {
                 <tr [class.table-warning]="don.trangThai === TrangThaiDon.DangChoDuyet">
-                  <td>{{ (pageNumber() - 1) * pageSize() + idx + 1 }}</td>
+                  <td>
+                    <span class="badge bg-dark">{{ don.maDon }}</span>
+                  </td>
                   
                   <!-- Nhân viên info -->
                   <td>
