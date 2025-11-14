@@ -59,36 +59,25 @@ namespace api.Service.Implement
         {
             var messageIds = new Dictionary<string, long>();
 
-            _logger.LogInformation("🔔 [TELEGRAM] Bắt đầu gửi thông báo đơn ID: {DonId}, Người gửi: {NguoiGui}",
-                donYeuCau.Id, nguoiGui.TenDayDu);
-
             if (_botClient == null || !_isEnabled)
             {
-                _logger.LogWarning("⚠️ [TELEGRAM] Bot không được bật hoặc chưa cấu hình. IsEnabled: {IsEnabled}, BotClient: {BotClient}",
-                    _isEnabled, _botClient != null);
                 return messageIds;
             }
 
             try
             {
                 // Tìm giám đốc (hoặc trưởng phòng) để gửi thông báo
-                _logger.LogInformation("🔍 [TELEGRAM] Đang tìm người duyệt...");
                 var nguoiNhanThongBao = await TimNguoiDuyetDonAsync(donYeuCau, nguoiGui);
 
                 if (nguoiNhanThongBao == null)
                 {
-                    _logger.LogWarning("⚠️ [TELEGRAM] Không tìm thấy người duyệt (Giám Đốc hoặc Trưởng Phòng) cho đơn ID: {DonId}", donYeuCau.Id);
                     return messageIds;
                 }
 
                 if (string.IsNullOrEmpty(nguoiNhanThongBao.TelegramChatId))
                 {
-                    _logger.LogWarning("⚠️ [TELEGRAM] Người duyệt {NguoiDuyet} chưa liên kết Telegram", nguoiNhanThongBao.TenDayDu);
                     return messageIds;
                 }
-
-                _logger.LogInformation("✅ [TELEGRAM] Tìm thấy người duyệt: {NguoiDuyet}, ChatId: {ChatId}",
-                    nguoiNhanThongBao.TenDayDu, nguoiNhanThongBao.TelegramChatId);
 
                 // Tạo nội dung tin nhắn
                 var message = TaoNoiDungThongBao(donYeuCau, nguoiGui);
@@ -97,7 +86,6 @@ namespace api.Service.Implement
                 var inlineKeyboard = TaoInlineKeyboardChoDon(donYeuCau.Id);
 
                 // Gửi tin nhắn với Inline Buttons
-                _logger.LogInformation("📤 [TELEGRAM] Đang gửi message với Inline Buttons tới ChatId: {ChatId}...", nguoiNhanThongBao.TelegramChatId);
                 var sentMessage = await _botClient.SendMessage(
                     chatId: nguoiNhanThongBao.TelegramChatId,
                     text: message,
@@ -106,7 +94,6 @@ namespace api.Service.Implement
                 );
 
                 messageIds.Add(nguoiNhanThongBao.TelegramChatId, sentMessage.MessageId);
-                _logger.LogInformation("✅ [TELEGRAM] Gửi thành công! MessageId: {MessageId}", sentMessage.MessageId);
 
                 return messageIds;
             }
@@ -156,13 +143,10 @@ namespace api.Service.Implement
                             parseMode: ParseMode.Html,
                             replyMarkup: null // Xóa buttons
                         );
-                        
-                        _logger.LogInformation("✅ [TELEGRAM] Đã disable buttons cho message {MessageId} trong chat {ChatId}", messageId, chatId);
                     }
                     catch (ApiRequestException ex) when (ex.Message.Contains("message is not modified"))
                     {
                         // Message không thay đổi, bỏ qua
-                        _logger.LogWarning("⚠️ [TELEGRAM] Message {MessageId} không có thay đổi", messageId);
                     }
                 }
             }
@@ -208,7 +192,6 @@ namespace api.Service.Implement
             try
             {
                 var me = await _botClient.GetMe();
-                _logger.LogInformation($"✅ Bot đang hoạt động: @{me.Username}");
                 return true;
             }
             catch (Exception ex)
@@ -225,9 +208,6 @@ namespace api.Service.Implement
         /// </summary>
         private async Task<NhanVien?> TimNguoiDuyetDonAsync(DonYeuCau donYeuCau, NhanVien nguoiGui)
         {
-            _logger.LogInformation("🔍 [TELEGRAM] Tìm Giám Đốc có role '{Role}' và đã liên kết Telegram...",
-                AppRolesExtensions.GiamDoc);
-
             // Ưu tiên 1: Tìm Giám Đốc (role = GiamDoc trong AspNetUserRoles)
             var giamDoc = await (from nv in _context.NhanViens
                                  join user in _context.Users on nv.Id equals user.Id
@@ -240,36 +220,20 @@ namespace api.Service.Implement
 
             if (giamDoc != null)
             {
-                _logger.LogInformation("✅ [TELEGRAM] Tìm thấy Giám Đốc: {TenGiamDoc}, ChatId: {ChatId}",
-                    giamDoc.TenDayDu, giamDoc.TelegramChatId);
                 return giamDoc;
             }
-
-            _logger.LogWarning("⚠️ [TELEGRAM] Không tìm thấy Giám Đốc có role '{Role}' và đã liên kết Telegram",
-                AppRolesExtensions.GiamDoc);
 
             // Ưu tiên 2: Tìm Trưởng phòng của người gửi (người quản lý trực tiếp)
             if (nguoiGui.QuanLyId.HasValue)
             {
-                _logger.LogInformation("🔍 [TELEGRAM] Tìm Trưởng Phòng (QuanLyId: {QuanLyId})...", nguoiGui.QuanLyId.Value);
-
                 var truongPhong = await _context.NhanViens
                     .FirstOrDefaultAsync(nv => nv.Id == nguoiGui.QuanLyId.Value
                                              && !string.IsNullOrEmpty(nv.TelegramChatId));
 
                 if (truongPhong != null)
                 {
-                    _logger.LogInformation("✅ [TELEGRAM] Tìm thấy Trưởng Phòng: {TenTruongPhong}, ChatId: {ChatId}",
-                        truongPhong.TenDayDu, truongPhong.TelegramChatId);
                     return truongPhong;
                 }
-
-                _logger.LogWarning("⚠️ [TELEGRAM] Trưởng Phòng (ID: {QuanLyId}) chưa liên kết Telegram", nguoiGui.QuanLyId.Value);
-            }
-            else
-            {
-                _logger.LogWarning("⚠️ [TELEGRAM] Nhân viên {NhanVien} không có QuanLyId (không có trưởng phòng)",
-                    nguoiGui.TenDayDu);
             }
 
             _logger.LogError("❌ [TELEGRAM] Không tìm thấy người duyệt nào (Giám Đốc hoặc Trưởng Phòng) có Telegram");
@@ -334,7 +298,6 @@ namespace api.Service.Implement
                 cancellationToken: _receivingCancellationTokenSource.Token
             );
 
-            _logger.LogInformation("🤖 Telegram Bot đang lắng nghe...");
             return Task.CompletedTask;
         }
 
@@ -524,13 +487,10 @@ namespace api.Service.Implement
                               "1️⃣ Đăng nhập tài khoản cũ và hủy liên kết\n" +
                               "2️⃣ Sau đó thử lại với tài khoản mới",
                         parseMode: ParseMode.Html,
-                        cancellationToken: cancellationToken
-                    );
-                    _logger.LogWarning($"⚠️ ChatId {chatId} đã liên kết với nhân viên {existingLink.TenDayDu}, không thể link với {nhanVien.TenDayDu}");
+                    cancellationToken: cancellationToken
+                );
                     return;
-                }
-
-                // ✅ Liên kết thành công
+                }                // ✅ Liên kết thành công
                 nhanVien.TelegramChatId = chatId.ToString();
                 linkToken.IsUsed = true;
                 linkToken.UsedAt = DateTime.UtcNow;
@@ -599,9 +559,6 @@ namespace api.Service.Implement
                     parseMode: ParseMode.Html,
                     cancellationToken: cancellationToken
                 );
-
-                var roleName = isGiamDoc ? "Giám Đốc" : (isTruongPhong ? "Trưởng Phòng" : "Nhân Viên");
-                _logger.LogInformation($"✅ Deep link: Đã liên kết ChatId {chatId} với {roleName} {nhanVien.TenDayDu}");
             }
             catch (Exception ex)
             {
@@ -656,8 +613,6 @@ namespace api.Service.Implement
             {
                 // Answer callback query ngay để Telegram không hiển thị loading
                 await _botClient.AnswerCallbackQuery(callbackQuery.Id, cancellationToken: cancellationToken);
-
-                _logger.LogInformation("🔘 [TELEGRAM] Callback nhận được: {Data} từ ChatId: {ChatId}", data, chatId);
 
                 // Parse callback data: format "action_donId"
                 var parts = data.Split('_');
@@ -754,8 +709,6 @@ namespace api.Service.Implement
 
                 await context.SaveChangesAsync(cancellationToken);
 
-                _logger.LogInformation("✅ [TELEGRAM] Đơn {DonId} đã được chấp thuận bởi {NguoiDuyet}", donId, nguoiDuyet.TenDayDu);
-
                 // Edit message gốc - disable buttons
                 var updatedMessage = TaoNoiDungThongBao(don, don.NhanVien, daDuyet: true);
                 await _botClient!.EditMessageText(
@@ -803,8 +756,6 @@ namespace api.Service.Implement
                 text: "📝 Vui lòng nhập lý do từ chối đơn này:",
                 cancellationToken: cancellationToken
             );
-
-            _logger.LogInformation("📝 [TELEGRAM] Yêu cầu nhập lý do từ chối đơn {DonId} từ ChatId: {ChatId}", donId, chatId);
         }
 
         /// <summary>
@@ -853,8 +804,6 @@ namespace api.Service.Implement
                 don.GhiChuNguoiDuyet = lyDoTuChoi;
 
                 await context.SaveChangesAsync(cancellationToken);
-
-                _logger.LogInformation("❌ [TELEGRAM] Đơn {DonId} đã bị từ chối bởi {NguoiDuyet}", donId, nguoiDuyet.TenDayDu);
 
                 // Thông báo thành công
                 await _botClient!.SendMessage(

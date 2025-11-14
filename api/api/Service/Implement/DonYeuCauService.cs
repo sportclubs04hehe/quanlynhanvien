@@ -448,8 +448,6 @@ namespace api.Service.Implement
             };
 
             var (dons, _) = await _donYeuCauRepo.GetAllAsync(filter);
-            
-            _logger.LogInformation($"GetNgayDaNghi: Found {dons.Count} approved leave requests for user {nhanVienId}");
 
             // Tạo danh sách tất cả các ngày đã nghỉ
             var ngayDaNghi = new List<DateTime>();
@@ -457,8 +455,6 @@ namespace api.Service.Implement
             {
                 if (don.NgayBatDau.HasValue && don.NgayKetThuc.HasValue)
                 {
-                    _logger.LogInformation($"Processing leave: {don.NgayBatDau:yyyy-MM-dd} to {don.NgayKetThuc:yyyy-MM-dd}");
-                    
                     var current = don.NgayBatDau.Value.Date;
                     var end = don.NgayKetThuc.Value.Date;
 
@@ -475,8 +471,6 @@ namespace api.Service.Implement
                     }
                 }
             }
-            
-            _logger.LogInformation($"GetNgayDaNghi: Returning {ngayDaNghi.Count} dates");
 
             return ngayDaNghi.Distinct().OrderBy(d => d).ToList();
         }
