@@ -105,6 +105,9 @@ namespace api.Service.Implement
             var don = _mapper.Map<DonYeuCau>(dto);
             don.NhanVienId = nhanVienId;
             
+            // Sinh mã đơn tự động
+            don.MaDon = await GenerateMaDonAsync(dto.LoaiDon);
+            
             // Chuyển đổi DateTime sang UTC
             ConvertDateTimesToUtc(don);
 
@@ -481,6 +484,37 @@ namespace api.Service.Implement
         #endregion
 
         #region Private Validation Methods
+
+        /// <summary>
+        /// Sinh mã đơn tự động theo format: {LoaiDon}-{Năm}-{STT}
+        /// Ví dụ: NP-2025-001, LTG-2025-002, DM-2025-003, CT-2025-004
+        /// </summary>
+        private async Task<string> GenerateMaDonAsync(LoaiDonYeuCau loaiDon)
+        {
+            var year = DateTime.UtcNow.Year;
+            var prefix = GetMaDonPrefix(loaiDon);
+            
+            // Đếm số đơn cùng loại và cùng năm
+            var existingDonsCount = await _donYeuCauRepo.CountByLoaiAndYearAsync(loaiDon, year);
+            
+            // STT bắt đầu từ 1
+            var stt = existingDonsCount + 1;
+            
+            // Format: PREFIX-YEAR-STT (STT có 3 chữ số)
+            return $"{prefix}-{year}-{stt:D3}";
+        }
+
+        /// <summary>
+        /// Lấy prefix cho mã đơn dựa trên loại đơn
+        /// </summary>
+        private string GetMaDonPrefix(LoaiDonYeuCau loaiDon) => loaiDon switch
+        {
+            LoaiDonYeuCau.NghiPhep => "NP",      // Nghỉ Phép
+            LoaiDonYeuCau.LamThemGio => "LTG",   // Làm Thêm Giờ
+            LoaiDonYeuCau.DiMuon => "DM",        // Đi Muộn
+            LoaiDonYeuCau.CongTac => "CT",       // Công Tác
+            _ => "DON"                             // Fallback
+        };
 
         private async Task ValidateCreateDonAsync(Guid nhanVienId, CreateDonYeuCauDto dto)
         {

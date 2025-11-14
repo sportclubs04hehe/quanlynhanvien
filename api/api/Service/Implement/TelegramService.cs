@@ -976,12 +976,13 @@ namespace api.Service.Implement
                 var header = GetLoaiDonHeader(don.LoaiDon);
                 var message = $"<b>🔔 {header}</b>\n\n";
                 message += $"<b>👤 Nhân viên:</b> {nguoiGui.TenDayDu}\n";
-                message += $"<b>📅 Ngày tạo:</b> {don.NgayTao:dd/MM/yyyy HH:mm}\n\n";
+                var ngayTaoVN = ToVietnamTime(don.NgayTao);
+                message += $"<b>📅 Ngày tạo:</b> {ngayTaoVN:dd/MM/yyyy HH:mm}\n\n";
                 
                 message += BuildDonDetails(don);
                 message += $"\n<b>📝 Lý do:</b> {don.LyDo}\n\n";
                 message += "<b>⏳ Trạng thái:</b> ĐANG CHỜ DUYỆT\n\n";
-                message += "👉 Vui lòng vào hệ thống để duyệt đơn";
+                message += "👉 Bạn có thể chấp thuận đơn tại đây hoặc truy cập vào hệ thống để duyệt đơn.";
                 
                 return message;
             }
@@ -994,7 +995,8 @@ namespace api.Service.Implement
                 var header = GetLoaiDonHeader(don.LoaiDon);
                 var message = $"<b>🔔 {header}</b>\n\n";
                 message += $"<b>👤 Nhân viên:</b> {nguoiGui.TenDayDu}\n";
-                message += $"<b>📅 Ngày tạo:</b> {don.NgayTao:dd/MM/yyyy HH:mm}\n\n";
+                var ngayTaoVN = ToVietnamTime(don.NgayTao);
+                message += $"<b>📅 Ngày tạo:</b> {ngayTaoVN:dd/MM/yyyy HH:mm}\n\n";
                 
                 message += BuildDonDetails(don);
                 message += $"\n<b>📝 Lý do:</b> {don.LyDo}\n\n";
@@ -1019,7 +1021,8 @@ namespace api.Service.Implement
                 if (!string.IsNullOrEmpty(don.GhiChuNguoiDuyet))
                     message += $"<b>Lý do từ chối:</b> {don.GhiChuNguoiDuyet}\n";
                 
-                message += $"<b>Ngày duyệt:</b> {don.NgayDuyet:dd/MM/yyyy HH:mm}";
+                var ngayDuyetVN = ToVietnamTime(don.NgayDuyet!.Value);
+                message += $"<b>Ngày duyệt:</b> {ngayDuyetVN:dd/MM/yyyy HH:mm}";
                 
                 return message;
             }
@@ -1038,12 +1041,22 @@ namespace api.Service.Implement
                 message += $"<b>🏢 Phòng ban:</b> {don.NhanVien.PhongBan?.TenPhongBan ?? "Chưa có"}\n";
                 message += $"<b>💼 Chức vụ:</b> {don.NhanVien.ChucVu?.TenChucVu ?? "Chưa có"}\n\n";
                 message += $"<b>📝 Lý do:</b> {don.LyDo}\n";
-                message += $"<b>📅 Ngày tạo:</b> {don.NgayTao:dd/MM/yyyy HH:mm}";
+                var ngayTaoVN = ToVietnamTime(don.NgayTao);
+                message += $"<b>📅 Ngày tạo:</b> {ngayTaoVN:dd/MM/yyyy HH:mm}";
                 
                 return message;
             }
 
             #region Private Helpers
+
+            /// <summary>
+            /// Chuyển đổi DateTime từ UTC sang múi giờ Việt Nam (UTC+7)
+            /// </summary>
+            private static DateTime ToVietnamTime(DateTime utcDateTime)
+            {
+                var vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+                return TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, vietnamTimeZone);
+            }
 
             private static string GetLoaiDonHeader(LoaiDonYeuCau loaiDon) => loaiDon switch
             {
@@ -1112,7 +1125,10 @@ namespace api.Service.Implement
                     message += $"<b>💬 Ghi chú:</b> {don.GhiChuNguoiDuyet}\n";
 
                 if (don.NgayDuyet.HasValue)
-                    message += $"<b>📅 Ngày duyệt:</b> {don.NgayDuyet:dd/MM/yyyy HH:mm}\n";
+                {
+                    var ngayDuyetVN = ToVietnamTime(don.NgayDuyet.Value);
+                    message += $"<b>📅 Ngày duyệt:</b> {ngayDuyetVN:dd/MM/yyyy HH:mm}\n";
+                }
 
                 return message;
             }

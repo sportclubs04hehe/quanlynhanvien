@@ -464,6 +464,18 @@ namespace api.Repository.Implement
 
         #region Validation
 
+        public async Task<int> CountByLoaiAndYearAsync(LoaiDonYeuCau loaiDon, int year)
+        {
+            var startOfYear = new DateTime(year, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            var endOfYear = new DateTime(year, 12, 31, 23, 59, 59, DateTimeKind.Utc);
+
+            return await _context.DonYeuCaus
+                .Where(d => d.LoaiDon == loaiDon 
+                         && d.NgayTao >= startOfYear 
+                         && d.NgayTao <= endOfYear)
+                .CountAsync();
+        }
+
         public async Task<bool> KiemTraTrungNgayNghiAsync(Guid nhanVienId, DateTime ngayBatDau, DateTime ngayKetThuc, Guid? excludeDonId = null)
         {
             // Chuyển đổi sang UTC nếu chưa

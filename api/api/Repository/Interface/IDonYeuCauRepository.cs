@@ -129,6 +129,11 @@ namespace api.Repository.Interface
         #region Validation
 
         /// <summary>
+        /// Đếm số đơn theo loại và năm (để sinh mã đơn tự động)
+        /// </summary>
+        Task<int> CountByLoaiAndYearAsync(LoaiDonYeuCau loaiDon, int year);
+
+        /// <summary>
         /// Kiểm tra trùng đơn nghỉ phép (cùng khoảng thời gian)
         /// </summary>
         Task<bool> KiemTraTrungNgayNghiAsync(Guid nhanVienId, DateTime ngayBatDau, DateTime ngayKetThuc, Guid? excludeDonId = null);
