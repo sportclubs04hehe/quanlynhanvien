@@ -550,64 +550,48 @@ namespace api.Service.Implement
                 var isGiamDoc = userRoles.Contains(AppRolesExtensions.GiamDoc);
                 var isTruongPhong = userRoles.Contains(AppRolesExtensions.TruongPhong);
 
-                // Tạo message chào mừng cá nhân hóa
+                // Tạo message chào mừng ngắn gọn
                 var successMessage = $"✅ <b>Xin chào {nhanVien.TenDayDu}!</b>\n\n" +
-                                    "🎉 <b>Liên kết Telegram thành công!</b>\n\n" +
-                                    $"📧 <b>Email:</b> {nhanVien.User?.Email}\n";
+                                    "🎉 Liên kết Telegram thành công!\n\n";
 
+                // Hiển thị thông tin cơ bản
                 if (nhanVien.ChucVu != null)
                 {
-                    successMessage += $"💼 <b>Chức vụ:</b> {nhanVien.ChucVu.TenChucVu}\n";
+                    successMessage += $"💼 {nhanVien.ChucVu.TenChucVu}";
+                    if (nhanVien.PhongBan != null)
+                    {
+                        successMessage += $" - {nhanVien.PhongBan.TenPhongBan}";
+                    }
+                    successMessage += "\n\n";
                 }
-
-                if (nhanVien.PhongBan != null)
+                else if (nhanVien.PhongBan != null)
                 {
-                    successMessage += $"🏢 <b>Phòng ban:</b> {nhanVien.PhongBan.TenPhongBan}\n";
+                    successMessage += $"🏢 {nhanVien.PhongBan.TenPhongBan}\n\n";
                 }
 
-                // Thông báo chức năng dựa trên role
-                successMessage += "\n━━━━━━━━━━━━━━━━━━━\n";
-
+                // Thông báo chức năng theo role
                 if (isGiamDoc)
                 {
-                    successMessage += "\n👔 <b>Với vai trò Giám Đốc, bạn sẽ nhận được:</b>\n\n" +
-                                     "🔔 <b>Thông báo đơn yêu cầu</b>\n" +
-                                     "   • Khi có đơn xin nghỉ phép mới\n" +
-                                     "   • Khi có đơn làm thêm giờ\n" +
-                                     "   • Khi có đơn xin đi muộn\n" +
-                                     "   • Khi có đơn công tác\n\n" +
-                                     "✅ <b>Duyệt đơn trực tiếp trên Telegram</b>\n" +
-                                     "   • Chấp thuận đơn ngay lập tức\n" +
-                                     "   • Từ chối đơn với lý do cụ thể\n" +
-                                     "   • Xem chi tiết đơn yêu cầu\n\n" +
-                                     "📊 Toàn quyền quản lý tất cả đơn trong công ty";
+                    successMessage += "📱 <b>Bạn sẽ nhận được:</b>\n" +
+                                     "• Thông báo đơn yêu cầu từ nhân viên\n" +
+                                     "• Duyệt/từ chối đơn trực tiếp trên Telegram\n\n" +
+                                     "💡 Giữ Telegram mở để quản lý đơn kịp thời!";
                 }
                 else if (isTruongPhong)
                 {
-                    successMessage += "\n👨‍💼 <b>Với vai trò Trưởng Phòng, bạn sẽ nhận được:</b>\n\n" +
-                                     "🔔 <b>Thông báo đơn yêu cầu</b>\n" +
-                                     "   • Đơn của nhân viên trong phòng ban\n" +
-                                     "   • Đơn nghỉ phép, làm thêm giờ, đi muộn, công tác\n\n" +
-                                     "✅ <b>Duyệt đơn trực tiếp trên Telegram</b>\n" +
-                                     "   • Chấp thuận đơn của nhân viên\n" +
-                                     "   • Từ chối đơn với lý do cụ thể\n" +
-                                     "   • Xem chi tiết đơn yêu cầu\n\n" +
-                                     "📋 <b>Thông báo kết quả</b>\n" +
-                                     "   • Khi đơn của bạn được duyệt/từ chối\n\n" +
-                                     "🏢 Quản lý đơn của phòng ban bạn phụ trách";
+                    successMessage += "📱 <b>Bạn sẽ nhận được:</b>\n" +
+                                     "• Thông báo đơn từ nhân viên trong phòng\n" +
+                                     "• Duyệt/từ chối đơn trực tiếp trên Telegram\n" +
+                                     "• Thông báo kết quả đơn của bạn\n\n" +
+                                     "💡 Giữ Telegram mở để quản lý đơn kịp thời!";
                 }
                 else
                 {
-                    successMessage += "\n👤 <b>Với vai trò Nhân Viên, bạn sẽ nhận được:</b>\n\n" +
-                                     "📋 <b>Thông báo kết quả duyệt đơn</b>\n" +
-                                     "   • ✅ Khi đơn của bạn được chấp thuận\n" +
-                                     "   • ❌ Khi đơn của bạn bị từ chối (kèm lý do)\n" +
-                                     "   • 📝 Chi tiết về người duyệt và thời gian\n\n" +
-                                     "📊 Theo dõi trạng thái đơn của bạn real-time";
+                    successMessage += "📱 <b>Bạn sẽ nhận được:</b>\n" +
+                                     "• Thông báo khi đơn được duyệt/từ chối\n" +
+                                     "• Chi tiết người duyệt và thời gian\n\n" +
+                                     "💡 Giữ Telegram mở để nhận thông báo kịp thời!";
                 }
-
-                successMessage += "\n\n━━━━━━━━━━━━━━━━━━━\n" +
-                                 "\n💡 <b>Lưu ý:</b> Giữ Telegram mở để nhận thông báo kịp thời!";
 
                 await _botClient!.SendMessage(
                     chatId: chatId,
@@ -1018,8 +1002,14 @@ namespace api.Service.Implement
                 message += $"<b>Loại đơn:</b> {don.LoaiDon.ToDisplayName()}\n";
                 message += $"<b>Người duyệt:</b> {nguoiDuyet.TenDayDu}\n";
                 
+                // Hiển thị ghi chú phù hợp theo trạng thái
                 if (!string.IsNullOrEmpty(don.GhiChuNguoiDuyet))
-                    message += $"<b>Lý do từ chối:</b> {don.GhiChuNguoiDuyet}\n";
+                {
+                    if (don.TrangThai == TrangThaiDon.BiTuChoi)
+                        message += $"<b>Lý do từ chối:</b> {don.GhiChuNguoiDuyet}\n";
+                    else
+                        message += $"<b>Ghi chú:</b> {don.GhiChuNguoiDuyet}\n";
+                }
                 
                 var ngayDuyetVN = ToVietnamTime(don.NgayDuyet!.Value);
                 message += $"<b>Ngày duyệt:</b> {ngayDuyetVN:dd/MM/yyyy HH:mm}";
