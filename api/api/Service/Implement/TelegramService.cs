@@ -999,20 +999,27 @@ namespace api.Service.Implement
                     : ("❌", "đã bị từ chối");
 
                 var message = $"{icon} <b>Đơn của bạn {status}</b>\n\n";
-                message += $"<b>Loại đơn:</b> {don.LoaiDon.ToDisplayName()}\n";
-                message += $"<b>Người duyệt:</b> {nguoiDuyet.TenDayDu}\n";
                 
-                // Hiển thị ghi chú phù hợp theo trạng thái
+                // Hiển thị mã đơn để nhận diện
+                message += $"<b>🆔 Mã đơn:</b> {don.MaDon ?? don.Id.ToString()[..8]}\n";
+                message += $"<b>📄 Loại đơn:</b> {don.LoaiDon.ToDisplayName()}\n\n";
+                
+                // Hiển thị chi tiết đơn
+                message += BuildDonDetails(don);
+                
+                // Thông tin duyệt
+                message += $"\n<b>👤 Người duyệt:</b> {nguoiDuyet.TenDayDu}\n";
+                var ngayDuyetVN = ToVietnamTime(don.NgayDuyet!.Value);
+                message += $"<b>📅 Ngày duyệt:</b> {ngayDuyetVN:dd/MM/yyyy HH:mm}\n";
+                
+                // Hiển thị ghi chú/lý do từ chối
                 if (!string.IsNullOrEmpty(don.GhiChuNguoiDuyet))
                 {
                     if (don.TrangThai == TrangThaiDon.BiTuChoi)
-                        message += $"<b>Lý do từ chối:</b> {don.GhiChuNguoiDuyet}\n";
+                        message += $"\n<b>❌ Lý do từ chối:</b>\n{don.GhiChuNguoiDuyet}";
                     else
-                        message += $"<b>Ghi chú:</b> {don.GhiChuNguoiDuyet}\n";
+                        message += $"\n<b>💬 Ghi chú:</b>\n{don.GhiChuNguoiDuyet}";
                 }
-                
-                var ngayDuyetVN = ToVietnamTime(don.NgayDuyet!.Value);
-                message += $"<b>Ngày duyệt:</b> {ngayDuyetVN:dd/MM/yyyy HH:mm}";
                 
                 return message;
             }
