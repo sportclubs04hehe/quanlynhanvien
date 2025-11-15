@@ -223,11 +223,13 @@ namespace api.Service.Implement
             Guid nhanVienId,
             int pageNumber,
             int pageSize,
+            string? maDon = null,
+            string? lyDo = null,
             LoaiDonYeuCau? loaiDon = null,
             TrangThaiDon? trangThai = null)
         {
             var (items, totalCount) = await _donYeuCauRepo.GetByNhanVienIdAsync(
-                nhanVienId, pageNumber, pageSize, loaiDon, trangThai);
+                nhanVienId, pageNumber, pageSize, maDon, lyDo, loaiDon, trangThai);
 
             var dtos = _mapper.Map<List<DonYeuCauDto>>(items);
 

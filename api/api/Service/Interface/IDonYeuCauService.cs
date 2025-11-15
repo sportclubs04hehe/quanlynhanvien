@@ -50,6 +50,8 @@ namespace api.Service.Interface
             Guid nhanVienId,
             int pageNumber,
             int pageSize,
+            string? maDon = null,
+            string? lyDo = null,
             LoaiDonYeuCau? loaiDon = null,
             TrangThaiDon? trangThai = null);
 

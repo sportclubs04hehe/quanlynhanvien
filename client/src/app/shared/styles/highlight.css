@@ -1,0 +1,36 @@
+/**
+ * Global styles cho highlight search results
+ * Import vào styles.css hoặc component-specific CSS
+ */
+
+/* Highlight style - màu vàng nổi bật */
+mark.bg-warning {
+  background-color: #fff3cd !important;
+  color: #000 !important;
+  font-weight: 500;
+  padding: 2px 4px;
+  border-radius: 3px;
+  box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.2);
+}
+
+/* Animation khi hover vào text có highlight */
+mark.bg-warning:hover {
+  background-color: #ffeb3b !important;
+  transition: background-color 0.2s ease;
+}
+
+/* Alternative highlight styles (có thể sử dụng) */
+.highlight-primary {
+  background-color: #cfe2ff !important;
+  color: #084298 !important;
+}
+
+.highlight-success {
+  background-color: #d1e7dd !important;
+  color: #0f5132 !important;
+}
+
+.highlight-danger {
+  background-color: #f8d7da !important;
+  color: #842029 !important;
+}

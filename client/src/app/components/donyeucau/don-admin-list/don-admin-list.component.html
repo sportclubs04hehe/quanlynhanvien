@@ -45,13 +45,13 @@
               @for (don of dons(); track don.id; let idx = $index) {
                 <tr>
                   <td>
-                    <span class="badge bg-dark">{{ don.maDon }}</span>
+                    <span class="badge text-dark" [innerHTML]="(don.maDon || '') | highlight: getSearchTerm()"></span>
                   </td>
                   
                   <!-- Nhân viên -->
                   <td>
                     <div class="d-flex flex-column">
-                      <span class="fw-semibold">{{ don.tenNhanVien }}</span>
+                      <span class="fw-semibold" [innerHTML]="don.tenNhanVien | highlight: getSearchTerm()"></span>
                       @if (don.chucVu) {
                         <small class="text-muted">
                           <i class="bi bi-person-badge"></i> {{ don.chucVu.tenChucVu }}
@@ -81,8 +81,11 @@
                   
                   <!-- Lý do -->
                   <td>
-                    <span class="text-truncate d-inline-block" style="max-width: 200px;" [title]="don.lyDo">
-                      {{ don.lyDo }}
+                    <span 
+                      class="text-truncate d-inline-block" 
+                      style="max-width: 200px;" 
+                      [title]="don.lyDo"
+                      [innerHTML]="don.lyDo | highlight: getSearchTerm()">
                     </span>
                   </td>
                   

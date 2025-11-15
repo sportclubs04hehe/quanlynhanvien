@@ -127,6 +127,7 @@ export class DonYeuCauService {
    getMyDons(
     pageNumber: number = 1,
     pageSize: number = 10,
+    maDon?: string,
     loaiDon?: LoaiDonYeuCau,
     trangThai?: TrangThaiDon
   ): Observable<PagedResult<DonYeuCauDto>> {
@@ -134,6 +135,7 @@ export class DonYeuCauService {
       .set('pageNumber', pageNumber.toString())
       .set('pageSize', pageSize.toString());
 
+    if (maDon) params = params.set('maDon', maDon);
     if (loaiDon !== undefined) params = params.set('loaiDon', loaiDon.toString());
     if (trangThai !== undefined) params = params.set('trangThai', trangThai.toString());
 

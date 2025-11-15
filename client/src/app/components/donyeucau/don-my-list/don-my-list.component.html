@@ -5,6 +5,18 @@
       <div class="row mb-3 g-3">
         <div class="col-md-3">
           <label class="form-label fw-semibold">
+            <i class="bi bi-tag"></i> Mã Đơn
+          </label>
+          <input 
+            type="text"
+            class="form-control"
+            placeholder="Tìm theo mã đơn..."
+            [(ngModel)]="searchMaDon"
+            (ngModelChange)="onSearchChange()">
+        </div>
+        
+        <div class="col-md-2">
+          <label class="form-label fw-semibold">
             <i class="bi bi-funnel"></i> Loại Đơn
           </label>
           <select 
@@ -19,7 +31,7 @@
           </select>
         </div>
         
-        <div class="col-md-3">
+        <div class="col-md-2">
           <label class="form-label fw-semibold">
             <i class="bi bi-flag"></i> Trạng Thái
           </label>
@@ -35,7 +47,7 @@
           </select>
         </div>
         
-        <div class="col-md-3 d-flex align-items-end">
+        <div class="col-md-2 d-flex align-items-end">
           @if (hasActiveFilters()) {
             <button 
               class="btn btn-outline-secondary w-100"
@@ -74,18 +86,19 @@
             <thead class="table-light">
               <tr>
                 <th style="width: 8%;">Mã Đơn</th>
-                <th style="width: 15%;">Loại Đơn</th>
-                <th style="width: 30%;">Lý Do</th>
-                <th style="width: 12%;">Ngày Tạo</th>
-                <th style="width: 13%;">Trạng Thái</th>
-                <th style="width: 25%;" class="text-center">Thao Tác</th>
+                <th style="width: 13%;">Loại Đơn</th>
+                <th style="width: 18%;">Thời Gian</th>
+                <th style="width: 23%;">Lý Do</th>
+                <th style="width: 10%;">Ngày Tạo</th>
+                <th style="width: 11%;">Trạng Thái</th>
+                <th style="width: 20%;" class="text-center">Thao Tác</th>
               </tr>
             </thead>
             <tbody>
               @for (don of dons(); track don.id; let idx = $index) {
                 <tr>
                   <td>
-                    <span class="badge bg-dark">{{ don.maDon }}</span>
+                    <span class="badge text-dark" [innerHTML]="(don.maDon || '') | highlight: (searchMaDon() || '')"></span>
                   </td>
                   <td>
                     <span class="badge bg-info">
@@ -94,8 +107,50 @@
                     </span>
                   </td>
                   <td>
-                    <span class="text-truncate d-inline-block" style="max-width: 300px;" [title]="don.lyDo">
-                      {{ don.lyDo }}
+                    @if (don.ngayBatDau && don.ngayKetThuc) {
+                      <div class="small">
+                        <span class="badge text-dark">
+                          <strong> Từ:</strong> {{ don.ngayBatDau | localDate }}
+                        </span> <br>
+                        <span class="badge text-dark">
+                          <strong> Đến:</strong> {{ don.ngayKetThuc | localDate }}
+                        </span>
+                        @if (don.soNgay) {
+                          <br>
+                          <div class="badge text-dark">
+                            <i class="bi bi-hourglass-split"></i>
+                            <strong> {{ don.soNgay }}</strong> ngày
+                          </div>
+                        }
+                      </div>
+                    } @else if (don.ngayLamThem) {
+                      <div class="badge text-dark">
+                        <i class="bi bi-calendar3"></i>
+                        {{ don.ngayLamThem | localDate }}
+                        @if (don.soGioLamThem) {
+                          <br>
+                          <div class="badge text-dark">{{ don.soGioLamThem }} giờ</div>
+                        }
+                      </div>
+                    } @else if (don.ngayDiMuon) {
+                      <div class="badge text-dark">
+                        <i class="bi bi-calendar3"></i>
+                        {{ don.ngayDiMuon | localDate }}
+                        @if (don.gioDuKienDen) {
+                          <br>
+                          <div class="badge text-dark">{{ don.gioDuKienDen | localDate:'short' }}</div>
+                        }
+                      </div>
+                    } @else {
+                      <span class="text-muted">--</span>
+                    }
+                  </td>
+                  <td>
+                    <span 
+                      class="text-truncate d-inline-block" 
+                      style="max-width: 250px;" 
+                      [title]="don.lyDo"
+                      [innerHTML]="don.lyDo | highlight: (searchMaDon() || '')">
                     </span>
                   </td>
                   <td>

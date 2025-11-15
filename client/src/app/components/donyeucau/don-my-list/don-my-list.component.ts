@@ -2,16 +2,18 @@ import { Component, inject, OnInit, signal, OnDestroy, NgZone, input, OnChanges,
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgbModal, NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
-import { Subject, takeUntil, finalize } from 'rxjs';
+import { Subject, takeUntil, finalize, debounceTime, distinctUntilChanged } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { DonYeuCauService } from '../../../services/don-yeu-cau.service';
 import { SpinnerService } from '../../../services/spinner.service';
 import { DonYeuCauDto, LoaiDonYeuCau, TrangThaiDon, canEditDon, canCancelDon } from '../../../types/don.model';
 import { DonStatusBadgeComponent } from '../../../shared/don-status-badge/don-status-badge.component';
 import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
+import { HighlightPipe } from '../../../shared/pipes/highlight.pipe';
 import { ConfirmDialogComponent } from '../../../shared/modal/confirm-dialog/confirm-dialog.component';
 import { DonDetailComponent } from '../don-detail/don-detail.component';
 import { DonCreateEditComponent } from '../don-create-edit/don-create-edit.component';
+import { SEARCH_DEBOUNCE_TIME } from '../../../shared/config/search.config';
 
 @Component({
   selector: 'app-don-my-list',
@@ -21,7 +23,8 @@ import { DonCreateEditComponent } from '../don-create-edit/don-create-edit.compo
     FormsModule, 
     NgbPaginationModule,
     DonStatusBadgeComponent,
-    LocalDatePipe
+    LocalDatePipe,
+    HighlightPipe
   ],
   templateUrl: './don-my-list.component.html',
   styleUrl: './don-my-list.component.css'
@@ -48,6 +51,7 @@ export class DonMyListComponent implements OnInit, OnDestroy, OnChanges {
   totalPages = signal(0);
   
   // Filter - Using writable signals for ngModel compatibility
+  searchMaDon = signal<string>('');
   selectedLoaiDon = signal<LoaiDonYeuCau | null>(null);
   selectedTrangThai = signal<TrangThaiDon | null>(null);
   
@@ -56,6 +60,8 @@ export class DonMyListComponent implements OnInit, OnDestroy, OnChanges {
   readonly TrangThaiDon = TrangThaiDon;
   readonly Math = Math;
   
+  // Subject for search debounce
+  private searchSubject$ = new Subject<string>();
   private destroy$ = new Subject<void>();
   
   ngOnInit(): void {
@@ -64,6 +70,19 @@ export class DonMyListComponent implements OnInit, OnDestroy, OnChanges {
     if (initialFilter !== null) {
       this.selectedTrangThai.set(initialFilter);
     }
+    
+    // Setup search debounce using shared config
+    this.searchSubject$
+      .pipe(
+        debounceTime(SEARCH_DEBOUNCE_TIME),
+        distinctUntilChanged(),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(() => {
+        this.pageNumber.set(1);
+        this.loadDons();
+      });
+    
     this.loadDons();
   }
   
@@ -99,6 +118,7 @@ export class DonMyListComponent implements OnInit, OnDestroy, OnChanges {
     this.donService.getMyDons(
       this.pageNumber(),
       this.pageSize(),
+      this.searchMaDon() || undefined,
       this.selectedLoaiDon() || undefined,
       this.selectedTrangThai() || undefined
     )
@@ -123,7 +143,14 @@ export class DonMyListComponent implements OnInit, OnDestroy, OnChanges {
   }
   
   /**
-   * Filter thay đổi
+   * Called when search input changes (với debounce)
+   */
+  onSearchChange(): void {
+    this.searchSubject$.next(this.searchMaDon());
+  }
+  
+  /**
+   * Filter thay đổi (dropdown - immediate)
    */
   onFilterChange(): void {
     this.pageNumber.set(1);
@@ -134,6 +161,7 @@ export class DonMyListComponent implements OnInit, OnDestroy, OnChanges {
    * Clear filters
    */
   clearFilters(): void {
+    this.searchMaDon.set('');
     this.selectedLoaiDon.set(null);
     this.selectedTrangThai.set(null);
     this.pageNumber.set(1);
@@ -294,6 +322,6 @@ export class DonMyListComponent implements OnInit, OnDestroy, OnChanges {
    * Check if any filter is active
    */
   hasActiveFilters(): boolean {
-    return this.selectedLoaiDon() !== null || this.selectedTrangThai() !== null;
+    return this.searchMaDon() !== '' || this.selectedLoaiDon() !== null || this.selectedTrangThai() !== null;
   }
 }

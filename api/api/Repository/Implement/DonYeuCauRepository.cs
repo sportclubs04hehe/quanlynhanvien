@@ -165,6 +165,8 @@ namespace api.Repository.Implement
             Guid nhanVienId,
             int pageNumber,
             int pageSize,
+            string? maDon = null,
+            string? lyDo = null,
             LoaiDonYeuCau? loaiDon = null,
             TrangThaiDon? trangThai = null)
         {
@@ -184,6 +186,16 @@ namespace api.Repository.Implement
             if (trangThai.HasValue)
             {
                 query = query.Where(d => d.TrangThai == trangThai.Value);
+            }
+            
+            if (!string.IsNullOrWhiteSpace(maDon))
+            {
+                query = query.Where(d => d.MaDon != null && d.MaDon.ToLower().Contains(maDon.ToLower()));
+            }
+
+            if (!string.IsNullOrWhiteSpace(lyDo))
+            {
+                query = query.Where(d => d.LyDo != null && d.LyDo.ToLower().Contains(lyDo.ToLower()));
             }
 
             var totalCount = await query.CountAsync();

@@ -9,6 +9,7 @@ import { SpinnerService } from '../../../services/spinner.service';
 import { DonYeuCauDto, FilterDonYeuCauDto, LoaiDonYeuCau, TrangThaiDon, canDeleteDon } from '../../../types/don.model';
 import { DonStatusBadgeComponent } from '../../../shared/don-status-badge/don-status-badge.component';
 import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
+import { HighlightPipe } from '../../../shared/pipes/highlight.pipe';
 import { DonDetailComponent } from '../don-detail/don-detail.component';
 import { ConfirmDialogComponent } from '../../../shared/modal/confirm-dialog/confirm-dialog.component';
 import { DonFilterComponent } from '../../../shared/don-filter/don-filter.component';
@@ -22,7 +23,8 @@ import { DonFilterComponent } from '../../../shared/don-filter/don-filter.compon
     NgbPaginationModule,
     DonStatusBadgeComponent,
     LocalDatePipe,
-    DonFilterComponent
+    DonFilterComponent,
+    HighlightPipe  // Used via pipe in template
   ],
   templateUrl: './don-admin-list.component.html',
   styleUrl: './don-admin-list.component.css'
@@ -235,5 +237,12 @@ export class DonAdminListComponent implements OnInit, OnDestroy {
       default:
         return 'bg-secondary';
     }
+  }
+  
+  /**
+   * Get combined search term for highlighting
+   */
+  getSearchTerm(): string {
+    return this.filter().searchTerm || this.filter().maDon || '';
   }
 }

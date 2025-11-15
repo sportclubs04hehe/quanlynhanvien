@@ -188,6 +188,8 @@ namespace api.Controllers
         public async Task<ActionResult<PagedResult<DonYeuCauDto>>> GetMyDons(
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 10,
+            [FromQuery] string? maDon = null,
+            [FromQuery] string? lyDo = null,
             [FromQuery] LoaiDonYeuCau? loaiDon = null,
             [FromQuery] TrangThaiDon? trangThai = null)
         {
@@ -195,7 +197,7 @@ namespace api.Controllers
             {
                 var currentUserId = GetCurrentUserId();
                 var result = await _donYeuCauService.GetMyDonsAsync(
-                    currentUserId, pageNumber, pageSize, loaiDon, trangThai);
+                    currentUserId, pageNumber, pageSize, maDon, lyDo, loaiDon, trangThai);
 
                 return Ok(result);
             }

@@ -10,6 +10,7 @@ import {
   LOAI_DON_DISPLAY_NAMES,
   TRANG_THAI_DON_DISPLAY_NAMES
 } from '../../types/don.model';
+import { SEARCH_DEBOUNCE_TIME } from '../config/search.config';
 
 @Component({
   selector: 'app-don-filter',
@@ -53,10 +54,10 @@ export class DonFilterComponent implements OnInit, OnDestroy, OnChanges {
       this.selectedTrangThai = this.initialTrangThai;
     }
     
-    // Setup search debounce - 500ms delay
+    // Setup search debounce using shared config
     this.searchSubject$
       .pipe(
-        debounceTime(500),
+        debounceTime(SEARCH_DEBOUNCE_TIME),
         distinctUntilChanged(),
         takeUntil(this.destroy$)
       )
