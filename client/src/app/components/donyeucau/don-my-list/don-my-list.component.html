@@ -3,7 +3,7 @@
     <div class="card-body">
       <!-- Toolbar: Filters & Actions -->
       <div class="row mb-3 g-3">
-        <div class="col-md-3">
+        <div class="col-md-2">
           <label class="form-label fw-semibold">
             <i class="bi bi-tag"></i> Mã Đơn
           </label>
@@ -12,6 +12,18 @@
             class="form-control"
             placeholder="Tìm theo mã đơn..."
             [(ngModel)]="searchMaDon"
+            (ngModelChange)="onSearchChange()">
+        </div>
+        
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">
+            <i class="bi bi-chat-left-text"></i> Lý Do
+          </label>
+          <input 
+            type="text"
+            class="form-control"
+            placeholder="Tìm theo lý do..."
+            [(ngModel)]="searchLyDo"
             (ngModelChange)="onSearchChange()">
         </div>
         
@@ -150,7 +162,7 @@
                       class="text-truncate d-inline-block" 
                       style="max-width: 250px;" 
                       [title]="don.lyDo"
-                      [innerHTML]="don.lyDo | highlight: (searchMaDon() || '')">
+                      [innerHTML]="don.lyDo | highlight: (searchLyDo() || '')">
                     </span>
                   </td>
                   <td>

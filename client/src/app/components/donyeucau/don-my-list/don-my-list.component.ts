@@ -52,6 +52,7 @@ export class DonMyListComponent implements OnInit, OnDestroy, OnChanges {
   
   // Filter - Using writable signals for ngModel compatibility
   searchMaDon = signal<string>('');
+  searchLyDo = signal<string>('');
   selectedLoaiDon = signal<LoaiDonYeuCau | null>(null);
   selectedTrangThai = signal<TrangThaiDon | null>(null);
   
@@ -119,6 +120,7 @@ export class DonMyListComponent implements OnInit, OnDestroy, OnChanges {
       this.pageNumber(),
       this.pageSize(),
       this.searchMaDon() || undefined,
+      this.searchLyDo() || undefined,
       this.selectedLoaiDon() || undefined,
       this.selectedTrangThai() || undefined
     )
@@ -146,7 +148,8 @@ export class DonMyListComponent implements OnInit, OnDestroy, OnChanges {
    * Called when search input changes (với debounce)
    */
   onSearchChange(): void {
-    this.searchSubject$.next(this.searchMaDon());
+    // Trigger debounce với giá trị kết hợp của cả 2 trường tìm kiếm
+    this.searchSubject$.next(`${this.searchMaDon()}|${this.searchLyDo()}`);
   }
   
   /**
@@ -162,6 +165,7 @@ export class DonMyListComponent implements OnInit, OnDestroy, OnChanges {
    */
   clearFilters(): void {
     this.searchMaDon.set('');
+    this.searchLyDo.set('');
     this.selectedLoaiDon.set(null);
     this.selectedTrangThai.set(null);
     this.pageNumber.set(1);
@@ -322,6 +326,6 @@ export class DonMyListComponent implements OnInit, OnDestroy, OnChanges {
    * Check if any filter is active
    */
   hasActiveFilters(): boolean {
-    return this.searchMaDon() !== '' || this.selectedLoaiDon() !== null || this.selectedTrangThai() !== null;
+    return this.searchMaDon() !== '' || this.searchLyDo() !== '' || this.selectedLoaiDon() !== null || this.selectedTrangThai() !== null;
   }
 }

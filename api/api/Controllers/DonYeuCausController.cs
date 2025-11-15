@@ -3,7 +3,6 @@ using api.Model.Enums;
 using api.Service.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace api.Controllers
 {
