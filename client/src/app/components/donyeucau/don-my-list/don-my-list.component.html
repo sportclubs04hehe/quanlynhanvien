@@ -3,7 +3,7 @@
     <div class="card-body">
       <!-- Toolbar: Filters & Actions -->
       <div class="row mb-3 g-3">
-        <div class="col-md-2">
+        <div class="col-md-2 col-sm-6">
           <label class="form-label fw-semibold">
             <i class="bi bi-tag"></i> Mã Đơn
           </label>
@@ -15,7 +15,7 @@
             (ngModelChange)="onSearchChange()">
         </div>
         
-        <div class="col-md-3">
+        <div class="col-md-3 col-sm-6">
           <label class="form-label fw-semibold">
             <i class="bi bi-chat-left-text"></i> Lý Do
           </label>
@@ -27,7 +27,7 @@
             (ngModelChange)="onSearchChange()">
         </div>
         
-        <div class="col-md-2">
+        <div class="col-md-2 col-sm-6">
           <label class="form-label fw-semibold">
             <i class="bi bi-funnel"></i> Loại Đơn
           </label>
@@ -43,7 +43,7 @@
           </select>
         </div>
         
-        <div class="col-md-2">
+        <div class="col-md-2 col-sm-6">
           <label class="form-label fw-semibold">
             <i class="bi bi-flag"></i> Trạng Thái
           </label>
@@ -59,19 +59,16 @@
           </select>
         </div>
         
-        <div class="col-md-2 d-flex align-items-end">
+        <div class="col-md-3 col-sm-12 d-flex align-items-end gap-2">
           @if (hasActiveFilters()) {
             <button 
-              class="btn btn-outline-secondary w-100"
+              class="btn btn-outline-secondary flex-fill"
               (click)="clearFilters()">
               <i class="bi bi-x-circle"></i> Xóa Lọc
             </button>
           }
-        </div>
-        
-        <div class="col-md-3 d-flex align-items-end">
           <button 
-            class="btn btn-success w-100"
+            class="btn btn-success flex-fill"
             (click)="createDon()">
             <i class="bi bi-plus-circle me-1"></i>Tạo Đơn Mới
           </button>
@@ -116,6 +113,9 @@
                     <span class="badge bg-info">
                       <i class="bi bi-file-earmark-text"></i>
                       {{ don.loaiDonText }}
+                      @if (don.loaiNghiPhepText) {
+                        <br><small>({{ don.loaiNghiPhepText }})</small>
+                      }
                     </span>
                   </td>
                   <td>
@@ -127,7 +127,13 @@
                         <span class="badge text-dark">
                           <strong> Đến:</strong> {{ don.ngayKetThuc | localDate }}
                         </span>
-                        @if (don.soNgay) {
+                        @if (don.soNgayThucTe !== undefined && don.soNgayThucTe !== null) {
+                          <br>
+                          <div class="badge text-dark">
+                            <i class="bi bi-hourglass-split"></i>
+                            <strong> {{ don.soNgayThucTe }}</strong> ngày
+                          </div>
+                        } @else if (don.soNgay) {
                           <br>
                           <div class="badge text-dark">
                             <i class="bi bi-hourglass-split"></i>

@@ -194,6 +194,9 @@ namespace api.Migrations
                     b.Property<int>("LoaiDon")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("LoaiNghiPhep")
+                        .HasColumnType("integer");
+
                     b.Property<string>("LyDo")
                         .IsRequired()
                         .HasColumnType("text");

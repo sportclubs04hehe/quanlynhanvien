@@ -606,6 +606,10 @@ namespace api.Service.Implement
 
         private void ValidateNghiPhep(CreateDonYeuCauDto dto)
         {
+            // Kiểm tra LoaiNghiPhep bắt buộc
+            if (!dto.LoaiNghiPhep.HasValue)
+                throw new InvalidOperationException("Loại nghỉ phép là bắt buộc");
+
             if (!dto.NgayBatDau.HasValue)
                 throw new InvalidOperationException("Ngày bắt đầu là bắt buộc cho đơn nghỉ phép");
             if (!dto.NgayKetThuc.HasValue)
@@ -614,16 +618,62 @@ namespace api.Service.Implement
                 throw new InvalidOperationException("Ngày bắt đầu phải trước ngày kết thúc");
             if (dto.NgayBatDau.Value.Date < DateTime.UtcNow.Date)
                 throw new InvalidOperationException("Không thể tạo đơn nghỉ phép cho ngày trong quá khứ");
+
+            // Validate logic theo LoaiNghiPhep
+            var soNgay = (dto.NgayKetThuc.Value.Date - dto.NgayBatDau.Value.Date).Days;
+            switch (dto.LoaiNghiPhep.Value)
+            {
+                case LoaiNghiPhep.BuoiSang:
+                case LoaiNghiPhep.BuoiChieu:
+                    if (soNgay != 0)
+                        throw new InvalidOperationException("Nghỉ buổi sáng/chiều chỉ áp dụng cho cùng 1 ngày (Ngày bắt đầu = Ngày kết thúc)");
+                    break;
+
+                case LoaiNghiPhep.MotNgay:
+                    if (soNgay != 0)
+                        throw new InvalidOperationException("Nghỉ một ngày chỉ áp dụng cho cùng 1 ngày (Ngày bắt đầu = Ngày kết thúc)");
+                    break;
+
+                case LoaiNghiPhep.NhieuNgay:
+                    if (soNgay < 1)
+                        throw new InvalidOperationException("Nghỉ nhiều ngày phải từ 2 ngày trở lên");
+                    break;
+            }
         }
 
         private void ValidateNghiPhep(UpdateDonYeuCauDto dto)
         {
+            // Kiểm tra LoaiNghiPhep bắt buộc
+            if (!dto.LoaiNghiPhep.HasValue)
+                throw new InvalidOperationException("Loại nghỉ phép là bắt buộc");
+
             if (!dto.NgayBatDau.HasValue)
                 throw new InvalidOperationException("Ngày bắt đầu là bắt buộc cho đơn nghỉ phép");
             if (!dto.NgayKetThuc.HasValue)
                 throw new InvalidOperationException("Ngày kết thúc là bắt buộc cho đơn nghỉ phép");
             if (dto.NgayBatDau.Value > dto.NgayKetThuc.Value)
                 throw new InvalidOperationException("Ngày bắt đầu phải trước ngày kết thúc");
+
+            // Validate logic theo LoaiNghiPhep
+            var soNgay = (dto.NgayKetThuc.Value.Date - dto.NgayBatDau.Value.Date).Days;
+            switch (dto.LoaiNghiPhep.Value)
+            {
+                case LoaiNghiPhep.BuoiSang:
+                case LoaiNghiPhep.BuoiChieu:
+                    if (soNgay != 0)
+                        throw new InvalidOperationException("Nghỉ buổi sáng/chiều chỉ áp dụng cho cùng 1 ngày (Ngày bắt đầu = Ngày kết thúc)");
+                    break;
+
+                case LoaiNghiPhep.MotNgay:
+                    if (soNgay != 0)
+                        throw new InvalidOperationException("Nghỉ một ngày chỉ áp dụng cho cùng 1 ngày (Ngày bắt đầu = Ngày kết thúc)");
+                    break;
+
+                case LoaiNghiPhep.NhieuNgay:
+                    if (soNgay < 1)
+                        throw new InvalidOperationException("Nghỉ nhiều ngày phải từ 2 ngày trở lên");
+                    break;
+            }
         }
 
         private void ValidateLamThemGio(CreateDonYeuCauDto dto)

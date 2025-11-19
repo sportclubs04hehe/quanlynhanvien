@@ -15,6 +15,9 @@ namespace api.DTO
         [StringLength(500, ErrorMessage = "Lý do không được vượt quá 500 ký tự")]
         public required string LyDo { get; set; }
 
+        // Dành cho Nghỉ Phép - Loại nghỉ chi tiết (bắt buộc nếu LoaiDon = NghiPhep)
+        public LoaiNghiPhep? LoaiNghiPhep { get; set; }
+
         // Dành cho Nghỉ Phép và Công Tác
         [DataType(DataType.Date)]
         public DateTime? NgayBatDau { get; set; }
@@ -52,6 +55,9 @@ namespace api.DTO
         [Required(ErrorMessage = "Lý do là bắt buộc")]
         [StringLength(500, ErrorMessage = "Lý do không được vượt quá 500 ký tự")]
         public required string LyDo { get; set; }
+
+        // Dành cho Nghỉ Phép - Loại nghỉ chi tiết
+        public LoaiNghiPhep? LoaiNghiPhep { get; set; }
 
         // Dành cho Nghỉ Phép và Công Tác
         [DataType(DataType.Date)]
@@ -94,6 +100,10 @@ namespace api.DTO
         public TrangThaiDon TrangThai { get; set; }
         public string TrangThaiText { get; set; } = string.Empty; // Tên hiển thị
 
+        // Loại nghỉ phép chi tiết (chỉ có khi LoaiDon = NghiPhep)
+        public LoaiNghiPhep? LoaiNghiPhep { get; set; }
+        public string? LoaiNghiPhepText { get; set; } // Tên hiển thị
+
         // Thông tin nhân viên
         public Guid NhanVienId { get; set; }
         public string TenNhanVien { get; set; } = string.Empty;
@@ -105,7 +115,8 @@ namespace api.DTO
         public string LyDo { get; set; } = string.Empty;
         public DateTime? NgayBatDau { get; set; }
         public DateTime? NgayKetThuc { get; set; }
-        public int? SoNgay { get; set; } // Tính toán số ngày (cho nghỉ phép/công tác)
+        public int? SoNgay { get; set; } // Tính toán số ngày (0 = nửa ngày, 1+ = ngày đầy đủ)
+        public decimal? SoNgayThucTe { get; set; } // Số ngày thực tế (0.5 cho buổi sáng/chiều)
 
         // Làm thêm giờ
         public decimal? SoGioLamThem { get; set; }
@@ -157,6 +168,7 @@ namespace api.DTO
 
         // Filter
         public LoaiDonYeuCau? LoaiDon { get; set; }
+        public LoaiNghiPhep? LoaiNghiPhep { get; set; } // Lọc theo loại nghỉ phép (chỉ dùng khi LoaiDon = NghiPhep)
         public TrangThaiDon? TrangThai { get; set; }
         public Guid? NhanVienId { get; set; } // Lọc theo nhân viên cụ thể
         public Guid? NguoiDuyetId { get; set; } // Lọc theo người duyệt

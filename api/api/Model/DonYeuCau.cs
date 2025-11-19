@@ -51,6 +51,11 @@ namespace api.Model
         /// </summary>
         public DateTime? NgayKetThuc { get; set; }
 
+        /// <summary>
+        /// Loại nghỉ phép chi tiết (chỉ dùng khi LoaiDon = NghiPhep)
+        /// </summary>
+        public LoaiNghiPhep? LoaiNghiPhep { get; set; }
+
         #endregion
 
         #region Dành cho Làm Thêm Giờ

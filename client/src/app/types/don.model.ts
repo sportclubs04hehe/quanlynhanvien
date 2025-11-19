@@ -17,6 +17,17 @@ export enum LoaiDonYeuCau {
 }
 
 /**
+ * Loại nghỉ phép chi tiết
+ * Phải khớp chính xác với backend: api/Model/Enums/LoaiNghiPhep.cs
+ */
+export enum LoaiNghiPhep {
+  BuoiSang = 'BuoiSang',          // Nghỉ buổi sáng (nửa ngày)
+  BuoiChieu = 'BuoiChieu',        // Nghỉ buổi chiều (nửa ngày)
+  MotNgay = 'MotNgay',            // Nghỉ 1 ngày (cả ngày)
+  NhieuNgay = 'NhieuNgay'         // Nghỉ nhiều ngày (từ 2 ngày trở lên)
+}
+
+/**
  * Trạng thái đơn yêu cầu
  * Phải khớp chính xác với backend: api/Model/Enums/TrangThaiDon.cs
  */
@@ -42,6 +53,16 @@ export const LOAI_DON_DISPLAY_NAMES: Record<LoaiDonYeuCau, string> = {
 };
 
 /**
+ * Tên hiển thị cho LoaiNghiPhep
+ */
+export const LOAI_NGHI_PHEP_DISPLAY_NAMES: Record<LoaiNghiPhep, string> = {
+  [LoaiNghiPhep.BuoiSang]: 'Buổi Sáng',
+  [LoaiNghiPhep.BuoiChieu]: 'Buổi Chiều',
+  [LoaiNghiPhep.MotNgay]: 'Một Ngày',
+  [LoaiNghiPhep.NhieuNgay]: 'Nhiều Ngày'
+};
+
+/**
  * Tên hiển thị cho TrangThaiDon
  */
 export const TRANG_THAI_DON_DISPLAY_NAMES: Record<TrangThaiDon, string> = {
@@ -56,6 +77,13 @@ export const TRANG_THAI_DON_DISPLAY_NAMES: Record<TrangThaiDon, string> = {
  */
 export function getLoaiDonDisplayName(loaiDon: LoaiDonYeuCau): string {
   return LOAI_DON_DISPLAY_NAMES[loaiDon] || 'Unknown';
+}
+
+/**
+ * Helper function để lấy display name của loại nghỉ phép
+ */
+export function getLoaiNghiPhepDisplayName(loaiNghiPhep: LoaiNghiPhep): string {
+  return LOAI_NGHI_PHEP_DISPLAY_NAMES[loaiNghiPhep] || 'Unknown';
 }
 
 /**
@@ -101,6 +129,9 @@ export interface CreateDonYeuCauDto {
   loaiDon: LoaiDonYeuCau;
   lyDo: string;
   
+  // Dành cho Nghỉ Phép - Loại nghỉ chi tiết (bắt buộc nếu LoaiDon = NghiPhep)
+  loaiNghiPhep?: LoaiNghiPhep;
+  
   // Dành cho Nghỉ Phép và Công Tác
   ngayBatDau?: Date | string;
   ngayKetThuc?: Date | string;
@@ -124,6 +155,9 @@ export interface CreateDonYeuCauDto {
  */
 export interface UpdateDonYeuCauDto {
   lyDo: string;
+  
+  // Dành cho Nghỉ Phép - Loại nghỉ chi tiết
+  loaiNghiPhep?: LoaiNghiPhep;
   
   // Dành cho Nghỉ Phép và Công Tác
   ngayBatDau?: Date | string;
@@ -154,6 +188,10 @@ export interface DonYeuCauDto {
   trangThai: TrangThaiDon;
   trangThaiText: string;        // Tên hiển thị
   
+  // Loại nghỉ phép chi tiết (chỉ có khi LoaiDon = NghiPhep)
+  loaiNghiPhep?: LoaiNghiPhep;
+  loaiNghiPhepText?: string;    // Tên hiển thị
+  
   // Thông tin nhân viên
   nhanVienId: string;
   tenNhanVien: string;
@@ -165,7 +203,8 @@ export interface DonYeuCauDto {
   lyDo: string;
   ngayBatDau?: Date | string;
   ngayKetThuc?: Date | string;
-  soNgay?: number;              // Tính toán số ngày (cho nghỉ phép/công tác)
+  soNgay?: number;              // Tính toán số ngày hiển thị (0 = nửa ngày, 1+ = ngày đầy đủ)
+  soNgayThucTe?: number;        // Số ngày thực tế (0.5 cho buổi sáng/chiều)
   
   // Làm thêm giờ
   soGioLamThem?: number;
@@ -214,6 +253,7 @@ export interface FilterDonYeuCauDto {
   
   // Filter
   loaiDon?: LoaiDonYeuCau;
+  loaiNghiPhep?: LoaiNghiPhep;  // Lọc theo loại nghỉ phép (chỉ dùng khi LoaiDon = NghiPhep)
   trangThai?: TrangThaiDon;
   nhanVienId?: string;          // Lọc theo nhân viên cụ thể
   nguoiDuyetId?: string;        // Lọc theo người duyệt

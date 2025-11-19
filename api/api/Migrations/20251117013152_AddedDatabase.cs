@@ -280,6 +280,7 @@ namespace api.Migrations
                     LyDo = table.Column<string>(type: "text", nullable: false),
                     NgayBatDau = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     NgayKetThuc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    LoaiNghiPhep = table.Column<int>(type: "integer", nullable: true),
                     SoGioLamThem = table.Column<decimal>(type: "numeric", nullable: true),
                     NgayLamThem = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     GioDuKienDen = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),

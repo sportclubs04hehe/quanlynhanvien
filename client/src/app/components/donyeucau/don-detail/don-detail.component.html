@@ -27,6 +27,13 @@
                 <i class="bi bi-file-earmark-text"></i>
                 {{ don()!.loaiDonText }}
               </span>
+              @if (don()!.loaiNghiPhepText) {
+                <br>
+                <span class="badge bg-info fs-6 mt-1">
+                  <i class="bi bi-clock"></i>
+                  {{ don()!.loaiNghiPhepText }}
+                </span>
+              }
             </p>
           </div>
         </div>

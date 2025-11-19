@@ -51,6 +51,12 @@ namespace api.Repository.Implement
                 query = query.Where(d => d.LoaiDon == filter.LoaiDon.Value);
             }
 
+            // Filter by LoaiNghiPhep (chỉ áp dụng khi LoaiDon = NghiPhep)
+            if (filter.LoaiNghiPhep.HasValue)
+            {
+                query = query.Where(d => d.LoaiDon == LoaiDonYeuCau.NghiPhep && d.LoaiNghiPhep == filter.LoaiNghiPhep.Value);
+            }
+
             // Filter by TrangThai
             if (filter.TrangThai.HasValue)
             {

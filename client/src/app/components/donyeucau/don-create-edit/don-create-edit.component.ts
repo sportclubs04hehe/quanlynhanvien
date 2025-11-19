@@ -10,7 +10,9 @@ import {
   UpdateDonYeuCauDto, 
   DonYeuCauDto, 
   LoaiDonYeuCau,
-  LOAI_DON_DISPLAY_NAMES
+  LoaiNghiPhep,
+  LOAI_DON_DISPLAY_NAMES,
+  LOAI_NGHI_PHEP_DISPLAY_NAMES
 } from '../../../types/don.model';
 import { CanComponentDeactivate } from '../../../guards/unsaved-changes.guard';
 import { ConfirmDialogComponent } from '../../../shared/modal/confirm-dialog/confirm-dialog.component';
@@ -48,8 +50,13 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
   
   // Expose enum to template
   readonly LoaiDonYeuCau = LoaiDonYeuCau;
+  readonly LoaiNghiPhep = LoaiNghiPhep;
   readonly loaiDonOptions = Object.entries(LOAI_DON_DISPLAY_NAMES).map(([key, value]) => ({
     value: key as LoaiDonYeuCau,
+    label: value
+  }));
+  readonly loaiNghiPhepOptions = Object.entries(LOAI_NGHI_PHEP_DISPLAY_NAMES).map(([key, value]) => ({
+    value: key as LoaiNghiPhep,
     label: value
   }));
   
@@ -124,6 +131,9 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
       ],
       lyDo: ['', [Validators.required, Validators.maxLength(500)]],
       
+      // Nghỉ Phép - Loại nghỉ chi tiết
+      loaiNghiPhep: [this.mode === 'create' ? LoaiNghiPhep.MotNgay : null],
+      
       // Nghỉ Phép & Công Tác
       ngayBatDau: [null],
       ngayKetThuc: [null],
@@ -152,6 +162,7 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
    */
   private updateValidators(loaiDon: LoaiDonYeuCau): void {
     // Clear all conditional validators first
+    this.donForm.get('loaiNghiPhep')?.clearValidators();
     this.donForm.get('ngayBatDau')?.clearValidators();
     this.donForm.get('ngayKetThuc')?.clearValidators();
     this.donForm.get('ngayLamThem')?.clearValidators();
@@ -164,6 +175,7 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
     // Apply validators based on loaiDon
     switch (loaiDon) {
       case LoaiDonYeuCau.NghiPhep:
+        this.donForm.get('loaiNghiPhep')?.setValidators(Validators.required);
         this.donForm.get('ngayBatDau')?.setValidators(Validators.required);
         this.donForm.get('ngayKetThuc')?.setValidators(Validators.required);
         break;
@@ -234,6 +246,7 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
     this.donForm.patchValue({
       loaiDon: don.loaiDon,
       lyDo: don.lyDo,
+      loaiNghiPhep: don.loaiNghiPhep || null,
       ngayBatDau,
       ngayKetThuc,
       ngayLamThem,
@@ -339,6 +352,11 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
       lyDo: formValue.lyDo.trim()
     };
     
+    // Add loaiNghiPhep if loaiDon is NghiPhep
+    if (loaiDon === LoaiDonYeuCau.NghiPhep) {
+      dto.loaiNghiPhep = formValue.loaiNghiPhep;
+    }
+    
     // Add conditional fields based on loaiDon
     if (loaiDon === LoaiDonYeuCau.NghiPhep || loaiDon === LoaiDonYeuCau.CongTac) {
       dto.ngayBatDau = this.ngbDateStructToISOString(formValue.ngayBatDau);
@@ -373,6 +391,11 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
     const dto: UpdateDonYeuCauDto = {
       lyDo: formValue.lyDo.trim()
     };
+    
+    // Add loaiNghiPhep if loaiDon is NghiPhep
+    if (loaiDon === LoaiDonYeuCau.NghiPhep) {
+      dto.loaiNghiPhep = formValue.loaiNghiPhep;
+    }
     
     // Add conditional fields (same logic as create)
     if (loaiDon === LoaiDonYeuCau.NghiPhep || loaiDon === LoaiDonYeuCau.CongTac) {
@@ -450,6 +473,8 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
     if (!loaiDon) return false;
     
     switch (field) {
+      case 'loaiNghiPhep':
+        return loaiDon === LoaiDonYeuCau.NghiPhep;
       case 'ngayBatDau':
       case 'ngayKetThuc':
         return loaiDon === LoaiDonYeuCau.NghiPhep || loaiDon === LoaiDonYeuCau.CongTac;

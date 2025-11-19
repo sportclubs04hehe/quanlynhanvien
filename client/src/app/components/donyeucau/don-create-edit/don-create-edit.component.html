@@ -16,28 +16,52 @@
   }
 
   <form [formGroup]="donForm" (ngSubmit)="onSubmit()">
-    <!-- Loại Đơn -->
-    <div class="mb-3">
-      <label for="loaiDon" class="form-label">
-        <i class="bi bi-file-earmark-text me-1"></i>
-        Loại Đơn <span class="text-danger">*</span>
-      </label>
-      <select 
-        class="form-select" 
-        id="loaiDon"
-        formControlName="loaiDon"
-        [class.is-invalid]="hasError('loaiDon')">
-        @for (option of loaiDonOptions; track option.value) {
-          <option [value]="option.value">{{ option.label }}</option>
+    <!-- Loại Đơn & Loại Nghỉ Phép -->
+    <div class="row mb-3">
+      <div [class]="shouldShowField('loaiNghiPhep') ? 'col-md-6' : 'col-md-12'">
+        <label for="loaiDon" class="form-label">
+          <i class="bi bi-file-earmark-text me-1"></i>
+          Loại Đơn <span class="text-danger">*</span>
+        </label>
+        <select 
+          class="form-select" 
+          id="loaiDon"
+          formControlName="loaiDon"
+          [class.is-invalid]="hasError('loaiDon')">
+          @for (option of loaiDonOptions; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+        @if (hasError('loaiDon')) {
+          <div class="invalid-feedback">{{ getErrorMessage('loaiDon') }}</div>
         }
-      </select>
-      @if (hasError('loaiDon')) {
-        <div class="invalid-feedback">{{ getErrorMessage('loaiDon') }}</div>
-      }
-      @if (mode === 'edit') {
-        <small class="form-text text-muted">
-          <i class="bi bi-info-circle"></i> Không thể thay đổi loại đơn khi chỉnh sửa
-        </small>
+        @if (mode === 'edit') {
+          <small class="form-text text-muted">
+            <i class="bi bi-info-circle"></i> Không thể thay đổi loại đơn
+          </small>
+        }
+      </div>
+
+      @if (shouldShowField('loaiNghiPhep')) {
+        <div class="col-md-6">
+          <label for="loaiNghiPhep" class="form-label">
+            <i class="bi bi-clock me-1"></i>
+            Loại Nghỉ Phép <span class="text-danger">*</span>
+          </label>
+          <select 
+            class="form-select" 
+            id="loaiNghiPhep"
+            formControlName="loaiNghiPhep"
+            [class.is-invalid]="hasError('loaiNghiPhep')">
+            <option [ngValue]="null">-- Chọn loại nghỉ phép --</option>
+            @for (option of loaiNghiPhepOptions; track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+          @if (hasError('loaiNghiPhep')) {
+            <div class="invalid-feedback">{{ getErrorMessage('loaiNghiPhep') }}</div>
+          }
+        </div>
       }
     </div>
 

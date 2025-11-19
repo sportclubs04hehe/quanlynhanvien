@@ -12,7 +12,7 @@ using api.Data;
 namespace api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251113172514_AddedDatabase")]
+    [Migration("20251117013152_AddedDatabase")]
     partial class AddedDatabase
     {
         /// <inheritdoc />
@@ -195,6 +195,9 @@ namespace api.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("LoaiDon")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("LoaiNghiPhep")
                         .HasColumnType("integer");
 
                     b.Property<string>("LyDo")
