@@ -7,14 +7,6 @@
 </div>
 
 <div class="modal-body">
-  @if (errorMessage()) {
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-      <i class="bi bi-exclamation-triangle-fill me-2"></i>
-      {{ errorMessage() }}
-      <button type="button" class="btn-close" (click)="errorMessage.set(null)"></button>
-    </div>
-  }
-
   <form [formGroup]="donForm" (ngSubmit)="onSubmit()">
     <!-- Loại Đơn & Loại Nghỉ Phép -->
     <div class="row mb-3">
@@ -107,92 +99,139 @@
           </small>
         </div>
         
-        <!-- Hidden datepicker for range selection -->
-        <div class="dp-hidden position-absolute">
-          <div class="input-group">
-            <input
-              name="datepicker"
-              class="form-control"
-              ngbDatepicker
-              #datepicker="ngbDatepicker"
-              [autoClose]="'outside'"
-              (dateSelect)="onDateSelection($event)"
-              [displayMonths]="2"
-              [dayTemplate]="dayTemplate"
-              [minDate]="minDate"
-              [markDisabled]="isDisabled"
-              outsideDays="hidden"
-              [startDate]="fromDate!"
-              tabindex="-1"
-            />
-            <ng-template #dayTemplate let-date let-focused="focused">
+        <!-- SINGLE DATE PICKER for Buổi Sáng/Buổi Chiều/Một Ngày -->
+        @if (shouldUseSingleDatePicker()) {
+          <div class="mb-3">
+            <label for="ngayNghi" class="form-label">
+              Ngày Nghỉ <span class="text-danger">*</span>
+            </label>
+            <div class="input-group">
+              <input 
+                class="form-control" 
+                placeholder="dd/mm/yyyy"
+                name="dpNgayNghi"
+                ngbDatepicker
+                #dSingleDate="ngbDatepicker"
+                [(ngModel)]="ngayNghi"
+                [ngModelOptions]="{standalone: true}"
+                (ngModelChange)="ngayNghi && onSingleDateSelection(ngayNghi)"
+                [minDate]="minDate"
+                [markDisabled]="isDisabled"
+                [dayTemplate]="singleDayTemplate"
+                [class.is-invalid]="hasError('ngayBatDau')">
+              <button 
+                class="btn btn-outline-secondary" 
+                (click)="dSingleDate.toggle()" 
+                type="button">
+                <i class="bi bi-calendar3"></i>
+              </button>
+            </div>
+            <!-- Day template for single date picker -->
+            <ng-template #singleDayTemplate let-date let-focused="focused">
               <span
                 class="custom-day"
                 [class.focused]="focused"
-                [class.range]="isRange(date)"
-                [class.faded]="isHovered(date) || isInside(date)"
                 [class.disabled-past]="date.before(minDate)"
                 [class.already-requested]="isRequestedLeaveDate(date)"
-                (mouseenter)="hoveredDate = date"
-                (mouseleave)="hoveredDate = null"
               >
                 {{ date.day }}
               </span>
             </ng-template>
-          </div>
-        </div>
-        
-        <div class="row">
-          <div class="col-md-6">
-            <label for="ngayBatDau" class="form-label">
-              Ngày Bắt Đầu <span class="text-danger">*</span>
-            </label>
-            <div class="input-group">
-              <input 
-                #dpFromDate
-                class="form-control" 
-                placeholder="dd/mm/yyyy"
-                name="dpFromDate"
-                [value]="formatter.format(fromDate)"
-                (input)="fromDate = validateInput(fromDate, dpFromDate.value); donForm.patchValue({ ngayBatDau: fromDate })"
-                [class.is-invalid]="hasError('ngayBatDau')">
-              <button 
-                class="btn btn-outline-secondary" 
-                (click)="datepicker.toggle()" 
-                type="button">
-                <i class="bi bi-calendar3"></i>
-              </button>
-            </div>
             @if (hasError('ngayBatDau')) {
               <div class="text-danger small mt-1">{{ getErrorMessage('ngayBatDau') }}</div>
             }
           </div>
-          
-          <div class="col-md-6">
-            <label for="ngayKetThuc" class="form-label">
-              Ngày Kết Thúc <span class="text-danger">*</span>
-            </label>
+        }
+        
+        <!-- RANGE DATE PICKER for Nhiều Ngày and Công Tác -->
+        @if (shouldUseRangeDatePicker()) {
+          <!-- Hidden datepicker for range selection -->
+          <div class="dp-hidden position-absolute">
             <div class="input-group">
-              <input 
-                #dpToDate
-                class="form-control" 
-                placeholder="dd/mm/yyyy"
-                name="dpToDate"
-                [value]="formatter.format(toDate)"
-                (input)="toDate = validateInput(toDate, dpToDate.value); donForm.patchValue({ ngayKetThuc: toDate })"
-                [class.is-invalid]="hasError('ngayKetThuc')">
-              <button 
-                class="btn btn-outline-secondary" 
-                (click)="datepicker.toggle()" 
-                type="button">
-                <i class="bi bi-calendar3"></i>
-              </button>
+              <input
+                name="datepicker"
+                class="form-control"
+                ngbDatepicker
+                #datepicker="ngbDatepicker"
+                [autoClose]="'outside'"
+                (dateSelect)="onDateSelection($event)"
+                [displayMonths]="2"
+                [dayTemplate]="dayTemplate"
+                [minDate]="minDate"
+                [markDisabled]="isDisabled"
+                outsideDays="hidden"
+                [startDate]="fromDate!"
+                tabindex="-1"
+              />
+              <ng-template #dayTemplate let-date let-focused="focused">
+                <span
+                  class="custom-day"
+                  [class.focused]="focused"
+                  [class.range]="isRange(date)"
+                  [class.faded]="isHovered(date) || isInside(date)"
+                  [class.disabled-past]="date.before(minDate)"
+                  [class.already-requested]="isRequestedLeaveDate(date)"
+                  (mouseenter)="hoveredDate = date"
+                  (mouseleave)="hoveredDate = null"
+                >
+                  {{ date.day }}
+                </span>
+              </ng-template>
             </div>
-            @if (hasError('ngayKetThuc')) {
-              <div class="text-danger small mt-1">{{ getErrorMessage('ngayKetThuc') }}</div>
-            }
           </div>
-        </div>
+          
+          <div class="row">
+            <div class="col-md-6">
+              <label for="ngayBatDau" class="form-label">
+                Ngày Bắt Đầu <span class="text-danger">*</span>
+              </label>
+              <div class="input-group">
+                <input 
+                  #dpFromDate
+                  class="form-control" 
+                  placeholder="dd/mm/yyyy"
+                  name="dpFromDate"
+                  [value]="formatter.format(fromDate)"
+                  (input)="fromDate = validateInput(fromDate, dpFromDate.value); donForm.patchValue({ ngayBatDau: fromDate })"
+                  [class.is-invalid]="hasError('ngayBatDau')">
+                <button 
+                  class="btn btn-outline-secondary" 
+                  (click)="datepicker.toggle()" 
+                  type="button">
+                  <i class="bi bi-calendar3"></i>
+                </button>
+              </div>
+              @if (hasError('ngayBatDau')) {
+                <div class="text-danger small mt-1">{{ getErrorMessage('ngayBatDau') }}</div>
+              }
+            </div>
+            
+            <div class="col-md-6">
+              <label for="ngayKetThuc" class="form-label">
+                Ngày Kết Thúc <span class="text-danger">*</span>
+              </label>
+              <div class="input-group">
+                <input 
+                  #dpToDate
+                  class="form-control" 
+                  placeholder="dd/mm/yyyy"
+                  name="dpToDate"
+                  [value]="formatter.format(toDate)"
+                  (input)="toDate = validateInput(toDate, dpToDate.value); donForm.patchValue({ ngayKetThuc: toDate })"
+                  [class.is-invalid]="hasError('ngayKetThuc')">
+                <button 
+                  class="btn btn-outline-secondary" 
+                  (click)="datepicker.toggle()" 
+                  type="button">
+                  <i class="bi bi-calendar3"></i>
+                </button>
+              </div>
+              @if (hasError('ngayKetThuc')) {
+                <div class="text-danger small mt-1">{{ getErrorMessage('ngayKetThuc') }}</div>
+              }
+            </div>
+          </div>
+        }
       </div>
     }
 
@@ -379,7 +418,6 @@
   <button 
     type="submit" 
     class="btn btn-primary"
-    [disabled]="donForm.invalid"
     (click)="onSubmit()">
     <i [class]="mode === 'create' ? 'bi bi-check-circle me-1' : 'bi bi-save me-1'"></i>
     {{ mode === 'create' ? 'Tạo Đơn' : 'Cập Nhật' }}

@@ -529,6 +529,85 @@ namespace api.Repository.Implement
             return exists;
         }
 
+        public async Task<bool> KiemTraXungDotNghiPhepAsync(
+            Guid nhanVienId, 
+            DateTime ngayBatDau, 
+            DateTime ngayKetThuc, 
+            LoaiNghiPhep loaiNghiPhep,
+            Guid? excludeDonId = null)
+        {
+            // Chuyển đổi sang UTC nếu chưa
+            ngayBatDau = DateTime.SpecifyKind(ngayBatDau, DateTimeKind.Utc);
+            ngayKetThuc = DateTime.SpecifyKind(ngayKetThuc, DateTimeKind.Utc);
+            
+            var existingDons = await _context.DonYeuCaus
+                .Where(d => d.NhanVienId == nhanVienId
+                    && d.LoaiDon == LoaiDonYeuCau.NghiPhep
+                    && d.LoaiNghiPhep.HasValue
+                    && (d.TrangThai == TrangThaiDon.DangChoDuyet || d.TrangThai == TrangThaiDon.DaChapThuan)
+                    && d.NgayBatDau.HasValue
+                    && d.NgayKetThuc.HasValue
+                    && d.Id != (excludeDonId ?? Guid.Empty)
+                    // Chỉ lấy các đơn có overlap về thời gian
+                    && d.NgayBatDau!.Value.Date <= ngayKetThuc.Date
+                    && d.NgayKetThuc!.Value.Date >= ngayBatDau.Date)
+                .ToListAsync();
+
+            // Kiểm tra từng đơn existing xem có xung đột không
+            foreach (var existingDon in existingDons)
+            {
+                var existing_NgayBatDau = existingDon.NgayBatDau!.Value.Date;
+                var existing_NgayKetThuc = existingDon.NgayKetThuc!.Value.Date;
+                var existing_LoaiNghiPhep = existingDon.LoaiNghiPhep!.Value;
+
+                // CASE 1: Đơn mới là NHIỀU NGÀY
+                if (loaiNghiPhep == LoaiNghiPhep.NhieuNgay)
+                {
+                    // Xung đột với bất kỳ đơn nào có overlap
+                    return true;
+                }
+
+                // CASE 2: Đơn existing là NHIỀU NGÀY
+                if (existing_LoaiNghiPhep == LoaiNghiPhep.NhieuNgay)
+                {
+                    // Xung đột với bất kỳ đơn mới nào có overlap
+                    return true;
+                }
+
+                // CASE 3: Đơn mới là MỘT NGÀY
+                if (loaiNghiPhep == LoaiNghiPhep.MotNgay)
+                {
+                    // Một ngày xung đột với mọi loại cùng ngày
+                    if (ngayBatDau.Date == existing_NgayBatDau)
+                        return true;
+                }
+
+                // CASE 4: Đơn existing là MỘT NGÀY
+                if (existing_LoaiNghiPhep == LoaiNghiPhep.MotNgay)
+                {
+                    // Một ngày xung đột với mọi loại cùng ngày
+                    if (existing_NgayBatDau == ngayBatDau.Date)
+                        return true;
+                }
+
+                // CASE 5: Cả hai đều là BUỔI SÁNG/CHIỀU cùng ngày
+                if (ngayBatDau.Date == existing_NgayBatDau)
+                {
+                    // Buổi sáng + Buổi sáng = Xung đột
+                    if (loaiNghiPhep == LoaiNghiPhep.BuoiSang && 
+                        existing_LoaiNghiPhep == LoaiNghiPhep.BuoiSang)
+                        return true;
+
+                    // Buổi chiều + Buổi chiều = Xung đột
+                    if (loaiNghiPhep == LoaiNghiPhep.BuoiChieu && 
+                        existing_LoaiNghiPhep == LoaiNghiPhep.BuoiChieu)
+                        return true;
+                }
+            }
+
+            return false; // Không có xung đột
+        }
+
         public async Task<bool> DaCoDoiDiMuonTrongNgayAsync(Guid nhanVienId, DateTime ngay, Guid? excludeDonId = null)
         {
             // Chuyển đổi sang UTC nếu chưa

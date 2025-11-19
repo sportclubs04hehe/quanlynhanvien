@@ -532,13 +532,16 @@ namespace api.Service.Implement
             {
                 case LoaiDonYeuCau.NghiPhep:
                     ValidateNghiPhep(dto);
-                    // Kiểm tra trùng ngày nghỉ
-                    if (dto.NgayBatDau.HasValue && dto.NgayKetThuc.HasValue)
+                    // Kiểm tra xung đột nghỉ phép với logic LoaiNghiPhep
+                    if (dto.NgayBatDau.HasValue && dto.NgayKetThuc.HasValue && dto.LoaiNghiPhep.HasValue)
                     {
-                        var isTrung = await _donYeuCauRepo.KiemTraTrungNgayNghiAsync(
-                            nhanVienId, dto.NgayBatDau.Value, dto.NgayKetThuc.Value);
-                        if (isTrung)
-                            throw new InvalidOperationException("Đã có đơn nghỉ phép trong khoảng thời gian này");
+                        var coXungDot = await _donYeuCauRepo.KiemTraXungDotNghiPhepAsync(
+                            nhanVienId, 
+                            dto.NgayBatDau.Value, 
+                            dto.NgayKetThuc.Value, 
+                            dto.LoaiNghiPhep.Value);
+                        if (coXungDot)
+                            throw new InvalidOperationException("Đã có đơn nghỉ phép xung đột trong khoảng thời gian này. Vui lòng kiểm tra lại.");
                     }
                     break;
 
@@ -574,12 +577,17 @@ namespace api.Service.Implement
             {
                 case LoaiDonYeuCau.NghiPhep:
                     ValidateNghiPhep(dto);
-                    if (dto.NgayBatDau.HasValue && dto.NgayKetThuc.HasValue)
+                    // Kiểm tra xung đột nghỉ phép với logic LoaiNghiPhep
+                    if (dto.NgayBatDau.HasValue && dto.NgayKetThuc.HasValue && dto.LoaiNghiPhep.HasValue)
                     {
-                        var isTrung = await _donYeuCauRepo.KiemTraTrungNgayNghiAsync(
-                            nhanVienId, dto.NgayBatDau.Value, dto.NgayKetThuc.Value, excludeDonId);
-                        if (isTrung)
-                            throw new InvalidOperationException("Đã có đơn nghỉ phép trong khoảng thời gian này");
+                        var coXungDot = await _donYeuCauRepo.KiemTraXungDotNghiPhepAsync(
+                            nhanVienId, 
+                            dto.NgayBatDau.Value, 
+                            dto.NgayKetThuc.Value, 
+                            dto.LoaiNghiPhep.Value,
+                            excludeDonId);
+                        if (coXungDot)
+                            throw new InvalidOperationException("Đã có đơn nghỉ phép xung đột trong khoảng thời gian này. Vui lòng kiểm tra lại.");
                     }
                     break;
 

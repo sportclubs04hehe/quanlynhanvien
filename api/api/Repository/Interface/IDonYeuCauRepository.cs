@@ -141,6 +141,19 @@ namespace api.Repository.Interface
         Task<bool> KiemTraTrungNgayNghiAsync(Guid nhanVienId, DateTime ngayBatDau, DateTime ngayKetThuc, Guid? excludeDonId = null);
 
         /// <summary>
+        /// Kiểm tra xung đột nghỉ phép với logic theo LoaiNghiPhep
+        /// - Buổi sáng/chiều: Cho phép cùng ngày nếu khác buổi
+        /// - Một ngày: Xung đột với mọi loại cùng ngày
+        /// - Nhiều ngày: Xung đột với mọi loại trong khoảng thời gian
+        /// </summary>
+        Task<bool> KiemTraXungDotNghiPhepAsync(
+            Guid nhanVienId, 
+            DateTime ngayBatDau, 
+            DateTime ngayKetThuc, 
+            LoaiNghiPhep loaiNghiPhep,
+            Guid? excludeDonId = null);
+
+        /// <summary>
         /// Kiểm tra đã có đơn đi muộn trong ngày chưa
         /// </summary>
         Task<bool> DaCoDoiDiMuonTrongNgayAsync(Guid nhanVienId, DateTime ngay, Guid? excludeDonId = null);

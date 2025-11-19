@@ -1,8 +1,9 @@
-import { Component, inject, Input, OnInit, signal } from '@angular/core';
+import { Component, inject, Input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { NgbActiveModal, NgbCalendar, NgbDate, NgbDatepickerModule, NgbDateParserFormatter, NgbDateStruct, NgbTimepickerModule, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { finalize } from 'rxjs';
+import { ToastrService } from 'ngx-toastr';
 import { DonYeuCauService } from '../../../services/don-yeu-cau.service';
 import { SpinnerService } from '../../../services/spinner.service';
 import { 
@@ -20,7 +21,7 @@ import { ConfirmDialogComponent } from '../../../shared/modal/confirm-dialog/con
 @Component({
   selector: 'app-don-create-edit',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgbDatepickerModule, NgbTimepickerModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgbDatepickerModule, NgbTimepickerModule],
   templateUrl: './don-create-edit.component.html',
   styleUrl: './don-create-edit.component.css'
 })
@@ -33,18 +34,19 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
   private donService = inject(DonYeuCauService);
   private spinner = inject(SpinnerService);
   private modal = inject(NgbModal);
+  private toastr = inject(ToastrService);
   activeModal = inject(NgbActiveModal);
   calendar = inject(NgbCalendar);
   formatter = inject(NgbDateParserFormatter);
   
   donForm!: FormGroup;
-  errorMessage = signal<string | null>(null);
   private isDirty = false;
   
-  // Range date picker properties
+  // Date picker properties
   hoveredDate: NgbDate | null = null;
   fromDate: NgbDate | null = null;
   toDate: NgbDate | null = null;
+  ngayNghi: NgbDate | null = null; // Single date for half-day/one-day leave
   minDate!: NgbDate; // Minimum date = today (không chọn quá khứ)
   requestedLeaveDates: Set<string> = new Set(); // Ngày đã nghỉ (format: yyyy-MM-dd)
   
@@ -84,6 +86,11 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
     // Watch loaiDon changes to update validators
     this.donForm.get('loaiDon')?.valueChanges.subscribe((loaiDon: LoaiDonYeuCau) => {
       this.updateValidators(loaiDon);
+    });
+    
+    // Watch loaiNghiPhep changes to reset date fields
+    this.donForm.get('loaiNghiPhep')?.valueChanges.subscribe((loaiNghiPhep: LoaiNghiPhep) => {
+      this.onLoaiNghiPhepChange(loaiNghiPhep);
     });
   }
   
@@ -219,7 +226,7 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
           this.isDirty = false;
         },
         error: (error) => {
-          this.errorMessage.set('Không thể tải thông tin đơn');
+          this.toastr.error('Không thể tải thông tin đơn', 'Thông báo');
           console.error('Error loading don:', error);
         }
       });
@@ -235,12 +242,22 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
     const ngayDiMuon = don.ngayDiMuon ? this.dateToNgbDateStruct(don.ngayDiMuon) : null;
     const gioDuKienDen = don.gioDuKienDen ? this.dateToTimeStruct(don.gioDuKienDen) : { hour: 9, minute: 0 };
     
-    // Set range dates for datepicker
-    if (ngayBatDau) {
-      this.fromDate = NgbDate.from(ngayBatDau);
-    }
-    if (ngayKetThuc) {
-      this.toDate = NgbDate.from(ngayKetThuc);
+    // Set dates for datepicker based on loaiNghiPhep
+    if (ngayBatDau && ngayKetThuc) {
+      const startDate = NgbDate.from(ngayBatDau);
+      const endDate = NgbDate.from(ngayKetThuc);
+      
+      // Check if it's single date (same start and end date)
+      if (startDate && endDate && startDate.equals(endDate)) {
+        this.ngayNghi = startDate;
+        this.fromDate = null;
+        this.toDate = null;
+      } else if (startDate && endDate) {
+        // Range date
+        this.fromDate = startDate;
+        this.toDate = endDate;
+        this.ngayNghi = null;
+      }
     }
     
     this.donForm.patchValue({
@@ -267,7 +284,7 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
   onSubmit(): void {
     if (this.donForm.invalid) {
       this.markFormGroupTouched(this.donForm);
-      this.errorMessage.set('Vui lòng điền đầy đủ thông tin bắt buộc');
+      this.toastr.warning('Vui lòng điền đầy đủ thông tin bắt buộc', 'Cảnh báo');
       return;
     }
     
@@ -302,7 +319,7 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
         error: (error) => {
           // Extract error message from backend
           const message = error.error?.message || 'Không thể tạo đơn. Vui lòng thử lại.';
-          this.errorMessage.set(message);
+          this.toastr.error(message, 'Thông báo');
           console.error('Error creating don:', error);
         }
       });
@@ -334,7 +351,7 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
         error: (error) => {
           // Extract error message from backend
           const message = error.error?.message || 'Không thể cập nhật đơn. Vui lòng thử lại.';
-          this.errorMessage.set(message);
+          this.toastr.error(message, 'Thông báo');
           console.error('Error updating don:', error);
         }
       });
@@ -463,6 +480,57 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
    */
   getCurrentLoaiDon(): LoaiDonYeuCau | null {
     return this.donForm.get('loaiDon')?.value;
+  }
+  
+  /**
+   * Check if should use single date picker (for half-day or one-day leave)
+   */
+  shouldUseSingleDatePicker(): boolean {
+    const loaiDon = this.getCurrentLoaiDon();
+    if (loaiDon !== LoaiDonYeuCau.NghiPhep) return false;
+    
+    const loaiNghiPhep = this.donForm.get('loaiNghiPhep')?.value;
+    return loaiNghiPhep === LoaiNghiPhep.BuoiSang ||
+           loaiNghiPhep === LoaiNghiPhep.BuoiChieu ||
+           loaiNghiPhep === LoaiNghiPhep.MotNgay;
+  }
+  
+  /**
+   * Check if should use range date picker (for multi-day leave or business trip)
+   */
+  shouldUseRangeDatePicker(): boolean {
+    const loaiDon = this.getCurrentLoaiDon();
+    if (loaiDon === LoaiDonYeuCau.CongTac) return true;
+    if (loaiDon !== LoaiDonYeuCau.NghiPhep) return false;
+    
+    const loaiNghiPhep = this.donForm.get('loaiNghiPhep')?.value;
+    return loaiNghiPhep === LoaiNghiPhep.NhieuNgay;
+  }
+  
+  /**
+   * Handle loaiNghiPhep change - reset date fields
+   */
+  private onLoaiNghiPhepChange(loaiNghiPhep: LoaiNghiPhep | null): void {
+    // Reset all date fields
+    this.ngayNghi = null;
+    this.fromDate = null;
+    this.toDate = null;
+    this.donForm.patchValue({
+      ngayBatDau: null,
+      ngayKetThuc: null
+    }, { emitEvent: false });
+  }
+  
+  /**
+   * Handle single date selection
+   */
+  onSingleDateSelection(date: NgbDate): void {
+    this.ngayNghi = date;
+    // Set both ngayBatDau and ngayKetThuc to the same date
+    this.donForm.patchValue({
+      ngayBatDau: date,
+      ngayKetThuc: date
+    });
   }
   
   /**
