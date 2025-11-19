@@ -115,7 +115,7 @@ namespace api.Service.Interface
         /// Lấy danh sách ngày đã nghỉ phép (đã được chấp thuận) của nhân viên
         /// Dùng để highlight trên datepicker
         /// </summary>
-        Task<List<DateTime>> GetNgayDaNghiAsync(Guid nhanVienId, DateTime? fromDate = null, DateTime? toDate = null);
+        Task<List<NgayNghiInfoDto>> GetNgayDaNghiAsync(Guid nhanVienId, DateTime? fromDate = null, DateTime? toDate = null);
 
         #endregion
     }

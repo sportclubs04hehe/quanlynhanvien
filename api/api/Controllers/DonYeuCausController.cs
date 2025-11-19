@@ -328,23 +328,23 @@ namespace api.Controllers
         }
 
         /// <summary>
-        /// Lấy danh sách ngày đã nghỉ phép (đã được chấp thuận)
-        /// Dùng để highlight trên datepicker
+        /// Lấy danh sách ngày đã nghỉ phép (đã được chấp thuận) với thông tin chi tiết
+        /// Dùng để highlight và disable thông minh trên datepicker
         /// </summary>
         [HttpGet("ngay-da-nghi")]
-        public async Task<ActionResult<List<DateTime>>> GetNgayDaNghi(
+        public async Task<ActionResult<List<NgayNghiInfoDto>>> GetNgayDaNghi(
             [FromQuery] DateTime? fromDate = null,
             [FromQuery] DateTime? toDate = null)
         {
             try
             {
                 var currentUserId = GetCurrentUserId();
-                var dates = await _donYeuCauService.GetNgayDaNghiAsync(currentUserId, fromDate, toDate);
-                return Ok(dates);
+                var ngayNghiInfos = await _donYeuCauService.GetNgayDaNghiAsync(currentUserId, fromDate, toDate);
+                return Ok(ngayNghiInfos);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Đã xảy ra lỗi", error = ex.Message });
+                return StatusCode(500, new { message = "Lỗi hệ thống", error = ex.Message });
             }
         }
 

@@ -4,6 +4,19 @@ using api.Model.Enums;
 namespace api.DTO
 {
     /// <summary>
+    /// DTO chứa thông tin chi tiết về ngày đã nghỉ
+    /// Dùng để frontend highlight và disable ngày trên datepicker một cách thông minh
+    /// </summary>
+    public class NgayNghiInfoDto
+    {
+        public DateTime Ngay { get; set; }                    // Ngày nghỉ (date-only)
+        public LoaiNghiPhep LoaiNghiPhep { get; set; }        // Loại nghỉ: BuoiSang, BuoiChieu, MotNgay, NhieuNgay
+        public bool BuoiSang { get; set; }                    // true nếu đã nghỉ buổi sáng
+        public bool BuoiChieu { get; set; }                   // true nếu đã nghỉ buổi chiều
+        public bool NghiCaNgay { get; set; }                  // true nếu nghỉ cả ngày (MotNgay hoặc NhieuNgay)
+    }
+
+    /// <summary>
     /// DTO để tạo đơn yêu cầu mới
     /// </summary>
     public class CreateDonYeuCauDto

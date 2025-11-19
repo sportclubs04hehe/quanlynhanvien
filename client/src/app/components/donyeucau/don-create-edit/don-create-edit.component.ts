@@ -12,6 +12,7 @@ import {
   DonYeuCauDto, 
   LoaiDonYeuCau,
   LoaiNghiPhep,
+  NgayNghiInfo,
   LOAI_DON_DISPLAY_NAMES,
   LOAI_NGHI_PHEP_DISPLAY_NAMES
 } from '../../../types/don.model';
@@ -48,7 +49,7 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
   toDate: NgbDate | null = null;
   ngayNghi: NgbDate | null = null; // Single date for half-day/one-day leave
   minDate!: NgbDate; // Minimum date = today (không chọn quá khứ)
-  requestedLeaveDates: Set<string> = new Set(); // Ngày đã nghỉ (format: yyyy-MM-dd)
+  requestedLeaveDates: Map<string, NgayNghiInfo> = new Map(); // Ngày đã nghỉ với thông tin chi tiết
   
   // Expose enum to template
   readonly LoaiDonYeuCau = LoaiDonYeuCau;
@@ -67,10 +68,8 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
     const today = new Date();
     this.minDate = new NgbDate(today.getFullYear(), today.getMonth() + 1, today.getDate());
     
-    // Load ngày đã nghỉ (chỉ cho loại Nghỉ Phép và mode create)
-    if (this.mode === 'create') {
-      this.loadRequestedLeaveDates();
-    }
+    // Load ngày đã nghỉ cho cả create và edit mode
+    this.loadRequestedLeaveDates();
     
     this.initForm();
     
@@ -112,12 +111,13 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
     
     this.donService.getNgayDaNghi(fromDate, toDate)
       .subscribe({
-        next: (dates) => {
-          // Convert to Set for fast lookup
-          this.requestedLeaveDates = new Set(
-            dates.map(d => {
-              const date = new Date(d);
-              return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        next: (ngayNghiInfos) => {
+          // Convert to Map for fast lookup
+          this.requestedLeaveDates = new Map(
+            ngayNghiInfos.map(info => {
+              const date = new Date(info.ngay);
+              const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+              return [dateKey, info];
             })
           );
         },
@@ -508,17 +508,38 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
   }
   
   /**
-   * Handle loaiNghiPhep change - reset date fields
+   * Handle loaiNghiPhep change - reset date fields only if switching between picker types
    */
   private onLoaiNghiPhepChange(loaiNghiPhep: LoaiNghiPhep | null): void {
-    // Reset all date fields
-    this.ngayNghi = null;
-    this.fromDate = null;
-    this.toDate = null;
-    this.donForm.patchValue({
-      ngayBatDau: null,
-      ngayKetThuc: null
-    }, { emitEvent: false });
+    if (!loaiNghiPhep) return;
+    
+    const isSingleDateType = loaiNghiPhep === LoaiNghiPhep.BuoiSang || 
+                             loaiNghiPhep === LoaiNghiPhep.BuoiChieu || 
+                             loaiNghiPhep === LoaiNghiPhep.MotNgay;
+    const isRangeDateType = loaiNghiPhep === LoaiNghiPhep.NhieuNgay;
+    
+    // Only reset if switching between single date and range date picker
+    if (isSingleDateType && (this.fromDate || this.toDate)) {
+      // Switching from range to single - convert first date to single date
+      if (this.fromDate) {
+        this.ngayNghi = this.fromDate;
+        this.donForm.patchValue({
+          ngayBatDau: this.fromDate,
+          ngayKetThuc: this.fromDate
+        }, { emitEvent: false });
+      }
+      this.fromDate = null;
+      this.toDate = null;
+    } else if (isRangeDateType && this.ngayNghi) {
+      // Switching from single to range - convert single date to range start
+      this.fromDate = this.ngayNghi;
+      this.toDate = null;
+      this.donForm.patchValue({
+        ngayBatDau: this.ngayNghi,
+        ngayKetThuc: null
+      }, { emitEvent: false });
+      this.ngayNghi = null;
+    }
   }
   
   /**
@@ -608,18 +629,44 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
   
   /**
    * Mark dates as disabled (for ngbDatepicker)
-   * Disable dates that are already requested for leave
+   * Disable dates that are already FULLY booked (nghỉ cả ngày)
+   * Nếu chỉ nghỉ nửa ngày (sáng hoặc chiều) thì KHÔNG disable
    */
   isDisabled = (date: NgbDate, current?: { month: number; year: number }) => {
-    return this.isRequestedLeaveDate(date);
+    const info = this.getRequestedLeaveInfo(date);
+    if (!info) return false;
+    
+    // Chỉ disable nếu nghỉ cả ngày
+    return info.nghiCaNgay;
   }
   
   /**
-   * Check if a date is already requested for leave
+   * Get thông tin ngày đã nghỉ cho một date cụ thể
+   */
+  getRequestedLeaveInfo(date: NgbDate): NgayNghiInfo | null {
+    const dateKey = `${date.year}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`;
+    return this.requestedLeaveDates.get(dateKey) || null;
+  }
+  
+  /**
+   * Check if a date is already requested for leave (bất kỳ loại nào)
+   * Dùng để styling (bôi vàng)
    */
   isRequestedLeaveDate(date: NgbDate): boolean {
     const dateKey = `${date.year}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`;
     return this.requestedLeaveDates.has(dateKey);
+  }
+  
+  /**
+   * Check if a date is half-day leave (nghỉ nửa ngày)
+   * Dùng để styling khác biệt (vàng nhạt hơn)
+   */
+  isHalfDayLeave(date: NgbDate): boolean {
+    const info = this.getRequestedLeaveInfo(date);
+    if (!info) return false;
+    
+    // Nửa ngày = chỉ nghỉ sáng HOẶC chỉ nghỉ chiều (không nghỉ cả ngày)
+    return !info.nghiCaNgay && (info.buoiSang || info.buoiChieu);
   }
 
   validateInput(currentValue: NgbDate | null, input: string): NgbDate | null {

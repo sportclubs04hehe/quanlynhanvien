@@ -94,8 +94,9 @@
           <small>
             <i class="bi bi-info-circle me-1"></i>
             <strong>Hướng dẫn:</strong> 
-            <span class="badge bg-secondary ms-1">Xám</span> = Quá khứ (không chọn được),
-            <span class="badge bg-warning text-dark ms-1">Vàng</span> = Đã nghỉ phép
+            <span class="badge bg-secondary ms-1">Xám</span> = Quá khứ,
+            <span class="badge bg-warning text-dark ms-1" style="opacity: 0.5">Vàng nhạt</span> = Đã nghỉ nửa ngày (có thể chọn nửa còn lại),
+            <span class="badge bg-warning text-dark ms-1">Vàng đậm</span> = Đã nghỉ cả ngày (không chọn được)
           </small>
         </div>
         
@@ -132,7 +133,8 @@
                 class="custom-day"
                 [class.focused]="focused"
                 [class.disabled-past]="date.before(minDate)"
-                [class.already-requested]="isRequestedLeaveDate(date)"
+                [class.already-requested-full]="isRequestedLeaveDate(date) && !isHalfDayLeave(date)"
+                [class.already-requested-half]="isHalfDayLeave(date)"
               >
                 {{ date.day }}
               </span>
@@ -170,7 +172,8 @@
                   [class.range]="isRange(date)"
                   [class.faded]="isHovered(date) || isInside(date)"
                   [class.disabled-past]="date.before(minDate)"
-                  [class.already-requested]="isRequestedLeaveDate(date)"
+                  [class.already-requested-full]="isRequestedLeaveDate(date) && !isHalfDayLeave(date)"
+                  [class.already-requested-half]="isHalfDayLeave(date)"
                   (mouseenter)="hoveredDate = date"
                   (mouseleave)="hoveredDate = null"
                 >
@@ -397,13 +400,6 @@
         </div>
       </div>
     }
-
-    <!-- Info Alert -->
-    <div class="alert alert-info">
-      <i class="bi bi-info-circle me-2"></i>
-      <strong>Lưu ý:</strong> Đơn yêu cầu sẽ được gửi đến người quản lý để phê duyệt. 
-      Bạn có thể chỉnh sửa hoặc hủy đơn khi đơn đang ở trạng thái "Đang chờ duyệt".
-    </div>
   </form>
 </div>
 

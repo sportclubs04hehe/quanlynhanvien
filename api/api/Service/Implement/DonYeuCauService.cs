@@ -433,14 +433,16 @@ namespace api.Service.Implement
             return await _donYeuCauRepo.CountDonChoDuyetAsync(nguoiDuyetId);
         }
 
-        public async Task<List<DateTime>> GetNgayDaNghiAsync(
+        public async Task<List<NgayNghiInfoDto>> GetNgayDaNghiAsync(
             Guid nhanVienId, 
             DateTime? fromDate = null, 
             DateTime? toDate = null)
         {
-            var ngayDaNghi = new List<DateTime>();
+            // Dictionary để gộp thông tin nhiều đơn cùng ngày
+            // Key: yyyy-MM-dd, Value: NgayNghiInfoDto
+            var ngayNghiDict = new Dictionary<string, NgayNghiInfoDto>();
             var pageNumber = 1;
-            const int pageSize = 100; // Reasonable page size
+            const int pageSize = 100;
             
             while (true)
             {
@@ -456,39 +458,75 @@ namespace api.Service.Implement
 
                 var (dons, totalCount) = await _donYeuCauRepo.GetAllAsync(filter);
                 
-                // Nếu không còn dữ liệu thì dừng
                 if (!dons.Any())
                     break;
 
                 // Xử lý từng đơn trong batch hiện tại
                 foreach (var don in dons)
                 {
-                    if (don.NgayBatDau.HasValue && don.NgayKetThuc.HasValue)
+                    if (don.NgayBatDau.HasValue && don.NgayKetThuc.HasValue && don.LoaiNghiPhep.HasValue)
                     {
                         var current = don.NgayBatDau.Value.Date;
                         var end = don.NgayKetThuc.Value.Date;
+                        var loaiNghiPhep = don.LoaiNghiPhep.Value;
 
-                        // Chỉ thêm các ngày nằm trong khoảng fromDate - toDate (nếu có)
                         while (current <= end)
                         {
+                            // Chỉ xử lý ngày nằm trong range filter
                             if ((!fromDate.HasValue || current >= fromDate.Value.Date) &&
                                 (!toDate.HasValue || current <= toDate.Value.Date))
                             {
-                                ngayDaNghi.Add(current);
+                                var dateKey = current.ToString("yyyy-MM-dd");
+                                
+                                // Nếu ngày này chưa có trong dict, tạo mới
+                                if (!ngayNghiDict.ContainsKey(dateKey))
+                                {
+                                    ngayNghiDict[dateKey] = new NgayNghiInfoDto
+                                    {
+                                        Ngay = current,
+                                        LoaiNghiPhep = loaiNghiPhep,
+                                        BuoiSang = false,
+                                        BuoiChieu = false,
+                                        NghiCaNgay = false
+                                    };
+                                }
+                                
+                                var info = ngayNghiDict[dateKey];
+                                
+                                // Cập nhật thông tin dựa trên loại nghỉ
+                                if (loaiNghiPhep == LoaiNghiPhep.BuoiSang)
+                                {
+                                    info.BuoiSang = true;
+                                }
+                                else if (loaiNghiPhep == LoaiNghiPhep.BuoiChieu)
+                                {
+                                    info.BuoiChieu = true;
+                                }
+                                else if (loaiNghiPhep == LoaiNghiPhep.MotNgay || loaiNghiPhep == LoaiNghiPhep.NhieuNgay)
+                                {
+                                    info.NghiCaNgay = true;
+                                    info.BuoiSang = true;
+                                    info.BuoiChieu = true;
+                                }
+                                
+                                // Nếu cả 2 buổi đều nghỉ thì = nghỉ cả ngày
+                                if (info.BuoiSang && info.BuoiChieu)
+                                {
+                                    info.NghiCaNgay = true;
+                                }
                             }
                             current = current.AddDays(1);
                         }
                     }
                 }
 
-                // Nếu đã load hết tất cả records thì dừng
                 if (pageNumber * pageSize >= totalCount)
                     break;
 
                 pageNumber++;
             }
 
-            return ngayDaNghi.Distinct().OrderBy(d => d).ToList();
+            return ngayNghiDict.Values.OrderBy(d => d.Ngay).ToList();
         }
 
         #endregion

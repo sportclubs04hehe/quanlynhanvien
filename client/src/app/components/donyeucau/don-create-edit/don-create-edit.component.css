@@ -66,15 +66,31 @@
   color: #ccc;
 }
 
-/* Already requested leave dates (to be implemented) */
-.custom-day.already-requested {
-  background-color: #fff3cd;
-  color: #856404;
-  border: 1px solid #ffc107;
+/* Already requested leave dates - FULL DAY (cả ngày) */
+.custom-day.already-requested-full {
+  background-color: #ffc107;
+  color: #000;
+  font-weight: 600;
+  border: 2px solid #ff9800;
+  text-decoration: line-through;
+  cursor: not-allowed;
 }
 
-.custom-day.already-requested:hover {
+.custom-day.already-requested-full:hover {
   background-color: #ffc107;
+  color: #000;
+}
+
+/* Already requested leave dates - HALF DAY (nửa ngày) */
+.custom-day.already-requested-half {
+  background-color: rgba(255, 193, 7, 0.3);
+  color: #856404;
+  border: 1px dashed #ffc107;
+  cursor: pointer;
+}
+
+.custom-day.already-requested-half:hover {
+  background-color: rgba(255, 193, 7, 0.5);
   color: #000;
 }
 

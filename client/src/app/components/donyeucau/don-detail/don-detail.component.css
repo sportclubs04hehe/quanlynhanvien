@@ -11,17 +11,16 @@
   overflow-y: auto;
 }
 
-/* Info Sections */
+/* Info Section */
 .info-section {
   background: #f8f9fa;
   border-radius: 0.5rem;
-  padding: 1.25rem;
+  padding: 1.5rem;
   border-left: 4px solid #0d6efd;
 }
 
-.info-section.approval-section {
-  border-left-color: #198754;
-  background: #e7f5ec;
+.approval-info {
+  padding-top: 0.5rem;
 }
 
 .section-title {

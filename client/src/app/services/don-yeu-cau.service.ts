@@ -10,6 +10,7 @@ import {
   DuyetDonYeuCauDto, 
   FilterDonYeuCauDto, 
   LoaiDonYeuCau, 
+  NgayNghiInfo, 
   ThongKeDonYeuCauDto, 
   TrangThaiDon, 
   UpdateDonYeuCauDto 
@@ -224,16 +225,16 @@ export class DonYeuCauService {
   }
 
   /**
-   * Lấy danh sách ngày đã nghỉ phép (đã được chấp thuận)
-   * Dùng để highlight trên datepicker
+   * Lấy danh sách ngày đã nghỉ phép (đã được chấp thuận) với thông tin chi tiết
+   * Dùng để highlight và disable thông minh trên datepicker
    * GET /api/DonYeuCaus/ngay-da-nghi
    */
-  getNgayDaNghi(fromDate?: Date | string, toDate?: Date | string): Observable<string[]> {
+  getNgayDaNghi(fromDate?: Date | string, toDate?: Date | string): Observable<NgayNghiInfo[]> {
     let params = new HttpParams();
     if (fromDate) params = params.set('fromDate', this.formatDate(fromDate));
     if (toDate) params = params.set('toDate', this.formatDate(toDate));
 
-    return this.http.get<string[]>(`${this.baseUrl}/ngay-da-nghi`, { params });
+    return this.http.get<NgayNghiInfo[]>(`${this.baseUrl}/ngay-da-nghi`, { params });
   }
 
   // ============================================================================

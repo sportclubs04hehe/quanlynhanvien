@@ -281,3 +281,15 @@ export interface ThongKeDonYeuCauDto {
   soDonDiMuon: number;
   soDonCongTac: number;
 }
+
+/**
+ * DTO chứa thông tin chi tiết về ngày đã nghỉ
+ * Dùng để highlight và disable ngày trên datepicker một cách thông minh
+ */
+export interface NgayNghiInfo {
+  ngay: Date | string;              // Ngày nghỉ (date-only)
+  loaiNghiPhep: LoaiNghiPhep;       // Loại nghỉ: BuoiSang, BuoiChieu, MotNgay, NhieuNgay
+  buoiSang: boolean;                // true nếu đã nghỉ buổi sáng
+  buoiChieu: boolean;               // true nếu đã nghỉ buổi chiều
+  nghiCaNgay: boolean;              // true nếu nghỉ cả ngày (MotNgay hoặc NhieuNgay)
+}
