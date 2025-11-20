@@ -33,6 +33,10 @@
   margin-bottom: 0;
 }
 
+.table-responsive {
+  overflow-x: auto;
+}
+
 .table thead th {
   font-weight: 600;
   font-size: 0.875rem;
@@ -40,6 +44,7 @@
   letter-spacing: 0.5px;
   border-bottom: 2px solid #dee2e6;
   background-color: #f8f9fa;
+  white-space: nowrap;
 }
 
 .table tbody td {
@@ -48,12 +53,11 @@
 }
 
 .table tbody tr {
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease;
 }
 
 .table tbody tr:hover {
   background-color: rgba(0, 123, 255, 0.05);
-  transform: scale(1.001);
 }
 
 /* Highlight pending requests */
@@ -115,6 +119,24 @@
 .btn-outline-danger:hover {
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+}
+
+/* Detail info column */
+.detail-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.detail-info small {
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.detail-info small i {
+  font-size: 0.75rem;
+  margin-right: 0.3rem;
+  opacity: 0.7;
 }
 
 /* Truncate text */
