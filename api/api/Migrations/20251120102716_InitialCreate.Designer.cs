@@ -12,8 +12,8 @@ using api.Data;
 namespace api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251117013152_AddedDatabase")]
-    partial class AddedDatabase
+    [Migration("20251120102716_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -256,6 +256,47 @@ namespace api.Migrations
                     b.HasIndex("NhanVienId");
 
                     b.ToTable("DonYeuCaus");
+                });
+
+            modelBuilder.Entity("api.Model.NghiPhepQuota", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("GhiChu")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Nam")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("NgayCapNhat")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<DateTime>("NgayTao")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<Guid>("NhanVienId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("SoNgayDaSuDung")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("SoNgayPhepThang")
+                        .HasColumnType("numeric");
+
+                    b.Property<int>("Thang")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("TongSoGioLamThem")
+                        .HasColumnType("numeric");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NhanVienId", "Nam", "Thang")
+                        .IsUnique();
+
+                    b.ToTable("NghiPhepQuotas");
                 });
 
             modelBuilder.Entity("api.Model.NhanVien", b =>
@@ -619,6 +660,17 @@ namespace api.Migrations
                         .IsRequired();
 
                     b.Navigation("NguoiDuyet");
+
+                    b.Navigation("NhanVien");
+                });
+
+            modelBuilder.Entity("api.Model.NghiPhepQuota", b =>
+                {
+                    b.HasOne("api.Model.NhanVien", "NhanVien")
+                        .WithMany()
+                        .HasForeignKey("NhanVienId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("NhanVien");
                 });

@@ -102,6 +102,20 @@ namespace api.Repository.Interface
         /// </summary>
         Task<bool> CanCancelAsync(Guid donId);
 
+        /// <summary>
+        /// Lấy đơn nghỉ sắp tới (approved, chưa đến ngày)
+        /// </summary>
+        Task<List<DonYeuCau>> GetUpcomingDonsAsync(Guid nhanVienId, int limit = 5);
+
+        /// <summary>
+        /// Lấy đơn theo khoảng thời gian và trạng thái
+        /// </summary>
+        Task<List<DonYeuCau>> GetDonsByDateRangeAsync(
+            Guid nhanVienId, 
+            DateTime startDate, 
+            DateTime endDate, 
+            TrangThaiDon? trangThai = null);
+
         #endregion
 
         #region Thống kê

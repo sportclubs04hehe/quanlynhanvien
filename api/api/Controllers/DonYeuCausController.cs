@@ -6,8 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace api.Controllers
 {
+    // DEV LE MINH HUY
     [Route("api/[controller]")]
-    [Authorize] // Tất cả endpoints đều cần đăng nhập
+    [Authorize] 
     public class DonYeuCausController : BaseApiController
     {
         private readonly IDonYeuCauService _donYeuCauService;

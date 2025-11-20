@@ -11,6 +11,7 @@ import { APP_ROLES } from './constants/roles.constants';
 import { ActiveSessionsComponent } from './components/account/active-sessions/active-sessions.component';
 import { TelegramSettingsComponent } from './components/account/telegram-settings/telegram-settings.component';
 import { ChangePasswordComponent } from './components/account/change-password/change-password.component';
+import { LichNghiComponent } from './components/lich-nghi/lich-nghi.component';
 
 export const routes: Routes = [
   {
@@ -21,6 +22,7 @@ export const routes: Routes = [
   { path: 'login', component: LoginComponent, canActivate: [loginGuard] },
   { path: 'auth/login', component: LoginComponent, canActivate: [loginGuard] },
   { path: 'don-yeu-cau', component: DonyeucauComponent, canActivate: [authGuard] },
+  { path: 'lich-nghi', component: LichNghiComponent, canActivate: [authGuard] },
 
   // Quản lý nhân viên - Yêu cầu role Giam Doc hoặc Truong Phong
   {

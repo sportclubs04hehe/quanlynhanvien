@@ -21,6 +21,7 @@ namespace api.Extensions
             services.AddScoped<INhanVienRepository, NhanVienRepository>();
             services.AddScoped<IDonYeuCauRepository, DonYeuCauRepository>();
             services.AddScoped<ITelegramLinkRepository, TelegramLinkRepository>();
+            services.AddScoped<INghiPhepQuotaRepository, NghiPhepQuotaRepository>();
 
             // Services
             services.AddScoped<IPhongBanService, PhongBanService>();
@@ -28,6 +29,7 @@ namespace api.Extensions
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IDonYeuCauService, DonYeuCauService>();
             services.AddScoped<ITelegramLinkService, TelegramLinkService>();
+            services.AddScoped<INghiPhepQuotaService, NghiPhepQuotaService>();
 
             return services;
         }

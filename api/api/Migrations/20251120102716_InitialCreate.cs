@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace api.Migrations
 {
     /// <inheritdoc />
-    public partial class AddedDatabase : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -315,6 +315,32 @@ namespace api.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "NghiPhepQuotas",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    NhanVienId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Nam = table.Column<int>(type: "integer", nullable: false),
+                    Thang = table.Column<int>(type: "integer", nullable: false),
+                    SoNgayPhepThang = table.Column<decimal>(type: "numeric", nullable: false),
+                    SoNgayDaSuDung = table.Column<decimal>(type: "numeric", nullable: false),
+                    TongSoGioLamThem = table.Column<decimal>(type: "numeric", nullable: false),
+                    GhiChu = table.Column<string>(type: "text", nullable: true),
+                    NgayTao = table.Column<DateTime>(type: "timestamptz", nullable: false),
+                    NgayCapNhat = table.Column<DateTime>(type: "timestamptz", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_NghiPhepQuotas", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_NghiPhepQuotas_NhanViens_NhanVienId",
+                        column: x => x.NhanVienId,
+                        principalTable: "NhanViens",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "TelegramLinkTokens",
                 columns: table => new
                 {
@@ -421,6 +447,12 @@ namespace api.Migrations
                 column: "NhanVienId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_NghiPhepQuotas_NhanVienId_Nam_Thang",
+                table: "NghiPhepQuotas",
+                columns: new[] { "NhanVienId", "Nam", "Thang" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_NhanViens_ChucVuId",
                 table: "NhanViens",
                 column: "ChucVuId");
@@ -485,6 +517,9 @@ namespace api.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUserTokens");
+
+            migrationBuilder.DropTable(
+                name: "NghiPhepQuotas");
 
             migrationBuilder.DropTable(
                 name: "RefreshTokens");

@@ -628,7 +628,49 @@ namespace api.Repository.Implement
             return await query.AnyAsync();
         }
 
+        public async Task<List<DonYeuCau>> GetUpcomingDonsAsync(Guid nhanVienId, int limit = 5)
+        {
+            var today = DateTime.UtcNow.Date;
+
+            return await _context.DonYeuCaus
+                .Include(d => d.NhanVien)
+                .Include(d => d.NhanVien.PhongBan)
+                .Include(d => d.NhanVien.ChucVu)
+                .Where(d => d.NhanVienId == nhanVienId
+                    && d.TrangThai == TrangThaiDon.DaChapThuan
+                    && d.NgayBatDau.HasValue
+                    && d.NgayBatDau.Value.Date >= today)
+                .OrderBy(d => d.NgayBatDau)
+                .Take(limit)
+                .ToListAsync();
+        }
+
+        public async Task<List<DonYeuCau>> GetDonsByDateRangeAsync(
+            Guid nhanVienId, 
+            DateTime startDate, 
+            DateTime endDate, 
+            TrangThaiDon? trangThai = null)
+        {
+            var query = _context.DonYeuCaus
+                .Include(d => d.NhanVien)
+                .Include(d => d.NhanVien.PhongBan)
+                .Include(d => d.NhanVien.ChucVu)
+                .Where(d => d.NhanVienId == nhanVienId
+                    && d.NgayBatDau.HasValue
+                    && d.NgayKetThuc.HasValue
+                    && d.NgayBatDau.Value.Date <= endDate
+                    && d.NgayKetThuc.Value.Date >= startDate);
+
+            if (trangThai.HasValue)
+            {
+                query = query.Where(d => d.TrangThai == trangThai.Value);
+            }
+
+            return await query
+                .OrderBy(d => d.NgayBatDau)
+                .ToListAsync();
+        }
+
         #endregion
     }
 }
-

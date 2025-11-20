@@ -21,6 +21,7 @@ namespace api.Data
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
         public DbSet<TelegramConfig> TelegramConfigs => Set<TelegramConfig>();
         public DbSet<TelegramLinkToken> TelegramLinkTokens => Set<TelegramLinkToken>();
+        public DbSet<NghiPhepQuota> NghiPhepQuotas => Set<NghiPhepQuota>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -102,6 +103,26 @@ namespace api.Data
 
             builder.Entity<TelegramLinkToken>()
                 .Property(t => t.UsedAt)
+                .HasColumnType("timestamptz");
+
+            // NghiPhepQuota configuration
+            builder.Entity<NghiPhepQuota>()
+                .HasOne(q => q.NhanVien)
+                .WithMany()
+                .HasForeignKey(q => q.NhanVienId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Unique constraint: Mỗi nhân viên chỉ có 1 quota record cho 1 tháng
+            builder.Entity<NghiPhepQuota>()
+                .HasIndex(q => new { q.NhanVienId, q.Nam, q.Thang })
+                .IsUnique();
+
+            builder.Entity<NghiPhepQuota>()
+                .Property(q => q.NgayTao)
+                .HasColumnType("timestamptz");
+
+            builder.Entity<NghiPhepQuota>()
+                .Property(q => q.NgayCapNhat)
                 .HasColumnType("timestamptz");
         }
     }
