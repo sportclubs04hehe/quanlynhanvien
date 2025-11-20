@@ -321,12 +321,7 @@ namespace api.Service.Implement
 
                     if (don != null && nguoiDuyetData != null)
                     {
-                        // 1. Cập nhật message cũ của Giám đốc
                         await telegramService.CapNhatTrangThaiDonAsync(don, nguoiDuyetData);
-
-                        // 2. Gửi thông báo MỚI cho nhân viên
-                        await GuiThongBaoKetQuaDuyetChoNhanVienWithRepoAsync(
-                            don, nguoiDuyetData, nhanVienRepo, telegramService, logger);
                     }
                 }
                 catch (Exception ex)
@@ -384,7 +379,6 @@ namespace api.Service.Implement
                         return;
                     
                     await telegramService.CapNhatTrangThaiDonAsync(don, nguoiDuyetData);
-                    await GuiThongBaoKetQuaDuyetChoNhanVienWithRepoAsync(don, nguoiDuyetData, nhanVienRepo, telegramService, logger);
                 }
                 catch (Exception ex)
                 {
@@ -860,107 +854,6 @@ namespace api.Service.Implement
                 // Không throw để không ảnh hưởng tới việc tạo đơn
             }
         }
-
-        /// <summary>
-        /// Gửi thông báo Telegram khi tạo đơn mới (DEPRECATED - dùng GuiThongBaoTelegramWithScopeAsync)
-        /// </summary>
-        [Obsolete("Use GuiThongBaoTelegramWithScopeAsync instead")]
-        private async Task GuiThongBaoTelegramAsync(DonYeuCau don, NhanVien nguoiGui)
-        {
-            try
-            {
-                _logger.LogInformation("📲 [DON] Bắt đầu gửi thông báo Telegram cho đơn ID: {DonId}", don.Id);
-                
-                var messageIds = await _telegramService.GuiThongBaoDonXinNghiAsync(don, nguoiGui);
-
-                if (messageIds.Any())
-                {
-                    don.DaGuiTelegram = true;
-                    don.ThoiGianGuiTelegram = DateTime.UtcNow;
-                    don.TelegramMessageIds = JsonSerializer.Serialize(messageIds);
-                    await _donYeuCauRepo.UpdateAsync(don);
-                    
-                    _logger.LogInformation("✅ [DON] Đã gửi thông báo Telegram thành công cho đơn ID: {DonId}, Số message: {Count}", 
-                        don.Id, messageIds.Count);
-                }
-                else
-                {
-                    _logger.LogWarning("⚠️ [DON] Không gửi được Telegram cho đơn ID: {DonId} - Không có người nhận", don.Id);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "❌ [DON] Lỗi gửi thông báo Telegram cho đơn ID: {DonId}", don.Id);
-                // Không throw để không ảnh hưởng tới việc tạo đơn
-            }
-        }
-
-        /// <summary>
-        /// Gửi thông báo kết quả duyệt cho nhân viên (dùng trong background task với scoped services)
-        /// </summary>
-        private static async Task GuiThongBaoKetQuaDuyetChoNhanVienWithRepoAsync(
-            DonYeuCau don, 
-            NhanVien nguoiDuyet,
-            INhanVienRepository nhanVienRepo,
-            ITelegramService telegramService,
-            ILogger<DonYeuCauService> logger)
-        {
-            try
-            {
-                var nhanVien = await nhanVienRepo.GetByIdAsync(don.NhanVienId);
-                
-                if (nhanVien == null || string.IsNullOrEmpty(nhanVien.TelegramChatId))
-                    return;
-
-                // Tạo nội dung thông báo
-                var trangThaiIcon = don.TrangThai switch
-                {
-                    TrangThaiDon.DaChapThuan => "✅",
-                    TrangThaiDon.BiTuChoi => "❌",
-                    _ => "ℹ️"
-                };
-
-                var trangThaiText = don.TrangThai switch
-                {
-                    TrangThaiDon.DaChapThuan => "ĐÃ ĐƯỢC CHẤP THUẬN",
-                    TrangThaiDon.BiTuChoi => "BỊ TỪ CHỐI",
-                    _ => "ĐÃ CẬP NHẬT"
-                };
-
-                var loaiDonText = don.LoaiDon switch
-                {
-                    LoaiDonYeuCau.NghiPhep => "nghỉ phép",
-                    LoaiDonYeuCau.LamThemGio => "làm thêm giờ",
-                    LoaiDonYeuCau.DiMuon => "đi muộn",
-                    LoaiDonYeuCau.CongTac => "công tác",
-                    _ => "yêu cầu"
-                };
-
-                var message = $"{trangThaiIcon} <b>ĐƠN {loaiDonText.ToUpper()} {trangThaiText}</b>\n\n";
-                message += $"<b>👤 Người duyệt:</b> {nguoiDuyet.TenDayDu}\n";
-                message += $"<b>📅 Ngày duyệt:</b> {DateTime.UtcNow:dd/MM/yyyy HH:mm}\n";
-
-                // Thêm thông tin chi tiết đơn
-                if (don.LoaiDon == LoaiDonYeuCau.NghiPhep)
-                {
-                    message += $"<b>📅Từ:</b> {don.NgayBatDau:dd/MM/yyyy} - <b>Đến:</b> {don.NgayKetThuc:dd/MM/yyyy}\n";
-                }
-
-                message += $"\n<b>📝 Lý do của bạn:</b> {don.LyDo}\n";
-
-                if (!string.IsNullOrEmpty(don.GhiChuNguoiDuyet))
-                {
-                    message += $"\n<b>💬 Ghi chú từ người duyệt:</b>\n{don.GhiChuNguoiDuyet}\n";
-                }
-
-                await telegramService.GuiTinNhanAsync(nhanVien.TelegramChatId, message);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "❌ Lỗi gửi thông báo kết quả duyệt");
-            }
-        }
-
         #endregion
     }
 }

@@ -118,42 +118,56 @@ namespace api.Service.Implement
             if (_botClient == null || !_isEnabled)
                 return;
 
-            if (string.IsNullOrEmpty(donYeuCau.TelegramMessageIds))
+            // Lấy thông tin nhân viên trước để kiểm tra
+            var nguoiGui = await _context.NhanViens.FindAsync(donYeuCau.NhanVienId);
+            if (nguoiGui == null)
                 return;
 
             try
             {
-                // Parse message IDs từ JSON
-                var messageIds = JsonSerializer.Deserialize<Dictionary<string, long>>(donYeuCau.TelegramMessageIds);
-                if (messageIds == null || !messageIds.Any())
-                    return;
-
-                // Tạo nội dung cập nhật
-                var nguoiGui = await _context.NhanViens.FindAsync(donYeuCau.NhanVienId);
-                var message = TaoNoiDungThongBao(donYeuCau, nguoiGui!, true);
-
-                // Cập nhật từng message (disable buttons)
-                foreach (var (chatId, messageId) in messageIds)
+                // Cập nhật message gốc (nếu có)
+                if (!string.IsNullOrEmpty(donYeuCau.TelegramMessageIds))
                 {
-                    try
+                    var messageIds = JsonSerializer.Deserialize<Dictionary<string, long>>(donYeuCau.TelegramMessageIds);
+                    if (messageIds != null && messageIds.Any())
                     {
-                        await _botClient.EditMessageText(
-                            chatId: chatId,
-                            messageId: (int)messageId,
-                            text: message,
-                            parseMode: ParseMode.Html,
-                            replyMarkup: null // Xóa buttons
-                        );
+                        var message = TaoNoiDungThongBao(donYeuCau, nguoiGui!, true);
+
+                        foreach (var (chatId, messageId) in messageIds)
+                        {
+                            try
+                            {
+                                await _botClient.EditMessageText(
+                                    chatId: chatId,
+                                    messageId: (int)messageId,
+                                    text: message,
+                                    parseMode: ParseMode.Html,
+                                    replyMarkup: null
+                                );
+                            }
+                            catch (ApiRequestException ex) when (ex.Message.Contains("message is not modified"))
+                            {
+                                // Message không thay đổi, bỏ qua
+                            }
+                        }
                     }
-                    catch (ApiRequestException ex) when (ex.Message.Contains("message is not modified"))
-                    {
-                        // Message không thay đổi, bỏ qua
-                    }
+                }
+
+                // Gửi thông báo cho nhân viên (LUÔN GỬI khi duyệt qua Web API)
+                if (!string.IsNullOrEmpty(nguoiGui.TelegramChatId))
+                {
+                    var notificationMessage = TelegramMessageBuilder.BuildEmployeeNotification(donYeuCau, nguoiDuyet);
+                    
+                    await _botClient.SendMessage(
+                        chatId: nguoiGui.TelegramChatId,
+                        text: notificationMessage,
+                        parseMode: ParseMode.Html
+                    );
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ [TELEGRAM] Lỗi cập nhật message Telegram");
+                _logger.LogError(ex, "❌ [TELEGRAM] Lỗi cập nhật Telegram");
             }
         }
 
@@ -482,7 +496,7 @@ namespace api.Service.Implement
                     await _botClient!.SendMessage(
                         chatId: chatId,
                         text: $"⚠️ <b>Telegram này đã được liên kết</b>\n\n" +
-                              $"Tài khoản Telegram của bạn đã được liên kết với tài khoản: <b>{existingLink.TenDayDu}</b>\n\n" +
+                              $"Tài khoản Telegram của bạn đã được liên kết với 1 tài khoản khác\n\n" +
                               "Mỗi Telegram chỉ có thể liên kết với 1 tài khoản duy nhất.\n\n" +
                               "Nếu bạn muốn liên kết tài khoản mới:\n" +
                               "1️⃣ Đăng nhập tài khoản cũ và hủy liên kết\n" +
@@ -950,12 +964,14 @@ namespace api.Service.Implement
 
                 var message = $"{icon} <b>Đơn của bạn {status}</b>\n\n";
                 
-                // Hiển thị mã đơn để nhận diện
+                // Hiển thị mã đơn
                 message += $"<b>🆔 Mã đơn:</b> {don.MaDon ?? don.Id.ToString()[..8]}\n";
-                message += $"<b>📄 Loại đơn:</b> {don.LoaiDon.ToDisplayName()}\n\n";
                 
-                // Hiển thị chi tiết đơn
+                // Hiển thị chi tiết đơn (bao gồm loại đơn và thông tin chi tiết)
                 message += BuildDonDetails(don);
+                
+                // Hiển thị lý do
+                message += $"\n<b>📝 Lý do:</b> {don.LyDo}\n";
                 
                 // Thông tin duyệt
                 message += $"\n<b>👤 Người duyệt:</b> {nguoiDuyet.TenDayDu}\n";
@@ -1027,10 +1043,45 @@ namespace api.Service.Implement
 
             private static string BuildNghiPhepDetails(DonYeuCau don)
             {
-                var soNgay = (don.NgayKetThuc!.Value - don.NgayBatDau!.Value).Days + 1;
-                return $"<b>📄 Loại đơn:</b> Nghỉ phép\n" +
-                       $"<b>📅 Thời gian nghỉ:</b> {don.NgayBatDau:dd/MM/yyyy} → {don.NgayKetThuc:dd/MM/yyyy}\n" +
-                       $"<b>⏳ Tổng số ngày:</b> {soNgay} ngày\n";
+                var details = "<b>📄 Loại đơn:</b> Nghỉ phép";
+                
+                // Hiển thị loại nghỉ phép chi tiết (sáng/chiều/cả ngày/nhiều ngày)
+                if (don.LoaiNghiPhep.HasValue)
+                {
+                    var icon = don.LoaiNghiPhep.Value switch
+                    {
+                        LoaiNghiPhep.BuoiSang => "🌅",
+                        LoaiNghiPhep.BuoiChieu => "🌆",
+                        LoaiNghiPhep.MotNgay => "📅",
+                        LoaiNghiPhep.NhieuNgay => "📆",
+                        _ => "📋"
+                    };
+                    details += $" - {icon} <b>{don.LoaiNghiPhep.Value.ToDisplayName()}</b>";
+                }
+                details += "\n";
+                
+                // Hiển thị thời gian nghỉ
+                if (don.LoaiNghiPhep == LoaiNghiPhep.BuoiSang || don.LoaiNghiPhep == LoaiNghiPhep.BuoiChieu)
+                {
+                    // Nửa ngày - chỉ hiển thị 1 ngày
+                    details += $"<b>📅 Ngày nghỉ:</b> {don.NgayBatDau:dd/MM/yyyy}\n";
+                    details += $"<b>⏳ Thời gian:</b> 0.5 ngày ({(don.LoaiNghiPhep == LoaiNghiPhep.BuoiSang ? "Buổi sáng" : "Buổi chiều")})\n";
+                }
+                else if (don.LoaiNghiPhep == LoaiNghiPhep.MotNgay)
+                {
+                    // 1 ngày
+                    details += $"<b>📅 Ngày nghỉ:</b> {don.NgayBatDau:dd/MM/yyyy}\n";
+                    details += $"<b>⏳ Thời gian:</b> 1 ngày (Cả ngày)\n";
+                }
+                else
+                {
+                    // Nhiều ngày hoặc không có loại nghỉ phép
+                    var soNgay = (don.NgayKetThuc!.Value - don.NgayBatDau!.Value).Days + 1;
+                    details += $"<b>📅 Thời gian nghỉ:</b> {don.NgayBatDau:dd/MM/yyyy} → {don.NgayKetThuc:dd/MM/yyyy}\n";
+                    details += $"<b>⏳ Tổng số ngày:</b> {soNgay} ngày\n";
+                }
+                
+                return details;
             }
 
             private static string BuildLamThemGioDetails(DonYeuCau don)

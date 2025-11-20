@@ -33,6 +33,13 @@ export class DonDetailComponent implements OnInit {
   }
   
   /**
+   * Kiểm tra nghỉ nhiều ngày (hiển thị range từ-đến)
+   */
+  isNghiNhieuNgay(don: DonYeuCauDto): boolean {
+    return don.loaiNghiPhep === 'NhieuNgay';
+  }
+  
+  /**
    * Load chi tiết đơn từ API
    */
   private loadDonDetail(): void {

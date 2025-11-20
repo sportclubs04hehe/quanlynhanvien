@@ -42,7 +42,7 @@
       </div>
 
       <!-- Nhân Viên -->
-      <div class="row">
+      <div class="row mt-3">
         <div class="col-md-6">
           <div class="info-item">
             <label class="info-label">Nhân Viên</label>
@@ -60,30 +60,32 @@
       </div>
 
       <!-- Phòng Ban & Chức Vụ -->
-      @if (don()!.phongBan || don()!.chucVu) {
-        <div class="row">
-          @if (don()!.phongBan) {
-            <div class="col-md-6">
-              <div class="info-item">
-                <label class="info-label">Phòng Ban</label>
-                <p class="info-value">
-                  <span class="badge bg-info">{{ don()!.phongBan!.tenPhongBan }}</span>
-                </p>
-              </div>
-            </div>
-          }
-          @if (don()!.chucVu) {
-            <div class="col-md-6">
-              <div class="info-item">
-                <label class="info-label">Chức Vụ</label>
-                <p class="info-value">
-                  <span class="badge bg-secondary">{{ don()!.chucVu!.tenChucVu }}</span>
-                </p>
-              </div>
-            </div>
-          }
+      <div class="row mt-3">
+        <div class="col-md-6">
+          <div class="info-item">
+            <label class="info-label">Phòng Ban</label>
+            <p class="info-value">
+              @if (don()!.phongBan) {
+                <span class="badge bg-info">{{ don()!.phongBan!.tenPhongBan }}</span>
+              } @else {
+                <span class="text-muted fst-italic">Chưa phân bổ</span>
+              }
+            </p>
+          </div>
         </div>
-      }
+        <div class="col-md-6">
+          <div class="info-item">
+            <label class="info-label">Chức Vụ</label>
+            <p class="info-value">
+              @if (don()!.chucVu) {
+                <span class="badge bg-secondary">{{ don()!.chucVu!.tenChucVu }}</span>
+              } @else {
+                <span class="text-muted fst-italic">Chưa phân bổ</span>
+              }
+            </p>
+          </div>
+        </div>
+      </div>
 
       <hr class="my-3">
 
@@ -95,30 +97,59 @@
 
       <!-- Nghỉ Phép -->
       @if (don()!.loaiDon === LoaiDonYeuCau.NghiPhep) {
-        <div class="row">
-          <div class="col-md-4">
-            <div class="info-item">
-              <label class="info-label">Từ Ngày</label>
-              <p class="info-value">{{ don()!.ngayBatDau | localDate }}</p>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="info-item">
-              <label class="info-label">Đến Ngày</label>
-              <p class="info-value">{{ don()!.ngayKetThuc | localDate }}</p>
-            </div>
-          </div>
-          @if (don()!.soNgay) {
+        @if (isNghiNhieuNgay(don()!)) {
+          <!-- Nghỉ Nhiều Ngày: Hiển thị range -->
+          <div class="row">
             <div class="col-md-4">
               <div class="info-item">
-                <label class="info-label">Số Ngày</label>
-                <p class="info-value">
-                  <span class="badge bg-warning text-dark">{{ don()!.soNgay }} ngày</span>
-                </p>
+                <label class="info-label">Từ Ngày</label>
+                <p class="info-value">{{ don()!.ngayBatDau | localDate }}</p>
               </div>
             </div>
-          }
-        </div>
+            <div class="col-md-4">
+              <div class="info-item">
+                <label class="info-label">Đến Hết Ngày</label>
+                <p class="info-value">{{ don()!.ngayKetThuc | localDate }}</p>
+              </div>
+            </div>
+            @if (don()!.soNgay) {
+              <div class="col-md-4">
+                <div class="info-item">
+                  <label class="info-label">Số Ngày</label>
+                  <p class="info-value">
+                    <span class="badge bg-warning text-dark">{{ don()!.soNgay }} ngày</span>
+                  </p>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <!-- Buổi Sáng/Chiều/Một Ngày: Chỉ hiển thị 1 trường -->
+          <div class="row">
+            <div class="col-md-6">
+              <div class="info-item">
+                <label class="info-label">Ngày Nghỉ</label>
+                <p class="info-value">{{ don()!.ngayBatDau | localDate }}</p>
+              </div>
+            </div>
+            @if (don()!.soNgayThucTe) {
+              <div class="col-md-6">
+                <div class="info-item">
+                  <label class="info-label">Thời Gian</label>
+                  <p class="info-value">
+                    <span class="badge bg-warning text-dark">
+                      @if (don()!.soNgayThucTe === 0.5) {
+                        Nửa ngày ({{ don()!.loaiNghiPhepText }})
+                      } @else {
+                        {{ don()!.soNgayThucTe }} ngày
+                      }
+                    </span>
+                  </p>
+                </div>
+              </div>
+            }
+          </div>
+        }
       }
 
       <!-- Làm Thêm Giờ -->
@@ -132,7 +163,7 @@
           </div>
           <div class="col-md-6">
             <div class="info-item">
-              <label class="info-label">Số Giờ</label>
+              <label class="info-label">Số Giờ Làm Thêm</label>
               <p class="info-value">
                 <span class="badge bg-warning text-dark">{{ formatDecimal(don()!.soGioLamThem) }} giờ</span>
               </p>
@@ -147,13 +178,15 @@
           <div class="col-md-6">
             <div class="info-item">
               <label class="info-label">Ngày Đi Muộn</label>
-              <p class="info-value">{{ don()!.ngayDiMuon | localDate }}</p>
+              <p class="info-value">{{ don()!.ngayDiMuon | localDate:'shortDate' }}</p>
             </div>
           </div>
           <div class="col-md-6">
             <div class="info-item">
               <label class="info-label">Giờ Dự Kiến Đến</label>
-              <p class="info-value">{{ don()!.gioDuKienDen | localDate }}</p>
+              <p class="info-value">
+                <span class="badge bg-warning text-dark">{{ don()!.gioDuKienDen | localDate:'shortTime' }}</span>
+              </p>
             </div>
           </div>
         </div>
@@ -170,7 +203,7 @@
           </div>
           <div class="col-md-4">
             <div class="info-item">
-              <label class="info-label">Đến Ngày</label>
+              <label class="info-label">Đến Hết Ngày</label>
               <p class="info-value">{{ don()!.ngayKetThuc | localDate }}</p>
             </div>
           </div>
@@ -205,8 +238,8 @@
       <div class="row">
         <div class="col-md-6">
           <div class="info-item">
-            <label class="info-label">Ngày Tạo</label>
-            <p class="info-value text-muted">{{ don()!.ngayTao | localDate }}</p>
+            <label class="info-label">Ngày Tạo Đơn</label>
+            <p class="info-value text-muted">{{ don()!.ngayTao | date:'dd/MM/yyyy HH:mm' }}</p>
           </div>
         </div>
         @if (don()!.ngayCapNhat) {
