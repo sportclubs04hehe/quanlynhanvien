@@ -4,8 +4,10 @@
       <!-- Filter Component -->
       <app-don-filter
         [initialTrangThai]="initialTrangThai()"
+        [hasData]="dons().length > 0"
         (filterChange)="onFilterChange($event)"
-        (refreshData)="refresh()">
+        (refreshData)="refresh()"
+        (exportExcel)="exportToExcel()">
       </app-don-filter>
 
       <!-- Error Message -->

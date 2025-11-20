@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable, of, tap } from 'rxjs';
+import { Observable, of, tap, map } from 'rxjs';
 import { environment } from '../../environments/environment.development';
 import { CacheService } from './cache.service';
 import { PagedResult } from '../types/page-result.model';
@@ -28,6 +28,31 @@ export class DonYeuCauService {
   // ============================================================================
   // dev LE MINH HUY
   // ============================================================================
+
+  /**
+   * Lấy TOÀN BỘ danh sách đơn yêu cầu (không phân trang) - dùng cho Export
+   * GET /api/DonYeuCaus
+   */
+  getAllForExport(filter: Omit<FilterDonYeuCauDto, 'pageNumber' | 'pageSize'>): Observable<DonYeuCauDto[]> {
+    let params = new HttpParams()
+      .set('pageNumber', '1')
+      .set('pageSize', '10000'); // Lấy tối đa 10000 records
+
+    if (filter.searchTerm) params = params.set('searchTerm', filter.searchTerm);
+    if (filter.maDon) params = params.set('maDon', filter.maDon);
+    if (filter.loaiDon !== undefined) params = params.set('loaiDon', filter.loaiDon.toString());
+    if (filter.trangThai !== undefined) params = params.set('trangThai', filter.trangThai.toString());
+    if (filter.nhanVienId) params = params.set('nhanVienId', filter.nhanVienId);
+    if (filter.nguoiDuyetId) params = params.set('nguoiDuyetId', filter.nguoiDuyetId);
+    if (filter.phongBanId) params = params.set('phongBanId', filter.phongBanId);
+    if (filter.tuNgay) params = params.set('tuNgay', this.formatDate(filter.tuNgay));
+    if (filter.denNgay) params = params.set('denNgay', this.formatDate(filter.denNgay));
+
+    return this.http.get<PagedResult<DonYeuCauDto>>(this.baseUrl, { params })
+      .pipe(
+        map(result => result.items) // Chỉ lấy items, bỏ pagination metadata
+      );
+  }
 
   /**
    * Lấy danh sách đơn yêu cầu với filter (Giám Đốc và Trưởng Phòng)
@@ -120,6 +145,31 @@ export class DonYeuCauService {
   // ============================================================================
   // My Dons (Đơn của tôi)
   // ============================================================================
+
+  /**
+   * Lấy TOÀN BỘ danh sách đơn của tôi (không phân trang) - dùng cho Export
+   * GET /api/DonYeuCaus/my-dons
+   */
+  getMyDonsForExport(
+    maDon?: string,
+    lyDo?: string,
+    loaiDon?: LoaiDonYeuCau,
+    trangThai?: TrangThaiDon
+  ): Observable<DonYeuCauDto[]> {
+    let params = new HttpParams()
+      .set('pageNumber', '1')
+      .set('pageSize', '10000'); // Lấy tối đa 10000 records
+
+    if (maDon) params = params.set('maDon', maDon);
+    if (lyDo) params = params.set('lyDo', lyDo);
+    if (loaiDon !== undefined) params = params.set('loaiDon', loaiDon.toString());
+    if (trangThai !== undefined) params = params.set('trangThai', trangThai.toString());
+
+    return this.http.get<PagedResult<DonYeuCauDto>>(`${this.baseUrl}/my-dons`, { params })
+      .pipe(
+        map(result => result.items) // Chỉ lấy items, bỏ pagination metadata
+      );
+  }
 
   /**
    * Lấy danh sách đơn của tôi - CẢI TIẾN

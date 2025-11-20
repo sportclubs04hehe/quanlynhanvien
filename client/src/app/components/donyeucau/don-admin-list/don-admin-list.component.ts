@@ -6,6 +6,7 @@ import { Subject, takeUntil, finalize } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { DonYeuCauService } from '../../../services/don-yeu-cau.service';
 import { SpinnerService } from '../../../services/spinner.service';
+import { ExportService } from '../../../services/export.service';
 import { DonYeuCauDto, FilterDonYeuCauDto, LoaiDonYeuCau, TrangThaiDon, canDeleteDon } from '../../../types/don.model';
 import { DonStatusBadgeComponent } from '../../../shared/don-status-badge/don-status-badge.component';
 import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
@@ -35,6 +36,7 @@ export class DonAdminListComponent implements OnInit, OnDestroy {
   private spinner = inject(SpinnerService);
   private toastr = inject(ToastrService);
   private ngZone = inject(NgZone);
+  private exportService = inject(ExportService);
   
   // Input: Initial filter từ parent component
   initialTrangThai = input<TrangThaiDon | null>(null);
@@ -244,5 +246,51 @@ export class DonAdminListComponent implements OnInit, OnDestroy {
    */
   getSearchTerm(): string {
     return this.filter().searchTerm || this.filter().maDon || '';
+  }
+  
+  /**
+   * Xuất danh sách đơn ra Excel (TOÀN BỘ dữ liệu, không phân trang)
+   */
+  exportToExcel(): void {
+    this.spinner.show('Đang tải dữ liệu để xuất...');
+    
+    // Tạo filter không có pagination
+    const exportFilter = {
+      searchTerm: this.filter().searchTerm,
+      maDon: this.filter().maDon,
+      loaiDon: this.filter().loaiDon,
+      trangThai: this.filter().trangThai,
+      nhanVienId: this.filter().nhanVienId,
+      nguoiDuyetId: this.filter().nguoiDuyetId,
+      phongBanId: this.filter().phongBanId,
+      tuNgay: this.filter().tuNgay,
+      denNgay: this.filter().denNgay
+    };
+    
+    this.donService.getAllForExport(exportFilter)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => this.spinner.hide())
+      )
+      .subscribe({
+        next: (allDons) => {
+          if (allDons.length === 0) {
+            this.toastr.warning('Không có dữ liệu để xuất!', 'Cảnh báo');
+            return;
+          }
+          
+          try {
+            this.exportService.exportToExcel(allDons, 'QuanLyDonYeuCau');
+            this.toastr.success(`Đã xuất ${allDons.length} đơn ra Excel thành công!`, 'Thành công');
+          } catch (error) {
+            console.error('Error exporting to Excel:', error);
+            this.toastr.error('Có lỗi xảy ra khi xuất Excel!', 'Lỗi');
+          }
+        },
+        error: (error) => {
+          console.error('Error loading data for export:', error);
+          this.toastr.error('Không thể tải dữ liệu để xuất!', 'Lỗi');
+        }
+      });
   }
 }

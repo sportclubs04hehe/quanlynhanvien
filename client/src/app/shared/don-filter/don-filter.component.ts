@@ -21,9 +21,11 @@ import { SEARCH_DEBOUNCE_TIME } from '../config/search.config';
 })
 export class DonFilterComponent implements OnInit, OnDestroy, OnChanges {
   @Input() initialTrangThai?: TrangThaiDon | null;
+  @Input() hasData: boolean = false; // Để kiểm tra có dữ liệu để xuất không
   @Output() filterChange = new EventEmitter<FilterDonYeuCauDto>();
   @Output() resetFilter = new EventEmitter<void>();
   @Output() refreshData = new EventEmitter<void>();
+  @Output() exportExcel = new EventEmitter<void>();
   
   // Filter model
   searchTerm: string = '';
@@ -148,6 +150,13 @@ export class DonFilterComponent implements OnInit, OnDestroy, OnChanges {
    */
   onRefresh(): void {
     this.refreshData.emit();
+  }
+  
+  /**
+   * Export to Excel
+   */
+  onExportExcel(): void {
+    this.exportExcel.emit();
   }
   
   /**

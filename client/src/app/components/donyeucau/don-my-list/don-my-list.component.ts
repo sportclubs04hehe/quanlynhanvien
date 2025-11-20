@@ -6,6 +6,7 @@ import { Subject, takeUntil, finalize, debounceTime, distinctUntilChanged } from
 import { ToastrService } from 'ngx-toastr';
 import { DonYeuCauService } from '../../../services/don-yeu-cau.service';
 import { SpinnerService } from '../../../services/spinner.service';
+import { ExportService } from '../../../services/export.service';
 import { DonYeuCauDto, LoaiDonYeuCau, TrangThaiDon, canEditDon, canCancelDon } from '../../../types/don.model';
 import { DonStatusBadgeComponent } from '../../../shared/don-status-badge/don-status-badge.component';
 import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
@@ -35,6 +36,7 @@ export class DonMyListComponent implements OnInit, OnDestroy, OnChanges {
   private spinner = inject(SpinnerService);
   private toastr = inject(ToastrService);
   private ngZone = inject(NgZone);
+  private exportService = inject(ExportService);
   
   // Input: Initial filter từ parent component
   initialTrangThai = input<TrangThaiDon | null>(null);
@@ -327,5 +329,43 @@ export class DonMyListComponent implements OnInit, OnDestroy, OnChanges {
    */
   hasActiveFilters(): boolean {
     return this.searchMaDon() !== '' || this.searchLyDo() !== '' || this.selectedLoaiDon() !== null || this.selectedTrangThai() !== null;
+  }
+  
+  /**
+   * Xuất danh sách đơn ra Excel (TOÀN BỘ dữ liệu, không phân trang)
+   */
+  exportToExcel(): void {
+    this.spinner.show('Đang tải dữ liệu để xuất...');
+    
+    this.donService.getMyDonsForExport(
+      this.searchMaDon() || undefined,
+      this.searchLyDo() || undefined,
+      this.selectedLoaiDon() || undefined,
+      this.selectedTrangThai() || undefined
+    )
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => this.spinner.hide())
+      )
+      .subscribe({
+        next: (allDons) => {
+          if (allDons.length === 0) {
+            this.toastr.warning('Không có dữ liệu để xuất!', 'Cảnh báo');
+            return;
+          }
+          
+          try {
+            this.exportService.exportToExcel(allDons, 'DonCuaToi');
+            this.toastr.success(`Đã xuất ${allDons.length} đơn ra Excel thành công!`, 'Thành công');
+          } catch (error) {
+            console.error('Error exporting to Excel:', error);
+            this.toastr.error('Có lỗi xảy ra khi xuất Excel!', 'Lỗi');
+          }
+        },
+        error: (error) => {
+          console.error('Error loading data for export:', error);
+          this.toastr.error('Không thể tải dữ liệu để xuất!', 'Lỗi');
+        }
+      });
   }
 }

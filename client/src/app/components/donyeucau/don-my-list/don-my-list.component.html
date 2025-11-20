@@ -67,6 +67,14 @@
               <i class="bi bi-x-circle"></i> Xóa Lọc
             </button>
           }
+          @if (dons().length > 0) {
+            <button 
+              class="btn btn-outline-success flex-fill"
+              (click)="exportToExcel()"
+              title="Xuất Excel">
+              <i class="bi bi-file-earmark-excel"></i> Xuất Excel
+            </button>
+          }
           <button 
             class="btn btn-success flex-fill"
             (click)="createDon()">
