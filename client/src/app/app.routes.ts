@@ -10,6 +10,7 @@ import { DonyeucauComponent } from './components/donyeucau/donyeucau.component';
 import { APP_ROLES } from './constants/roles.constants';
 import { ActiveSessionsComponent } from './components/account/active-sessions/active-sessions.component';
 import { TelegramSettingsComponent } from './components/account/telegram-settings/telegram-settings.component';
+import { ChangePasswordComponent } from './components/account/change-password/change-password.component';
 
 export const routes: Routes = [
   {
@@ -55,6 +56,12 @@ export const routes: Routes = [
   {
     path: 'telegram',
     component: TelegramSettingsComponent,
+    canActivate: [authGuard]
+  },
+
+    {
+    path: 'change-password',
+    component: ChangePasswordComponent,
     canActivate: [authGuard]
   },
 

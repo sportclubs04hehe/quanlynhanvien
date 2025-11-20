@@ -53,3 +53,10 @@ export interface UpdateUserDto {
   status?: NhanVienStatus;
   role?: string;  // Role để cập nhật (chỉ Giám Đốc mới được đổi)
 }
+
+export interface ChangePasswordDto {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+

@@ -142,7 +142,33 @@ namespace api.DTO
     }
 
     /// <summary>
-    /// DTO thông tin session (device đang login)
+    /// DTO để đổi mật khẩu
+    /// </summary>
+    public class ChangePasswordDto
+    {
+        [Required(ErrorMessage = "Mật khẩu hiện tại là bắt buộc")]
+        public required string CurrentPassword { get; set; }
+
+        [Required(ErrorMessage = "Mật khẩu mới là bắt buộc")]
+        [MinLength(6, ErrorMessage = "Mật khẩu mới phải có ít nhất 6 ký tự")]
+        public required string NewPassword { get; set; }
+
+        [Required(ErrorMessage = "Xác nhận mật khẩu là bắt buộc")]
+        [Compare(nameof(NewPassword), ErrorMessage = "Mật khẩu xác nhận không khớp")]
+        public required string ConfirmPassword { get; set; }
+    }
+
+    /// <summary>
+    /// DTO response cho đổi mật khẩu
+    /// </summary>
+    public class ChangePasswordResponseDto
+    {
+        public bool Success { get; set; }
+        public string Message { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// DTO thông tin về refresh token (active session)
     /// </summary>
     public class RefreshTokenInfoDto
     {

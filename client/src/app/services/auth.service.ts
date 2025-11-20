@@ -198,4 +198,17 @@ export class AuthService {
         })
       );
   }
+
+  changePassword(payload: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/change-password`, payload)
+      .pipe(
+        tap((res) => {
+          console.log('Password changed successfully', res);
+        }),
+        catchError((err) => {
+          console.error('Change password failed', err);
+          return throwError(() => err);
+        })
+      );
+  }
 }

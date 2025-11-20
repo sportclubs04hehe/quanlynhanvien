@@ -572,5 +572,57 @@ namespace api.Service.Implement
         }
 
         #endregion
+
+        #region Change Password
+
+        public async Task<ChangePasswordResponseDto> ChangePasswordAsync(
+            Guid userId, 
+            ChangePasswordDto dto, 
+            string? ipAddress = null)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null)
+            {
+                return new ChangePasswordResponseDto
+                {
+                    Success = false,
+                    Message = "Không tìm thấy người dùng"
+                };
+            }
+
+            // Kiểm tra mật khẩu hiện tại
+            var isPasswordCorrect = await _userManager.CheckPasswordAsync(user, dto.CurrentPassword);
+            if (!isPasswordCorrect)
+            {
+                return new ChangePasswordResponseDto
+                {
+                    Success = false,
+                    Message = "Mật khẩu hiện tại không đúng"
+                };
+            }
+
+            // Đổi mật khẩu
+            var result = await _userManager.ChangePasswordAsync(user, dto.CurrentPassword, dto.NewPassword);
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                return new ChangePasswordResponseDto
+                {
+                    Success = false,
+                    Message = $"Đổi mật khẩu thất bại: {errors}"
+                };
+            }
+
+            // Revoke tất cả refresh tokens cũ để bắt người dùng phải đăng nhập lại
+            await RevokeAllUserTokensAsync(userId, ipAddress);
+
+            return new ChangePasswordResponseDto
+            {
+                Success = true,
+                Message = "Đổi mật khẩu thành công. Vui lòng đăng nhập lại."
+            };
+        }
+
+        #endregion
     }
 }

@@ -319,5 +319,34 @@ namespace api.Controllers
                 return StatusCode(500, new { message = "Đã xảy ra lỗi khi revoke session", error = ex.Message });
             }
         }
+
+        /// <summary>
+        /// Đổi mật khẩu
+        /// User chỉ có thể đổi mật khẩu của chính mình
+        /// </summary>
+        [HttpPost("change-password")]
+        [Authorize]
+        public async Task<ActionResult<ChangePasswordResponseDto>> ChangePassword([FromBody] ChangePasswordDto dto)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var userId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty);
+                var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+
+                var result = await _authService.ChangePasswordAsync(userId, dto, ipAddress);
+                
+                if (!result.Success)
+                    return BadRequest(result);
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi đổi mật khẩu", error = ex.Message });
+            }
+        }
     }
 }

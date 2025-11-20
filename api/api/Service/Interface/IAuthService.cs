@@ -63,5 +63,10 @@ namespace api.Service.Interface
         /// Xóa tất cả refresh tokens đã hết hạn của user
         /// </summary>
         Task CleanupExpiredTokensAsync(Guid userId);
+
+        /// <summary>
+        /// Đổi mật khẩu người dùng
+        /// </summary>
+        Task<ChangePasswordResponseDto> ChangePasswordAsync(Guid userId, ChangePasswordDto dto, string? ipAddress = null);
     }
 }
