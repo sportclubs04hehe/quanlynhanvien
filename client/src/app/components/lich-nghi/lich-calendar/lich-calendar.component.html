@@ -1,1 +1,98 @@
-<p>lich-calendar works!</p>
+<div class="calendar-container">
+  <!-- Loading Spinner -->
+  @if (isLoading()) {
+    <div class="text-center py-5">
+      <div class="text-primary" role="status">
+        <span class="visually-hidden">Đang tải...</span>
+      </div>
+    </div>
+  }
+
+  <!-- Calendar Content -->
+  @if (!isLoading() && calendar()) {
+    <!-- Month Navigation -->
+    <div class="calendar-header d-flex justify-content-between align-items-center mb-3">
+      <button class="btn btn-outline-primary" (click)="previousMonth()">
+        <i class="bi bi-chevron-left"></i> Tháng trước
+      </button>
+      
+      <div class="text-center">
+        <h4 class="mb-0">{{ getMonthName() }} {{ currentYear() }}</h4>
+        <small class="text-muted">{{ getTotalNgayNghiInfo() }}</small>
+      </div>
+      
+      <div class="btn-group">
+        <button class="btn btn-outline-secondary" (click)="goToToday()">
+          <i class="bi bi-calendar-today"></i> Hôm nay
+        </button>
+        <button class="btn btn-outline-primary" (click)="nextMonth()">
+          Tháng sau <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Calendar Grid -->
+    <div class="calendar-grid">
+      <!-- Week Days Header -->
+      @for (day of weekDays; track day) {
+        <div class="calendar-weekday">{{ day }}</div>
+      }
+
+      <!-- Calendar Days -->
+      @for (day of calendarDays(); track day.date.getTime()) {
+        <div [class]="getDayClass(day)">
+          <div class="day-number">
+            {{ day.date.getDate() }}
+          </div>
+          
+          @if (day.ngayNghi && day.ngayNghi.length > 0) {
+            <div class="leave-indicators">
+              @for (nghi of day.ngayNghi; track nghi.donYeuCauId) {
+                <div 
+                  class="leave-badge {{ getLeaveTypeClass(nghi.loaiNghiPhep) }}"
+                  [title]="nghi.maDon + ': ' + nghi.lyDo">
+                  <i class="bi bi-circle-fill"></i>
+                  <small>{{ nghi.loaiNghiPhep }}</small>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Legend -->
+    <div class="calendar-legend mt-3">
+      <div class="d-flex flex-wrap gap-3 justify-content-center">
+        <div class="legend-item">
+          <span class="legend-color today-color"></span>
+          <small>Hôm nay</small>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color weekend-color"></span>
+          <small>Cuối tuần</small>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color leave-morning-color"></span>
+          <small>Buổi sáng</small>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color leave-afternoon-color"></span>
+          <small>Buổi chiều</small>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color leave-full-color"></span>
+          <small>Cả ngày</small>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (!isLoading() && !calendar()) {
+    <div class="alert alert-warning text-center" role="alert">
+      <i class="bi bi-exclamation-triangle"></i>
+      Không thể tải dữ liệu lịch. Vui lòng thử lại sau.
+    </div>
+  }
+</div>

@@ -1,3 +1,5 @@
+import { DonYeuCauDto } from "./don.model";
+
 export interface NghiPhepQuotaDto {
   id: string;
   nhanVienId: string;
@@ -35,7 +37,7 @@ export interface LichNghiDashboardDto {
   tongNgayNghiTrongNam: number;
   tongGioLamThemTrongNam: number;
   calendarThangHienTai?: LichNghiCalendarDto;
-  donNghiSapToi: any[];
+  donNghiSapToi: DonYeuCauDto[];
   canhBao: string[];
 }
 

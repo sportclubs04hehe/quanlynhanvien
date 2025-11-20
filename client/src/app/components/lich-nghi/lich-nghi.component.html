@@ -1,1 +1,45 @@
-<p>lich-nghi works!</p>
+<div class="container-fluid">
+  <div class="card shadow-sm border-0">
+    <!-- Tab Navigation -->
+    <div class="card-header bg-white border-bottom">
+      <ul class="nav nav-tabs card-header-tabs" role="tablist">
+        @for (tab of tabs; track tab.id) {
+          <li class="nav-item" role="presentation">
+            <button 
+              class="nav-link" 
+              [class.active]="isActive(tab.id)" 
+              (click)="switchTab(tab.id)" 
+              type="button"
+              role="tab">
+              <i class="bi" [ngClass]="tab.icon"></i>
+              {{ tab.label }}
+            </button>
+          </li>
+        }
+      </ul>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="card-body p-4">
+      <div class="tab-content">
+        @switch (activeTab()) {
+          @case ('dashboard') {
+            <app-lich-dashboard />
+          }
+          @case ('calendar') {
+            <app-lich-calendar />
+          }
+          @case ('upcoming') {
+            <app-lich-upcoming />
+          }
+          @default {
+            <div class="p-5 text-center text-muted">
+              <i class="bi bi-inbox display-1"></i>
+              <p class="mt-3">Tab này đang được phát triển</p>
+            </div>
+          }
+        }
+      </div>
+    </div>
+  </div>
+</div>

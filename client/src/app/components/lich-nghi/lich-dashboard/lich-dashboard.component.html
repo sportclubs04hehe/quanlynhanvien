@@ -1,1 +1,197 @@
-<p>lich-dashboard works!</p>
+<div class="dashboard-container">
+  <!-- Loading Spinner -->
+  @if (isLoading()) {
+    <div class="text-center py-5">
+      <div class="text-primary" role="status">
+        <span class="visually-hidden">Đang tải...</span>
+      </div>
+    </div>
+  }
+
+  <!-- Dashboard Content -->
+  @if (!isLoading() && dashboard()) {
+    <!-- Row 1: Quota Cards -->
+    <div class="row g-3 mb-3">
+      <!-- Hạn Mức Tháng Hiện Tại -->
+      <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+          <div class="card-body">
+            <h5 class="card-title text-primary">
+              <i class="bi bi-calendar-check"></i> Hạn Mức Nghỉ Phép Tháng Này
+            </h5>
+            @if (dashboard()?.quotaThangHienTai; as quota) {
+              <div class="quota-info">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="text-muted">Tháng {{ quota.thang }}/{{ quota.nam }}</span>
+                  @if (quota.daVuotQuota) {
+                    <span class="badge bg-danger">Đã vượt hạn mức</span>
+                  } @else {
+                    <span class="badge bg-success">Trong hạn mức</span>
+                  }
+                </div>
+                
+                <!-- Progress Bar -->
+                <div class="progress mb-3" style="height: 25px;">
+                  <div 
+                    class="progress-bar {{ getQuotaBarClass() }}" 
+                    role="progressbar" 
+                    [style.width.%]="getQuotaPercentage()"
+                    [attr.aria-valuenow]="quota.soNgayDaSuDung"
+                    aria-valuemin="0"
+                    [attr.aria-valuemax]="quota.soNgayPhepThang">
+                    {{ quota.soNgayDaSuDung }} / {{ quota.soNgayPhepThang }} ngày
+                  </div>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="row text-center">
+                  <div class="col-4">
+                    <div class="stat-box">
+                      <div class="stat-value text-success">{{ quota.soNgayPhepThang }}</div>
+                      <div class="stat-label">Được phép</div>
+                    </div>
+                  </div>
+                  <div class="col-4">
+                    <div class="stat-box">
+                      <div class="stat-value text-primary">{{ quota.soNgayDaSuDung }}</div>
+                      <div class="stat-label">Đã sử dụng</div>
+                    </div>
+                  </div>
+                  <div class="col-4">
+                    <div class="stat-box">
+                      <div class="stat-value" [class.text-danger]="quota.soNgayPhepConLai < 0" [class.text-warning]="quota.soNgayPhepConLai === 0" [class.text-success]="quota.soNgayPhepConLai > 0">
+                        {{ quota.soNgayPhepConLai }}
+                      </div>
+                      <div class="stat-label">Còn lại</div>
+                    </div>
+                  </div>
+                </div>
+
+                @if (quota.tongSoGioLamThem > 0) {
+                  <div class="mt-3 p-3 bg-light rounded">
+                    <div class="d-flex align-items-center fs-6">
+                      <i class="bi bi-clock-history text-info fs-5 me-2"></i>
+                      <span>Giờ làm thêm tháng này: <strong class="text-info">{{ quota.tongSoGioLamThem }}</strong> giờ</span>
+                    </div>
+                  </div>
+                }
+
+                @if (quota.ghiChu) {
+                  <div class="mt-2">
+                    <small class="text-muted"><i class="bi bi-info-circle"></i> {{ quota.ghiChu }}</small>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="text-muted">Chưa có dữ liệu quota tháng này.</p>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Thống Kê Năm -->
+      <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+          <div class="card-body">
+            <h5 class="card-title text-success">
+              <i class="bi bi-bar-chart"></i> Thống Kê Cả Năm {{ dashboard()?.quotaThangHienTai?.nam || getCurrentYear() }}
+            </h5>
+            <div class="yearly-stats">
+              <div class="stat-item">
+                <div class="d-flex justify-content-between align-items-center">
+                  <span><i class="bi bi-calendar-x text-danger"></i> Tổng ngày nghỉ:</span>
+                  <strong class="fs-4 text-danger">{{ dashboard()?.tongNgayNghiTrongNam || 0 }} Ngày</strong>
+                </div>
+              </div>
+              <hr>
+              <div class="stat-item">
+                <div class="d-flex justify-content-between align-items-center">
+                  <span><i class="bi bi-clock text-warning"></i> Tổng giờ làm thêm:</span>
+                  <strong class="fs-4 text-warning">{{ dashboard()?.tongGioLamThemTrongNam || 0 }} Giờ</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 2: Warnings & Upcoming Leaves -->
+    <div class="row g-3">
+      <!-- Cảnh Báo -->
+      <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+          <div class="card-body">
+            <h5 class="card-title text-warning">
+              <i class="bi bi-exclamation-triangle"></i> Cảnh Báo
+            </h5>
+            @if (dashboard()?.canhBao && dashboard()!.canhBao.length > 0) {
+              <div class="warnings-list">
+                @for (warning of dashboard()!.canhBao; track warning) {
+                  <div class="alert {{ getAlertClass(warning) }} alert-dismissible fade show" role="alert">
+                     {{ warning }}
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="alert alert-success" role="alert">
+                <i class="bi bi-check-circle"></i> Không có cảnh báo. Mọi thứ ổn!
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Đơn Nghỉ Sắp Tới -->
+      <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+          <div class="card-body">
+            <h5 class="card-title text-info">
+              <i class="bi bi-calendar-event"></i> Đơn Nghỉ Sắp Tới
+            </h5>
+            @if (dashboard()?.donNghiSapToi && dashboard()!.donNghiSapToi.length > 0) {
+              <div class="list-group list-group-flush">
+                @for (don of dashboard()!.donNghiSapToi; track don.id) {
+                  <div class="list-group-item px-0">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <div class="flex-grow-1">
+                        <h6 class="mb-1">
+                          <span class="badge bg-primary">{{ don.maDon }}</span>
+                          {{ getLoaiDonDisplayName(don.loaiDon) }}
+                          @if (don.loaiNghiPhepText) {
+                            <span class="badge bg-secondary ms-1">{{ don.loaiNghiPhepText }}</span>
+                          }
+                        </h6>
+                        <p class="mb-1 text-muted small">
+                          <i class="bi bi-calendar3"></i> 
+                          {{ formatDate(don.ngayBatDau) }}
+                          @if (don.ngayKetThuc && don.ngayBatDau !== don.ngayKetThuc) {
+                            → {{ formatDate(don.ngayKetThuc) }}
+                          }
+                        </p>
+                        <small class="text-muted"><i class="bi bi-chat-left-text"></i> {{ don.lyDo }}</small>
+                      </div>
+                      <div class="text-end ms-2">
+                        <span class="badge bg-info">{{ don.soNgayThucTe || don.soNgay }} ngày</span>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="text-muted">Không có đơn nghỉ sắp tới.</p>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (!isLoading() && !dashboard()) {
+    <div class="alert alert-warning text-center" role="alert">
+      <i class="bi bi-exclamation-triangle"></i>
+      Không thể tải dữ liệu dashboard. Vui lòng thử lại sau.
+    </div>
+  }
+</div>

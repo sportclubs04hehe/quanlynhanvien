@@ -63,12 +63,12 @@ namespace api.Service.Implement
             // 5. Cảnh báo
             if (dashboard.QuotaThangHienTai.DaVuotQuota)
             {
-                dashboard.CanhBao.Add($"⚠️ Bạn đã nghỉ {dashboard.QuotaThangHienTai.SoNgayDaSuDung} ngày trong tháng {targetThang}, vượt quota {dashboard.QuotaThangHienTai.SoNgayPhepThang} ngày!");
+                dashboard.CanhBao.Add($"⚠️ Bạn đã nghỉ {dashboard.QuotaThangHienTai.SoNgayDaSuDung} ngày trong tháng {targetThang}, vượt hạn mức {dashboard.QuotaThangHienTai.SoNgayPhepThang} ngày được phép!");
             }
 
             if (dashboard.TongNgayNghiTrongNam > 12)
             {
-                dashboard.CanhBao.Add($"⚠️ Bạn đã nghỉ {dashboard.TongNgayNghiTrongNam} ngày trong năm {targetNam}, vượt quota 12 ngày/năm!");
+                dashboard.CanhBao.Add($"⚠️ Bạn đã nghỉ {dashboard.TongNgayNghiTrongNam} ngày trong năm {targetNam}, vượt hạn mức 12 ngày/năm!");
             }
 
             return dashboard;
@@ -174,7 +174,7 @@ namespace api.Service.Implement
             var existingQuota = await _quotaRepo.GetByNhanVienAndMonthAsync(dto.NhanVienId, dto.Nam, dto.Thang);
             
             if (existingQuota != null)
-                throw new InvalidOperationException($"Quota cho tháng {dto.Thang}/{dto.Nam} đã tồn tại");
+                throw new InvalidOperationException($"Hạn mức nghỉ phép cho tháng {dto.Thang}/{dto.Nam} đã tồn tại");
 
             var quota = _mapper.Map<NghiPhepQuota>(dto);
             quota = await _quotaRepo.CreateAsync(quota);
@@ -218,7 +218,7 @@ namespace api.Service.Implement
             // Warning nếu gần hết quota
             if (soNgayConLai - soNgayNghi < 0.5m)
             {
-                return (true, $"⚠️ Cảnh báo: Sau khi tạo đơn này, bạn sẽ hết quota tháng {thangBatDau}!");
+                return (true, $"⚠️ Cảnh báo: Sau khi tạo đơn này, bạn sẽ hết hạn mức nghỉ phép tháng {thangBatDau}!");
             }
 
             return (true, null);
