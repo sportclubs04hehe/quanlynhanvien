@@ -3,6 +3,8 @@ import { TelegramService } from '../../../services/telegram.service';
 import { TelegramLinkStatus, TelegramLinkResponse } from '../../../types/telegram.model';
 import { Subscription, interval } from 'rxjs';
 import * as QRCode from 'qrcode';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ConfirmDialogComponent } from '../../../shared/modal/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-telegram-settings',
@@ -13,6 +15,7 @@ import * as QRCode from 'qrcode';
 })
 export class TelegramSettingsComponent implements OnInit, OnDestroy {
   private telegramService = inject(TelegramService);
+  private modalService = inject(NgbModal);
   
   // State
   linkStatus: TelegramLinkStatus | null = null;
@@ -161,32 +164,46 @@ export class TelegramSettingsComponent implements OnInit, OnDestroy {
   /**
    * Hủy liên kết Telegram
    */
-  unlinkTelegram(): void {
-    if (!confirm('Bạn có chắc muốn hủy liên kết Telegram?')) {
+  async unlinkTelegram(): Promise<void> {
+    const modalRef = this.modalService.open(ConfirmDialogComponent, {
+      centered: true,
+      backdrop: 'static'
+    });
+
+    modalRef.componentInstance.title = 'Xác nhận hủy liên kết';
+    modalRef.componentInstance.message = 'Bạn có chắc chắn muốn hủy liên kết Telegram? Bạn sẽ không nhận được thông báo nữa.';
+    modalRef.componentInstance.confirmText = 'Hủy liên kết';
+    modalRef.componentInstance.cancelText = 'Không';
+
+    try {
+      const confirmed = await modalRef.result;
+      if (!confirmed) return;
+
+      this.loading = true;
+      this.error = null;
+
+      this.telegramService.unlink().subscribe({
+        next: (response) => {
+          this.successMessage = response.message || 'Đã hủy liên kết thành công';
+          this.loading = false;
+          this.showDeepLink = false;
+          this.generatedLink = null;
+          this.stopCountdown();
+          this.stopPolling();
+          
+          // Refresh trạng thái
+          setTimeout(() => this.loadLinkStatus(), 500);
+        },
+        error: (err) => {
+          this.error = err.error?.message || 'Không thể hủy liên kết';
+          this.loading = false;
+          console.error('Error unlinking:', err);
+        }
+      });
+    } catch {
+      // User dismissed modal (clicked Cancel or closed)
       return;
     }
-
-    this.loading = true;
-    this.error = null;
-
-    this.telegramService.unlink().subscribe({
-      next: (response) => {
-        this.successMessage = response.message || 'Đã hủy liên kết thành công';
-        this.loading = false;
-        this.showDeepLink = false;
-        this.generatedLink = null;
-        this.stopCountdown();
-        this.stopPolling();
-        
-        // Refresh trạng thái
-        setTimeout(() => this.loadLinkStatus(), 500);
-      },
-      error: (err) => {
-        this.error = err.error?.message || 'Không thể hủy liên kết';
-        this.loading = false;
-        console.error('Error unlinking:', err);
-      }
-    });
   }
 
   /**
