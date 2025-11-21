@@ -153,6 +153,21 @@ namespace api.Repository.Implement
                 .ToListAsync();
         }
 
+        public async Task<List<NhanVien>> GetNhanViensForBulkAsync(Guid? phongBanId = null)
+        {
+            var query = _context.NhanViens.AsQueryable();
+
+            // Filter by phong ban if specified
+            if (phongBanId.HasValue)
+            {
+                query = query.Where(nv => nv.PhongBanId == phongBanId.Value);
+            }
+
+            return await query
+                .OrderBy(nv => nv.TenDayDu)
+                .ToListAsync();
+        }
+
         /// <summary>
         /// Tính số ngày trong khoảng thời gian nằm trong tháng (dành cho đơn NhieuNgay)
         /// VD: Nghỉ từ 18/11 - 21/11 trong tháng 11 = 4 ngày

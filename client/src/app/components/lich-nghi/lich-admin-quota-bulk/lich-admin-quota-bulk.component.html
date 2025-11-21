@@ -1,0 +1,125 @@
+<!-- Modal Backdrop -->
+<div class="modal-backdrop fade show"></div>
+
+<!-- Modal Dialog -->
+<div class="modal fade show d-block" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <!-- Modal Header -->
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">
+          <i class="bi bi-people-fill me-2"></i>
+          Cấu Hình Hàng Loạt Hạn Mức Nghỉ Phép
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="onCancel()" [disabled]="isSubmitting"></button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <!-- Mode Description -->
+        <div class="alert alert-info mb-4">
+          <i class="bi bi-info-circle me-2"></i>
+          <div>
+            <strong>Cấu hình hàng loạt:</strong>
+            <ul class="mb-0 mt-2">
+              <li>Nếu nhân viên <strong>chưa có</strong> hạn mức tháng này → <strong>Tạo mới</strong></li>
+              <li>Nếu nhân viên <strong>đã có</strong> hạn mức → <strong>Cập nhật</strong> số ngày phép</li>
+              <li>Áp dụng cho toàn bộ nhân viên trong phạm vi được chọn</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Form -->
+        <form [formGroup]="bulkForm" (ngSubmit)="onSubmit()">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Năm <span class="text-danger">*</span></label>
+              <select class="form-select" formControlName="nam" [class.is-invalid]="isInvalid('nam')">
+                <option *ngFor="let year of years" [value]="year">{{ year }}</option>
+              </select>
+              @if (isInvalid('nam')) {
+                <div class="invalid-feedback">{{ getErrorMessage('nam') }}</div>
+              }
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Tháng <span class="text-danger">*</span></label>
+              <select class="form-select" formControlName="thang" [class.is-invalid]="isInvalid('thang')">
+                <option *ngFor="let month of months" [value]="month.value">{{ month.label }}</option>
+              </select>
+              @if (isInvalid('thang')) {
+                <div class="invalid-feedback">{{ getErrorMessage('thang') }}</div>
+              }
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Hạn mức nghỉ phép (ngày) <span class="text-danger">*</span></label>
+            <input 
+              type="number" 
+              class="form-control" 
+              formControlName="soNgayPhepThang"
+              [class.is-invalid]="isInvalid('soNgayPhepThang')"
+              step="0.5"
+              min="0"
+              max="31"
+              placeholder="VD: 1">
+            @if (isInvalid('soNgayPhepThang')) {
+              <div class="invalid-feedback">{{ getErrorMessage('soNgayPhepThang') }}</div>
+            }
+            <div class="form-text">Số ngày phép cho tất cả nhân viên (có thể dùng số thập phân: VD 1.5)</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Phạm vi áp dụng</label>
+            <select class="form-select" formControlName="phongBanId">
+              <option value="all">Toàn công ty</option>
+              <option *ngFor="let pb of phongBans()" [value]="pb.id">{{ pb.tenPhongBan }}</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Ghi chú</label>
+            <textarea 
+              class="form-control" 
+              formControlName="ghiChu"
+              rows="3"
+              maxlength="500"
+              placeholder="VD: Cấu hình hàng loạt cho toàn công ty tháng 12/2025"></textarea>
+            <div class="form-text">{{ bulkForm.get('ghiChu')?.value?.length || 0 }} / 500 ký tự</div>
+          </div>
+        </form>
+
+        <!-- Warning -->
+        <div class="alert alert-warning">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          <strong>Cảnh báo:</strong> Thao tác này sẽ tạo mới hoặc cập nhật hạn mức cho <strong>nhiều nhân viên</strong>. Vui lòng kiểm tra kỹ trước khi thực hiện.
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <button 
+          type="button" 
+          class="btn btn-secondary" 
+          (click)="onCancel()"
+          [disabled]="isSubmitting">
+          <i class="bi bi-x-circle me-1"></i>
+          Hủy
+        </button>
+        <button 
+          type="submit" 
+          class="btn btn-primary" 
+          (click)="onSubmit()"
+          [disabled]="isSubmitting || bulkForm.invalid">
+          @if (isSubmitting) {
+            <span class="spinner-border spinner-border-sm me-2"></span>
+            Đang xử lý...
+          } @else {
+            <i class="bi bi-check-circle me-1"></i>
+            Xác Nhận Cấu Hình
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

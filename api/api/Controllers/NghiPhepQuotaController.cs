@@ -84,29 +84,6 @@ namespace api.Controllers
             }
         }
 
-        /// <summary>
-        /// Validate quota trước khi tạo đơn (check nếu đủ quota)
-        /// </summary>
-        [HttpPost("validate")]
-        public async Task<ActionResult> ValidateQuota([FromBody] ValidateQuotaRequest request)
-        {
-            try
-            {
-                var currentUserId = GetCurrentUserId();
-                var (isValid, message) = await _quotaService.ValidateQuotaAsync(
-                    currentUserId,
-                    request.NgayBatDau,
-                    request.NgayKetThuc,
-                    request.SoNgayNghi);
-
-                return Ok(new { isValid, message });
-            }
-            catch (Exception ex)
-            {
-                return InternalServerError("Đã xảy ra lỗi", ex.Message);
-            }
-        }
-
         #region Admin Operations (Giám Đốc)
 
         /// <summary>
@@ -126,31 +103,6 @@ namespace api.Controllers
 
                 var quotas = await _quotaService.GetQuotasByMonthAsync(nam, thang, phongBanId);
                 return Ok(quotas);
-            }
-            catch (Exception ex)
-            {
-                return InternalServerError("Đã xảy ra lỗi", ex.Message);
-            }
-        }
-
-        /// <summary>
-        /// Tạo quota mới cho nhân viên (Giám Đốc)
-        /// </summary>
-        [HttpPost]
-        [Authorize(Roles = AppRolesExtensions.GiamDoc)]
-        public async Task<ActionResult<NghiPhepQuotaDto>> CreateQuota([FromBody] UpsertNghiPhepQuotaDto dto)
-        {
-            try
-            {
-                if (!ModelState.IsValid)
-                    return BadRequest(ModelState);
-
-                var quota = await _quotaService.CreateQuotaAsync(dto);
-                return CreatedAtAction(nameof(GetMyQuota), new { nam = dto.Nam, thang = dto.Thang }, quota);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
             }
             catch (Exception ex)
             {
@@ -205,6 +157,32 @@ namespace api.Controllers
                 return InternalServerError("Đã xảy ra lỗi", ex.Message);
             }
         }
+
+        /// <summary>
+        /// Bulk create/update quota cho nhiều nhân viên cùng lúc (Giám Đốc)
+        /// Use case: Đầu tháng tạo quota cho toàn bộ nhân viên, hoặc cập nhật hàng loạt
+        /// </summary>
+        [HttpPost("bulk")]
+        [Authorize(Roles = AppRolesExtensions.GiamDoc)]
+        public async Task<ActionResult<BulkQuotaResultDto>> BulkCreateOrUpdateQuota([FromBody] BulkQuotaRequestDto request)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                if (request.Thang < 1 || request.Thang > 12)
+                    return BadRequest("Tháng không hợp lệ");
+
+                var result = await _quotaService.BulkCreateOrUpdateQuotaAsync(request);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return InternalServerError("Đã xảy ra lỗi khi cấu hình hàng loạt", ex.Message);
+            }
+        }
+
 
         #endregion
     }

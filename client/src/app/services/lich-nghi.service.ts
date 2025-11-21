@@ -6,7 +6,6 @@ import {
   LichNghiDashboardDto,
   LichNghiCalendarDto,
   NghiPhepQuotaDto,
-  ValidateQuotaRequest,
   UpsertNghiPhepQuotaDto
 } from '../types/lichnghi.model';
 import { CacheService } from './cache.service';
@@ -77,14 +76,6 @@ export class LichNghiService {
       );
   }
 
-  /**
-   * Validate quota trước khi tạo đơn
-   * Không cache - phải real-time
-   */
-  validateQuota(request: ValidateQuotaRequest): Observable<any> {
-    return this.http.post(`${this.baseUrl}/validate`, request);
-  }
-
   // Admin Operations
 
   /**
@@ -102,20 +93,20 @@ export class LichNghiService {
   }
 
   /**
-   * Tạo quota mới (Giám Đốc)
+   * Cập nhật quota (Giám Đốc)
    */
-  createQuota(dto: UpsertNghiPhepQuotaDto): Observable<NghiPhepQuotaDto> {
-    return this.http.post<NghiPhepQuotaDto>(this.baseUrl, dto)
+  updateQuota(quotaId: string, dto: UpsertNghiPhepQuotaDto): Observable<NghiPhepQuotaDto> {
+    return this.http.put<NghiPhepQuotaDto>(`${this.baseUrl}/${quotaId}`, dto)
       .pipe(
         tap(() => this.cache.clear('lichnghi-'))
       );
   }
 
   /**
-   * Cập nhật quota (Giám Đốc)
+   * Bulk create/update quota cho nhiều nhân viên
    */
-  updateQuota(quotaId: string, dto: UpsertNghiPhepQuotaDto): Observable<NghiPhepQuotaDto> {
-    return this.http.put<NghiPhepQuotaDto>(`${this.baseUrl}/${quotaId}`, dto)
+  bulkCreateOrUpdateQuota(request: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/bulk`, request)
       .pipe(
         tap(() => this.cache.clear('lichnghi-'))
       );

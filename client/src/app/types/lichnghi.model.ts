@@ -41,16 +41,28 @@ export interface LichNghiDashboardDto {
   canhBao: string[];
 }
 
-export interface ValidateQuotaRequest {
-  ngayBatDau: Date;
-  ngayKetThuc: Date;
-  soNgayNghi: number;
-}
-
 export interface UpsertNghiPhepQuotaDto {
   nhanVienId: string;
   nam: number;
   thang: number;
   soNgayPhepThang: number;
   ghiChu?: string;
+}
+
+// Bulk Operations
+export interface BulkQuotaRequestDto {
+  nam: number;
+  thang: number;
+  soNgayPhepThang: number;
+  phongBanId?: string;
+  ghiChu?: string;
+}
+
+export interface BulkQuotaResultDto {
+  soLuongTaoMoi: number;
+  soLuongCapNhat: number;
+  soLuongBoQua: number;
+  tongSoNhanVien: number;
+  message: string;
+  errors: string[];
 }

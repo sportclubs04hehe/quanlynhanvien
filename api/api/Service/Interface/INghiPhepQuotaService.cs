@@ -25,11 +25,6 @@ namespace api.Service.Interface
         Task<NghiPhepQuotaDto> UpdateQuotaAsync(Guid quotaId, UpsertNghiPhepQuotaDto dto);
 
         /// <summary>
-        /// Tạo quota cho tháng mới (thường gọi tự động)
-        /// </summary>
-        Task<NghiPhepQuotaDto> CreateQuotaAsync(UpsertNghiPhepQuotaDto dto);
-
-        /// <summary>
         /// Recalculate quota sau khi approve/reject đơn
         /// </summary>
         Task RecalculateQuotaAsync(Guid nhanVienId, int nam, int thang);
@@ -40,8 +35,9 @@ namespace api.Service.Interface
         Task<List<NghiPhepQuotaDto>> GetQuotasByMonthAsync(int nam, int thang, Guid? phongBanId = null);
 
         /// <summary>
-        /// Kiểm tra nhân viên có đủ quota để tạo đơn nghỉ không
+        /// Bulk create hoặc update quota cho nhiều nhân viên cùng lúc
         /// </summary>
-        Task<(bool IsValid, string? Message)> ValidateQuotaAsync(Guid nhanVienId, DateTime ngayBatDau, DateTime ngayKetThuc, decimal soNgayNghi);
+        Task<BulkQuotaResultDto> BulkCreateOrUpdateQuotaAsync(BulkQuotaRequestDto request);
+
     }
 }

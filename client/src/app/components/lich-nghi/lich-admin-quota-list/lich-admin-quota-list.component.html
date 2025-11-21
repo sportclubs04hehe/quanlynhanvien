@@ -1,0 +1,215 @@
+<div class="quota-list-container">
+  <!-- Header with filters -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0">
+      <i class="bi bi-calendar-check me-2"></i>
+      Quản Lý Hạn Mức Nghỉ Phép
+    </h4>
+    <div class="btn-group">
+      <button class="btn btn-primary btn-sm" (click)="openBulkModal()">
+        <i class="bi bi-people-fill me-1"></i>
+        Cấu hình hàng loạt
+      </button>
+      <button class="btn btn-outline-secondary btn-sm" (click)="refresh()" [disabled]="isLoading()">
+        <i class="bi bi-arrow-clockwise"></i>
+        Làm mới
+      </button>
+    </div>
+  </div>
+
+  <!-- Filter controls -->
+  <div class="card mb-3">
+    <div class="card-body">
+      <div class="row g-3">
+        <!-- Year filter -->
+        <div class="col-md-3">
+          <label class="form-label fw-bold">Năm</label>
+          <select 
+            class="form-select" 
+            [(ngModel)]="selectedNam" 
+            (change)="onFilterChange()">
+            <option *ngFor="let year of years" [value]="year">{{ year }}</option>
+          </select>
+        </div>
+
+        <!-- Month filter -->
+        <div class="col-md-3">
+          <label class="form-label fw-bold">Tháng</label>
+          <select 
+            class="form-select" 
+            [(ngModel)]="selectedThang" 
+            (change)="onFilterChange()">
+            <option *ngFor="let month of months" [value]="month.value">
+              {{ month.label }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Phòng ban filter -->
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Phòng ban</label>
+          <select 
+            class="form-select" 
+            [(ngModel)]="selectedPhongBanId" 
+            (change)="onFilterChange()">
+            <option value="all">Tất cả phòng ban</option>
+            <option *ngFor="let pb of phongBans()" [value]="pb.id">
+              {{ pb.tenPhongBan }}
+            </option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistics cards -->
+  <div class="row g-3 mb-3">
+    <div class="col-md-3">
+      <div class="card text-center">
+        <div class="card-body">
+          <h3 class="mb-0 text-primary">{{ stats().tongSoNhanVien }}</h3>
+          <small class="text-muted">Tổng nhân viên</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-center">
+        <div class="card-body">
+          <h3 class="mb-0 text-danger">{{ stats().soNguoiVuotHanMuc }}</h3>
+          <small class="text-muted">Vượt hạn mức</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-center">
+        <div class="card-body">
+          <h3 class="mb-0 text-warning">{{ stats().soNguoiSapHet }}</h3>
+          <small class="text-muted">Sắp hết phép</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-center">
+        <div class="card-body">
+          <h3 class="mb-0 text-info">{{ formatNumber(stats().tongNgayDaSuDung) }}</h3>
+          <small class="text-muted">Tổng ngày đã dùng</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading state -->
+  <div *ngIf="isLoading()" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Đang tải...</span>
+    </div>
+    <p class="mt-2 text-muted">Đang tải danh sách hạn mức nghỉ phép...</p>
+  </div>
+
+  <!-- Error state -->
+  <div *ngIf="errorMessage() && !isLoading()" class="alert alert-danger">
+    <i class="bi bi-exclamation-triangle me-2"></i>
+    {{ errorMessage() }}
+  </div>
+
+  <!-- Quota table -->
+  <div *ngIf="!isLoading() && !errorMessage()" class="card">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Nhân viên</th>
+              <th class="text-center">Hạn mức tháng</th>
+              <th class="text-center">Đã nghỉ</th>
+              <th class="text-center">Số ngày còn lại</th>
+              <th class="text-center">Làm thêm (giờ)</th>
+              <th class="text-center">Trạng thái</th>
+              <th class="text-center">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let quota of quotas()">
+              <!-- Nhân viên -->
+              <td>
+                <div class="fw-bold">{{ quota.tenNhanVien }}</div>
+                <small class="text-muted" *ngIf="quota.ghiChu">
+                  <i class="bi bi-info-circle me-1"></i>{{ quota.ghiChu }}
+                </small>
+              </td>
+
+              <!-- Hạn mức tháng -->
+              <td class="text-center">
+                <span class="badge bg-primary">{{ formatNumber(quota.soNgayPhepThang) }}</span>
+              </td>
+
+              <!-- Đã sử dụng -->
+              <td class="text-center">
+                <span class="badge bg-secondary">{{ formatNumber(quota.soNgayDaSuDung) }} ngày</span>
+              </td>
+
+              <!-- Còn lại -->
+              <td class="text-center">
+                <span 
+                  class="badge"
+                  [class.bg-success]="quota.soNgayPhepConLai > 0"
+                  [class.bg-danger]="quota.soNgayPhepConLai < 0"
+                  [class.bg-warning]="quota.soNgayPhepConLai === 0">
+                  {{ formatNumber(quota.soNgayPhepConLai) }} ngày
+                </span>
+              </td>
+
+              <!-- Làm thêm -->
+              <td class="text-center">
+                <span class="text-muted">{{ formatNumber(quota.tongSoGioLamThem) }}</span>
+              </td>
+
+              <!-- Trạng thái -->
+              <td class="text-center">
+                <span [class]="getStatusBadgeClass(quota)">
+                  {{ getStatusText(quota) }}
+                </span>
+              </td>
+
+              <!-- Thao tác -->
+              <td class="text-center">
+                <div class="btn-group btn-group-sm" role="group">
+                  <button 
+                    type="button" 
+                    class="btn btn-outline-primary"
+                    (click)="editQuota(quota)"
+                    title="Sửa hạn mức nghỉ phép">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Empty state -->
+            <tr *ngIf="quotas().length === 0">
+              <td colspan="7" class="text-center py-5 text-muted">
+                <i class="bi bi-inbox display-4 d-block mb-3"></i>
+                Chưa có dữ liệu hạn mức nghỉ phép cho tháng này
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+@if (showEditModal() && selectedQuota()) {
+  <app-lich-admin-quota-edit 
+    [quota]="selectedQuota()!" 
+    (saved)="onQuotaSaved()"
+    (cancelled)="onModalCancelled()" />
+}
+
+<!-- Bulk Configuration Modal -->
+@if (showBulkModal()) {
+  <app-lich-admin-quota-bulk 
+    (saved)="onBulkSaved()"
+    (cancelled)="onBulkCancelled()" />
+}

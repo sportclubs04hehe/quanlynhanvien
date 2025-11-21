@@ -3,7 +3,7 @@
     <!-- Tab Navigation -->
     <div class="card-header bg-white border-bottom">
       <ul class="nav nav-tabs card-header-tabs" role="tablist">
-        @for (tab of tabs; track tab.id) {
+        @for (tab of tabs(); track tab.id) {
           <li class="nav-item" role="presentation">
             <button 
               class="nav-link" 
@@ -31,6 +31,9 @@
           }
           @case ('upcoming') {
             <app-lich-upcoming />
+          }
+          @case ('admin-quota') {
+            <app-lich-admin-quota-list />
           }
           @default {
             <div class="p-5 text-center text-muted">

@@ -18,7 +18,7 @@ export class PhongbanService {
 
   getAll(pageNumber: number = 1, pageSize: number = 10, searchTerm?: string): Observable<PagedResult<PhongBanDto>> {
     const cacheKey = `${this.CACHE_PREFIX}${pageNumber}_${pageSize}_${searchTerm || ''}`;
-    
+
     // Kiểm tra cache
     const cached = this.cache.get<PhongBanDto>(cacheKey);
     if (cached) {

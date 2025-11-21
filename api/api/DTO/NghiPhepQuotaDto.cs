@@ -107,4 +107,75 @@ namespace api.DTO
         /// </summary>
         public List<string> CanhBao { get; set; } = new();
     }
+
+    #region Bulk Operations DTOs
+
+    /// <summary>
+    /// DTO cho bulk create/update quota
+    /// </summary>
+    public class BulkQuotaRequestDto
+    {
+        /// <summary>
+        /// Năm áp dụng
+        /// </summary>
+        public int Nam { get; set; }
+
+        /// <summary>
+        /// Tháng áp dụng (1-12)
+        /// </summary>
+        public int Thang { get; set; }
+
+        /// <summary>
+        /// Số ngày phép mặc định cho tất cả nhân viên
+        /// </summary>
+        public decimal SoNgayPhepThang { get; set; } = 1m;
+
+        /// <summary>
+        /// Phạm vi áp dụng: null = tất cả công ty, hoặc chỉ định phòng ban cụ thể
+        /// </summary>
+        public Guid? PhongBanId { get; set; }
+
+        /// <summary>
+        /// Ghi chú chung
+        /// </summary>
+        public string? GhiChu { get; set; }
+    }
+
+    /// <summary>
+    /// DTO kết quả bulk operation
+    /// </summary>
+    public class BulkQuotaResultDto
+    {
+        /// <summary>
+        /// Số lượng quota đã tạo mới
+        /// </summary>
+        public int SoLuongTaoMoi { get; set; }
+
+        /// <summary>
+        /// Số lượng quota đã cập nhật
+        /// </summary>
+        public int SoLuongCapNhat { get; set; }
+
+        /// <summary>
+        /// Số lượng bị bỏ qua (VD: không tìm thấy nhân viên)
+        /// </summary>
+        public int SoLuongBoQua { get; set; }
+
+        /// <summary>
+        /// Tổng số nhân viên được xử lý
+        /// </summary>
+        public int TongSoNhanVien { get; set; }
+
+        /// <summary>
+        /// Thông báo kết quả
+        /// </summary>
+        public string Message { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Danh sách lỗi (nếu có)
+        /// </summary>
+        public List<string> Errors { get; set; } = new();
+    }
+
+    #endregion
 }

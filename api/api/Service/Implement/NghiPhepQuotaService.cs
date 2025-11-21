@@ -181,19 +181,6 @@ namespace api.Service.Implement
             return _mapper.Map<NghiPhepQuotaDto>(quota);
         }
 
-        public async Task<NghiPhepQuotaDto> CreateQuotaAsync(UpsertNghiPhepQuotaDto dto)
-        {
-            var existingQuota = await _quotaRepo.GetByNhanVienAndMonthAsync(dto.NhanVienId, dto.Nam, dto.Thang);
-            
-            if (existingQuota != null)
-                throw new InvalidOperationException($"Hạn mức nghỉ phép cho tháng {dto.Thang}/{dto.Nam} đã tồn tại");
-
-            var quota = _mapper.Map<NghiPhepQuota>(dto);
-            quota = await _quotaRepo.CreateAsync(quota);
-            
-            return _mapper.Map<NghiPhepQuotaDto>(quota);
-        }
-
         public async Task RecalculateQuotaAsync(Guid nhanVienId, int nam, int thang)
         {
             await _quotaRepo.RecalculateQuotaAsync(nhanVienId, nam, thang);
@@ -205,35 +192,75 @@ namespace api.Service.Implement
             return _mapper.Map<List<NghiPhepQuotaDto>>(quotas);
         }
 
-        public async Task<(bool IsValid, string? Message)> ValidateQuotaAsync(
-            Guid nhanVienId, 
-            DateTime ngayBatDau, 
-            DateTime ngayKetThuc, 
-            decimal soNgayNghi)
+        public async Task<BulkQuotaResultDto> BulkCreateOrUpdateQuotaAsync(BulkQuotaRequestDto request)
         {
-            // Lấy quota của các tháng liên quan
-            var thangBatDau = ngayBatDau.Month;
-            var namBatDau = ngayBatDau.Year;
-
-            var quota = await _quotaRepo.GetOrCreateQuotaAsync(nhanVienId, namBatDau, thangBatDau);
-
-            // Kiểm tra quota còn đủ không
-            var soNgayConLai = quota.SoNgayPhepConLai;
-
-            if (soNgayConLai < soNgayNghi)
+            var result = new BulkQuotaResultDto
             {
-                return (false, $"Bạn chỉ còn {soNgayConLai} ngày phép trong tháng {thangBatDau}/{namBatDau}. " +
-                    $"Bạn đang yêu cầu nghỉ {soNgayNghi} ngày. " +
-                    $"Vui lòng xem xét hoặc liên hệ Giám Đốc để xin phép đặc biệt.");
+                SoLuongTaoMoi = 0,
+                SoLuongCapNhat = 0,
+                SoLuongBoQua = 0
+            };
+
+            try
+            {
+                // Lấy danh sách nhân viên
+                var nhanViens = await _quotaRepo.GetNhanViensForBulkAsync(request.PhongBanId);
+                result.TongSoNhanVien = nhanViens.Count;
+
+                foreach (var nhanVien in nhanViens)
+                {
+                    try
+                    {
+                        // Kiểm tra xem quota đã tồn tại chưa
+                        var existingQuota = await _quotaRepo.GetByNhanVienAndMonthAsync(nhanVien.Id, request.Nam, request.Thang);
+
+                        if (existingQuota == null)
+                        {
+                            // Tạo mới
+                            var newQuota = new NghiPhepQuota
+                            {
+                                Id = Guid.NewGuid(),
+                                NhanVienId = nhanVien.Id,
+                                Nam = request.Nam,
+                                Thang = request.Thang,
+                                SoNgayPhepThang = request.SoNgayPhepThang,
+                                GhiChu = request.GhiChu,
+                                NgayTao = DateTime.UtcNow
+                            };
+                            await _quotaRepo.CreateAsync(newQuota);
+                            result.SoLuongTaoMoi++;
+                        }
+                        else
+                        {
+                            // Cập nhật
+                            existingQuota.SoNgayPhepThang = request.SoNgayPhepThang;
+                            existingQuota.GhiChu = request.GhiChu;
+                            existingQuota.NgayCapNhat = DateTime.UtcNow;
+                            await _quotaRepo.UpdateAsync(existingQuota);
+                            result.SoLuongCapNhat++;
+                        }
+
+                        // Recalculate để đảm bảo số ngày đã sử dụng chính xác
+                        await _quotaRepo.RecalculateQuotaAsync(nhanVien.Id, request.Nam, request.Thang);
+                    }
+                    catch (Exception ex)
+                    {
+                        result.SoLuongBoQua++;
+                        result.Errors.Add($"Nhân viên {nhanVien.TenDayDu}: {ex.Message}");
+                    }
+                }
+
+                var scopeText = request.PhongBanId.HasValue ? "phòng ban" : "toàn công ty";
+                result.Message = $"Đã cấu hình hạn mức nghỉ phép cho {scopeText} tháng {request.Thang}/{request.Nam}. " +
+                                 $"Tạo mới: {result.SoLuongTaoMoi}, Cập nhật: {result.SoLuongCapNhat}, Bỏ qua: {result.SoLuongBoQua}.";
+            }
+            catch (Exception ex)
+            {
+                result.Errors.Add($"Lỗi hệ thống: {ex.Message}");
+                result.Message = "Có lỗi xảy ra khi cấu hình hàng loạt";
             }
 
-            // Warning nếu gần hết quota
-            if (soNgayConLai - soNgayNghi < 0.5m)
-            {
-                return (true, $"⚠️ Cảnh báo: Sau khi tạo đơn này, bạn sẽ hết hạn mức nghỉ phép tháng {thangBatDau}!");
-            }
-
-            return (true, null);
+            return result;
         }
     }
 }

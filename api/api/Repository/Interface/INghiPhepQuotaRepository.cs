@@ -43,5 +43,10 @@ namespace api.Repository.Interface
         /// Lấy danh sách quota của nhiều nhân viên (cho Giám Đốc xem tổng quan)
         /// </summary>
         Task<List<NghiPhepQuota>> GetQuotasByMonthAsync(int nam, int thang, Guid? phongBanId = null);
+
+        /// <summary>
+        /// Lấy danh sách nhân viên cho bulk operation
+        /// </summary>
+        Task<List<NhanVien>> GetNhanViensForBulkAsync(Guid? phongBanId = null);
     }
 }

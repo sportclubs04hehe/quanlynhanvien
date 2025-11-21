@@ -1,0 +1,154 @@
+<!-- Modal Backdrop -->
+<div class="modal-backdrop fade show"></div>
+
+<!-- Modal Dialog -->
+<div class="modal fade show d-block" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <!-- Modal Header -->
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">
+          <i class="bi bi-pencil-square me-2"></i>
+          Chỉnh Sửa Hạn Mức Nghỉ Phép
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="onCancel()" [disabled]="isSubmitting"></button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <form [formGroup]="editForm" (ngSubmit)="onSubmit()">
+          <!-- Thông tin nhân viên (readonly) -->
+          <div class="mb-3">
+            <label class="form-label fw-bold">Nhân viên</label>
+            <input 
+              type="text" 
+              class="form-control" 
+              [value]="quota().tenNhanVien" 
+              readonly
+              disabled>
+          </div>
+
+          <!-- Tháng/Năm (readonly) -->
+          <div class="row mb-3">
+            <div class="col-6">
+              <label class="form-label fw-bold">Tháng</label>
+              <input 
+                type="text" 
+                class="form-control" 
+                [value]="quota().thang" 
+                readonly
+                disabled>
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-bold">Năm</label>
+              <input 
+                type="text" 
+                class="form-control" 
+                [value]="quota().nam" 
+                readonly
+                disabled>
+            </div>
+          </div>
+
+          <!-- Hạn mức tháng (editable) -->
+          <div class="mb-3">
+            <label for="soNgayPhepThang" class="form-label fw-bold">
+              Hạn mức nghỉ phép tháng <span class="text-danger">*</span>
+            </label>
+            <input 
+              type="number" 
+              id="soNgayPhepThang"
+              class="form-control" 
+              [class.is-invalid]="isInvalid('soNgayPhepThang')"
+              formControlName="soNgayPhepThang"
+              placeholder="Nhập số ngày phép (VD: 1)"
+              step="0.5"
+              min="0"
+              max="31">
+            @if (isInvalid('soNgayPhepThang')) {
+              <div class="invalid-feedback">
+                {{ getErrorMessage('soNgayPhepThang') }}
+              </div>
+            }
+            <div class="form-text">
+              <i class="bi bi-info-circle me-1"></i>
+              Có thể nhập số thập phân (VD: 1.5 ngày). Mặc định: 1 ngày/tháng.
+            </div>
+          </div>
+
+          <!-- Thông tin hiện tại -->
+          <div class="alert alert-info mb-3">
+            <div class="row text-center">
+              <div class="col-4">
+                <small class="text-muted d-block">Đã sử dụng</small>
+                <strong class="text-primary">{{ quota().soNgayDaSuDung }} ngày</strong>
+              </div>
+              <div class="col-4">
+                <small class="text-muted d-block">Còn lại</small>
+                <strong [class.text-danger]="quota().soNgayPhepConLai < 0" [class.text-success]="quota().soNgayPhepConLai >= 0">
+                  {{ quota().soNgayPhepConLai }} ngày
+                </strong>
+              </div>
+              <div class="col-4">
+                <small class="text-muted d-block">Trạng thái</small>
+                @if (quota().daVuotQuota) {
+                  <span class="badge bg-danger">Vượt hạn mức</span>
+                } @else if (quota().soNgayPhepConLai < 0.5) {
+                  <span class="badge bg-warning">Sắp hết phép</span>
+                } @else {
+                  <span class="badge bg-success">Bình thường</span>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Ghi chú (optional) -->
+          <div class="mb-3">
+            <label for="ghiChu" class="form-label fw-bold">Ghi chú</label>
+            <textarea 
+              id="ghiChu"
+              class="form-control" 
+              [class.is-invalid]="isInvalid('ghiChu')"
+              formControlName="ghiChu"
+              rows="3"
+              placeholder="VD: Tăng lên 2 ngày do dự án đặc biệt..."
+              maxlength="500"></textarea>
+            @if (isInvalid('ghiChu')) {
+              <div class="invalid-feedback">
+                {{ getErrorMessage('ghiChu') }}
+              </div>
+            }
+            <div class="form-text">
+              {{ editForm.get('ghiChu')?.value?.length || 0 }} / 500 ký tự
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <button 
+          type="button" 
+          class="btn btn-secondary" 
+          (click)="onCancel()"
+          [disabled]="isSubmitting">
+          <i class="bi bi-x-circle me-1"></i>
+          Hủy
+        </button>
+        <button 
+          type="submit" 
+          class="btn btn-primary" 
+          (click)="onSubmit()"
+          [disabled]="editForm.invalid || isSubmitting">
+          @if (isSubmitting) {
+            <span class="spinner-border spinner-border-sm me-2"></span>
+            Đang lưu...
+          } @else {
+            <i class="bi bi-check-circle me-1"></i>
+            Lưu thay đổi
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
