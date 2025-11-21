@@ -1,0 +1,44 @@
+/* Logo styling */
+.navbar-logo {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+  transition: transform 0.3s ease;
+}
+
+.navbar-logo:hover {
+  transform: scale(1.05);
+}
+
+/* Company name styling */
+.company-name {
+  font-weight: 600;
+  font-size: 1.25rem;
+  color: #333;
+  letter-spacing: 0.5px;
+}
+
+/* Navbar brand hover effect */
+.navbar-brand {
+  transition: opacity 0.3s ease;
+}
+
+.navbar-brand:hover {
+  opacity: 0.8;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .navbar-logo {
+    height: 32px;
+  }
+  
+  .company-name {
+    font-size: 1rem;
+  }
+}
+
+/* Optional: Add subtle shadow to logo */
+.navbar-logo {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}

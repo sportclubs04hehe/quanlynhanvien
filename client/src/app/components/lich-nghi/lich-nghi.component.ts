@@ -1,4 +1,4 @@
-import { Component, signal, inject, computed } from '@angular/core';
+import { Component, signal, inject, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RoleService } from '../../services/role.service';
 import { LichDashboardComponent } from './lich-dashboard/lich-dashboard.component';
@@ -28,16 +28,16 @@ interface Tab {
   templateUrl: './lich-nghi.component.html',
   styleUrl: './lich-nghi.component.css'
 })
-export class LichNghiComponent {
+export class LichNghiComponent implements OnInit {
   roleService = inject(RoleService);
   activeTab = signal<TabType>('dashboard');
 
   // All available tabs
   allTabs: Tab[] = [
     { id: 'dashboard', label: 'Tổng Quan', icon: 'bi-speedometer2' },
-    { id: 'calendar', label: 'Lịch Nghỉ', icon: 'bi-calendar3' },
-    { id: 'upcoming', label: 'Sắp Tới', icon: 'bi-calendar-event' },
-    { id: 'admin-quota', label: 'Hạn Mức Nghỉ Phép', icon: 'bi-people', requiresGiamDoc: true }
+    { id: 'calendar', label: 'Lịch Nghỉ', icon: 'bi-calendar3-fill' },
+    { id: 'upcoming', label: 'Sắp Tới', icon: 'bi-calendar-event-fill' },
+    { id: 'admin-quota', label: 'Quản Lý Hạn Mức Nghỉ Phép', icon: 'bi-people-fill', requiresGiamDoc: true }
   ];
 
   // Computed: Filter tabs based on role
@@ -50,6 +50,13 @@ export class LichNghiComponent {
       return true;
     });
   });
+
+  ngOnInit(): void {
+    // Nếu là Giám Đốc, mặc định vào tab "Hạn Mức Nghỉ Phép"
+    if (this.roleService.isGiamDoc()) {
+      this.activeTab.set('admin-quota');
+    }
+  }
 
   switchTab(tabId: TabType): void {
     this.activeTab.set(tabId);
