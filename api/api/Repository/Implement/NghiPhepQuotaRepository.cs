@@ -111,7 +111,7 @@ namespace api.Repository.Implement
                         LoaiNghiPhep.BuoiSang => 0.5m,
                         LoaiNghiPhep.BuoiChieu => 0.5m,
                         LoaiNghiPhep.MotNgay => 1m,
-                        LoaiNghiPhep.NhieuNgay => CalculateDaysInMonth(don.NgayBatDau!.Value, don.NgayKetThuc!.Value, startDate, endDate),
+                        LoaiNghiPhep.NhieuNgay => CalculateDaysInMonthForLeave(don.NgayBatDau!.Value, don.NgayKetThuc!.Value, startDate, endDate),
                         _ => 0
                     };
                 }
@@ -154,14 +154,18 @@ namespace api.Repository.Implement
         }
 
         /// <summary>
-        /// Tính số ngày trong khoảng thời gian nằm trong tháng
+        /// Tính số ngày trong khoảng thời gian nằm trong tháng (dành cho đơn NhieuNgay)
+        /// VD: Nghỉ từ 18/11 - 21/11 trong tháng 11 = 4 ngày
         /// </summary>
-        private static decimal CalculateDaysInMonth(DateTime ngayBatDau, DateTime ngayKetThuc, DateTime startOfMonth, DateTime endOfMonth)
+        private static decimal CalculateDaysInMonthForLeave(DateTime ngayBatDau, DateTime ngayKetThuc, DateTime startOfMonth, DateTime endOfMonth)
         {
-            var start = ngayBatDau.Date > startOfMonth ? ngayBatDau.Date : startOfMonth;
-            var end = ngayKetThuc.Date < endOfMonth ? ngayKetThuc.Date : endOfMonth;
+            // Chỉ lấy phần Date để tránh vấn đề timezone
+            var start = ngayBatDau.Date > startOfMonth.Date ? ngayBatDau.Date : startOfMonth.Date;
+            var end = ngayKetThuc.Date < endOfMonth.Date ? ngayKetThuc.Date : endOfMonth.Date;
 
-            return (decimal)(end - start).TotalDays + 1;
+            // Công thức: (end - start).Days + 1
+            // VD: 21/11 - 18/11 = 3 days, +1 = 4 days
+            return (decimal)(end - start).Days + 1;
         }
     }
 }

@@ -41,6 +41,7 @@ export class LichCalendarComponent implements OnInit {
 
   loadCalendar(): void {
     this.isLoading.set(true);
+    
     this.lichNghiService.getCalendar(this.currentYear(), this.currentMonth()).subscribe({
       next: (data) => {
         this.calendar.set(data);

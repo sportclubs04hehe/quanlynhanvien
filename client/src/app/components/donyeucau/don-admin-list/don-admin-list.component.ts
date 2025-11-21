@@ -5,7 +5,6 @@ import { NgbModal, NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
 import { Subject, takeUntil, finalize } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { DonYeuCauService } from '../../../services/don-yeu-cau.service';
-import { SpinnerService } from '../../../services/spinner.service';
 import { ExportService } from '../../../services/export.service';
 import { DonYeuCauDto, FilterDonYeuCauDto, LoaiDonYeuCau, TrangThaiDon, canDeleteDon } from '../../../types/don.model';
 import { DonStatusBadgeComponent } from '../../../shared/don-status-badge/don-status-badge.component';
@@ -33,7 +32,6 @@ import { DonFilterComponent } from '../../../shared/don-filter/don-filter.compon
 export class DonAdminListComponent implements OnInit, OnDestroy {
   private modal = inject(NgbModal);
   private donService = inject(DonYeuCauService);
-  private spinner = inject(SpinnerService);
   private toastr = inject(ToastrService);
   private ngZone = inject(NgZone);
   private exportService = inject(ExportService);
@@ -83,7 +81,6 @@ export class DonAdminListComponent implements OnInit, OnDestroy {
   loadDons(): void {
     this.errorMessage.set(null);
     this.isLoading.set(true);
-    this.spinner.show('Đang tải danh sách đơn...');
     
     // Build filter with current pagination
     const currentFilter: FilterDonYeuCauDto = {
@@ -98,7 +95,6 @@ export class DonAdminListComponent implements OnInit, OnDestroy {
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => {
-          this.spinner.hide();
           this.isLoading.set(false);
         })
       )
@@ -195,11 +191,9 @@ export class DonAdminListComponent implements OnInit, OnDestroy {
           modalRef.result.then(
             (confirmed) => {
               if (confirmed) {
-                this.spinner.show('Đang xóa đơn...');
                 this.donService.delete(don.id)
                   .pipe(
-                    takeUntil(this.destroy$),
-                    finalize(() => this.spinner.hide())
+                    takeUntil(this.destroy$)
                   )
                   .subscribe({
                     next: () => {
@@ -252,8 +246,6 @@ export class DonAdminListComponent implements OnInit, OnDestroy {
    * Xuất danh sách đơn ra Excel (TOÀN BỘ dữ liệu, không phân trang)
    */
   exportToExcel(): void {
-    this.spinner.show('Đang tải dữ liệu để xuất...');
-    
     // Tạo filter không có pagination
     const exportFilter = {
       searchTerm: this.filter().searchTerm,
@@ -269,8 +261,7 @@ export class DonAdminListComponent implements OnInit, OnDestroy {
     
     this.donService.getAllForExport(exportFilter)
       .pipe(
-        takeUntil(this.destroy$),
-        finalize(() => this.spinner.hide())
+        takeUntil(this.destroy$)
       )
       .subscribe({
         next: (allDons) => {

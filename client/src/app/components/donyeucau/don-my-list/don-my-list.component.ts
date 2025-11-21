@@ -5,7 +5,6 @@ import { NgbModal, NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
 import { Subject, takeUntil, finalize, debounceTime, distinctUntilChanged } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { DonYeuCauService } from '../../../services/don-yeu-cau.service';
-import { SpinnerService } from '../../../services/spinner.service';
 import { ExportService } from '../../../services/export.service';
 import { DonYeuCauDto, LoaiDonYeuCau, TrangThaiDon, canEditDon, canCancelDon } from '../../../types/don.model';
 import { DonStatusBadgeComponent } from '../../../shared/don-status-badge/don-status-badge.component';
@@ -33,7 +32,6 @@ import { SEARCH_DEBOUNCE_TIME } from '../../../shared/config/search.config';
 export class DonMyListComponent implements OnInit, OnDestroy, OnChanges {
   private modal = inject(NgbModal);
   private donService = inject(DonYeuCauService);
-  private spinner = inject(SpinnerService);
   private toastr = inject(ToastrService);
   private ngZone = inject(NgZone);
   private exportService = inject(ExportService);
@@ -116,7 +114,6 @@ export class DonMyListComponent implements OnInit, OnDestroy, OnChanges {
   loadDons(): void {
     this.errorMessage.set(null);
     this.isLoading.set(true);
-    this.spinner.show('Đang tải danh sách đơn...');
     
     this.donService.getMyDons(
       this.pageNumber(),
@@ -129,7 +126,6 @@ export class DonMyListComponent implements OnInit, OnDestroy, OnChanges {
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => {
-          this.spinner.hide();
           this.isLoading.set(false);
         })
       )
@@ -306,9 +302,7 @@ export class DonMyListComponent implements OnInit, OnDestroy, OnChanges {
     modalRef.result.then(
       (confirmed) => {
         if (confirmed) {
-          this.spinner.show('Đang hủy đơn...');
           this.donService.huyDon(don.id)
-            .pipe(finalize(() => this.spinner.hide()))
             .subscribe({
               next: () => {
                 this.loadDons();
@@ -335,7 +329,6 @@ export class DonMyListComponent implements OnInit, OnDestroy, OnChanges {
    * Xuất danh sách đơn ra Excel (TOÀN BỘ dữ liệu, không phân trang)
    */
   exportToExcel(): void {
-    this.spinner.show('Đang tải dữ liệu để xuất...');
     
     this.donService.getMyDonsForExport(
       this.searchMaDon() || undefined,
@@ -345,7 +338,6 @@ export class DonMyListComponent implements OnInit, OnDestroy, OnChanges {
     )
       .pipe(
         takeUntil(this.destroy$),
-        finalize(() => this.spinner.hide())
       )
       .subscribe({
         next: (allDons) => {

@@ -5,7 +5,6 @@ import { NgbActiveModal, NgbModal, NgbDatepickerModule, NgbDateStruct } from '@n
 import { finalize } from 'rxjs';
 import { QuanlynhanvienService } from '../../../services/quanlynhanvien.service';
 import { PhongbanService } from '../../../services/phongban.service';
-import { SpinnerService } from '../../../services/spinner.service';
 import { ConfirmDialogComponent } from '../../../shared/modal/confirm-dialog/confirm-dialog.component';
 import { RegisterUserDto, UpdateUserDto, UserDto, NhanVienStatus } from '../../../types/users.model';
 import { PhongBanDto } from '../../../types/phongban.model';
@@ -32,7 +31,6 @@ export class ThemSuaNhanvienComponent implements OnInit, CanComponentDeactivate 
   private nhanVienService = inject(QuanlynhanvienService);
   private phongBanService = inject(PhongbanService);
   private chucVuService: ChucvuService = inject(ChucvuService);
-  private spinner = inject(SpinnerService);
   private modal = inject(NgbModal);
   roleService = inject(RoleService);
   
@@ -112,9 +110,7 @@ export class ThemSuaNhanvienComponent implements OnInit, CanComponentDeactivate 
   private loadUserData() {
     if (!this.userId) return;
 
-    this.spinner.show('Đang tải thông tin nhân viên...');
     this.nhanVienService.getById(this.userId)
-      .pipe(finalize(() => this.spinner.hide()))
       .subscribe({
         next: (user) => {
           const ngaySinhStruct = user.ngaySinh ? this.dateToNgbDateStruct(user.ngaySinh) : null;
@@ -185,9 +181,7 @@ export class ThemSuaNhanvienComponent implements OnInit, CanComponentDeactivate 
         ngayVaoLam: formValue.ngayVaoLam ? this.ngbDateStructToDate(formValue.ngayVaoLam) : undefined
       };
 
-      this.spinner.show('Đang tạo nhân viên...');
       this.nhanVienService.register(dto)
-        .pipe(finalize(() => this.spinner.hide()))
         .subscribe({
           next: () => {
             this.isDirty = false;
@@ -213,9 +207,7 @@ export class ThemSuaNhanvienComponent implements OnInit, CanComponentDeactivate 
         role: this.canSelectRole && formValue.role ? formValue.role : undefined  // Chỉ gửi role nếu là Giám Đốc
       };
 
-      this.spinner.show('Đang cập nhật nhân viên...');
       this.nhanVienService.update(this.userId!, dto)
-        .pipe(finalize(() => this.spinner.hide()))
         .subscribe({
           next: () => {
             this.isDirty = false;

@@ -5,7 +5,6 @@ import { NgbModal, NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
 import { Subject, takeUntil, finalize } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { DonYeuCauService } from '../../../services/don-yeu-cau.service';
-import { SpinnerService } from '../../../services/spinner.service';
 import { DonYeuCauDto, LoaiDonYeuCau, TrangThaiDon } from '../../../types/don.model';
 import { DonStatusBadgeComponent } from '../../../shared/don-status-badge/don-status-badge.component';
 import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
@@ -28,7 +27,6 @@ import { DonApproveModalComponent, ApprovalResult } from '../../../shared/don-ap
 export class DonApproveListComponent implements OnInit, OnDestroy {
   private modal = inject(NgbModal);
   private donService = inject(DonYeuCauService);
-  private spinner = inject(SpinnerService);
   private toastr = inject(ToastrService);
   private ngZone = inject(NgZone);
   
@@ -67,7 +65,6 @@ export class DonApproveListComponent implements OnInit, OnDestroy {
   loadDons(): void {
     this.errorMessage.set(null);
     this.isLoading.set(true);
-    this.spinner.show('Đang tải danh sách đơn cần duyệt...');
     
     this.donService.getDonCanDuyet(
       this.pageNumber(),
@@ -76,7 +73,6 @@ export class DonApproveListComponent implements OnInit, OnDestroy {
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => {
-          this.spinner.hide();
           this.isLoading.set(false);
         })
       )
@@ -223,12 +219,10 @@ export class DonApproveListComponent implements OnInit, OnDestroy {
    * Handle approval
    */
   private handleApproval(donId: string, ghiChu?: string): void {
-    this.spinner.show('Đang chấp thuận đơn...');
     
     this.donService.chapThuan(donId, ghiChu)
       .pipe(
         takeUntil(this.destroy$),
-        finalize(() => this.spinner.hide())
       )
       .subscribe({
         next: () => {
@@ -249,12 +243,10 @@ export class DonApproveListComponent implements OnInit, OnDestroy {
    * Handle rejection
    */
   private handleRejection(donId: string, ghiChu?: string): void {
-    this.spinner.show('Đang từ chối đơn...');
     
     this.donService.tuChoi(donId, ghiChu)
       .pipe(
         takeUntil(this.destroy$),
-        finalize(() => this.spinner.hide())
       )
       .subscribe({
         next: () => {

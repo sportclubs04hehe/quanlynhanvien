@@ -4,7 +4,6 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
 import { CommonModule } from '@angular/common';
 import { LoginRequest } from '../../../types/login.model';
-import { SpinnerService } from '../../../services/spinner.service';
 
 @Component({
   selector: 'app-login',
@@ -17,7 +16,6 @@ export class LoginComponent {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
-  private readonly spinner = inject(SpinnerService);
 
   loginForm: FormGroup;
   isLoading = signal(false);
@@ -50,7 +48,6 @@ export class LoginComponent {
 
     this.isLoading.set(true);
     this.errorMessage.set(null);
-    this.spinner.show('Đang đăng nhập...');
 
     const loginRequest: LoginRequest = {
       email: this.loginForm.value.email,
@@ -60,12 +57,10 @@ export class LoginComponent {
     this.authService.login(loginRequest).subscribe({
       next: (response) => {
         this.isLoading.set(false);
-        this.spinner.hide();
         this.router.navigate(['/dashboard']);
       },
       error: (error) => {
         this.isLoading.set(false);
-        this.spinner.hide();
         
         let errorMsg = 'Đã xảy ra lỗi. Vui lòng thử lại sau.';
         

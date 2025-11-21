@@ -25,6 +25,7 @@ export class LichDashboardComponent implements OnInit {
 
   loadDashboard(): void {
     this.isLoading.set(true);
+    
     this.lichNghiService.getMyDashboard().subscribe({
       next: (data) => {
         this.dashboard.set(data);

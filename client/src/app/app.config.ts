@@ -5,6 +5,7 @@ import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { authInterceptor } from './interceptors/auth.interceptor';
 import { errorInterceptor } from './interceptors/error.interceptor';
+import { loadingInterceptor } from './interceptors/loading.interceptor';
 import { registerLocaleData } from '@angular/common';
 import localeVi from '@angular/common/locales/vi';
 import { provideToastr } from 'ngx-toastr';
@@ -21,7 +22,11 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideHttpClient(
       withFetch(),
-      withInterceptors([authInterceptor, errorInterceptor]) 
+      withInterceptors([
+        loadingInterceptor,  // Loading spinner
+        authInterceptor,     // Auth token
+        errorInterceptor     // Error handling
+      ]) 
     ),
     provideAnimations(),
     provideToastr(),

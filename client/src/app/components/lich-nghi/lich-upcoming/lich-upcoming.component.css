@@ -1,0 +1,98 @@
+.upcoming-container {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.don-card {
+  transition: all 0.3s ease;
+  border-left: 4px solid transparent;
+}
+
+.don-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Border color by status */
+.don-card:has(.bg-warning) {
+  border-left-color: #ffc107;
+}
+
+.don-card:has(.bg-success) {
+  border-left-color: #198754;
+}
+
+.don-card:has(.bg-danger) {
+  border-left-color: #dc3545;
+}
+
+.don-card:has(.bg-secondary) {
+  border-left-color: #6c757d;
+}
+
+/* Text truncation */
+.text-truncate-2-lines {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.5;
+  max-height: 3em;
+}
+
+/* Filter controls styling */
+.form-label {
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+}
+
+.form-select-sm,
+.form-control-sm {
+  font-size: 0.875rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .don-card {
+    margin-bottom: 1rem;
+  }
+
+  .badge {
+    font-size: 0.7rem;
+  }
+
+  h6 {
+    font-size: 0.9rem;
+  }
+}
+
+/* Empty state */
+.bi-inbox {
+  font-size: 5rem;
+}
+
+/* Button group styling */
+.btn-group .btn {
+  border-radius: 0;
+}
+
+.btn-group .btn:first-child {
+  border-top-left-radius: 0.25rem;
+  border-bottom-left-radius: 0.25rem;
+}
+
+.btn-group .btn:last-child {
+  border-top-right-radius: 0.25rem;
+  border-bottom-right-radius: 0.25rem;
+}

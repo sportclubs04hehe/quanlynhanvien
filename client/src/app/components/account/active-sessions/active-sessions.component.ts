@@ -1,7 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../services/auth.service';
-import { SpinnerService } from '../../../services/spinner.service';
 import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
 import { finalize } from 'rxjs';
 import { Session } from '../../../types/session.model';
@@ -15,7 +14,6 @@ import { Session } from '../../../types/session.model';
 })
 export class ActiveSessionsComponent implements OnInit {
   private authService = inject(AuthService);
-  private spinner = inject(SpinnerService);
 
   sessions = signal<Session[]>([]);
 
@@ -24,9 +22,7 @@ export class ActiveSessionsComponent implements OnInit {
   }
 
   loadSessions() {
-    this.spinner.show('Đang tải danh sách sessions...');
     this.authService.getActiveSessions()
-      .pipe(finalize(() => this.spinner.hide()))
       .subscribe({
         next: (sessions) => {
           // Parse ISO string sang Date object để Angular tự động convert timezone
@@ -54,9 +50,7 @@ export class ActiveSessionsComponent implements OnInit {
       return;
     }
 
-    this.spinner.show('Đang đăng xuất thiết bị...');
     this.authService.revokeSession(session.id)
-      .pipe(finalize(() => this.spinner.hide()))
       .subscribe({
         next: () => {
           alert('Đã đăng xuất thiết bị thành công');
@@ -75,9 +69,7 @@ export class ActiveSessionsComponent implements OnInit {
       return;
     }
 
-    this.spinner.show('Đang đăng xuất tất cả thiết bị...');
     this.authService.revokeAllTokens()
-      .pipe(finalize(() => this.spinner.hide()))
       .subscribe({
         next: () => {
           alert('Đã đăng xuất tất cả thiết bị. Vui lòng đăng nhập lại.');

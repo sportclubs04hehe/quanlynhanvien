@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { debounceTime, distinctUntilChanged, Subject, takeUntil, finalize } from 'rxjs';
 import { QuanlynhanvienService } from '../../services/quanlynhanvien.service';
-import { SpinnerService } from '../../services/spinner.service';
 import { RoleService } from '../../services/role.service';
 import { NoficationComponent } from '../../shared/modal/nofication/nofication.component';
 import { ThemSuaNhanvienComponent } from './them-sua-nhanvien/them-sua-nhanvien.component';
@@ -23,7 +22,6 @@ import { APP_ROLES } from '../../constants/roles.constants';
 export class QuanlynhanvienComponent implements OnInit, OnDestroy, CanComponentDeactivate {
   private modal = inject(NgbModal);
   private nhanVienService = inject(QuanlynhanvienService);
-  private spinner = inject(SpinnerService);
   roleService = inject(RoleService);
 
   users = signal<UserDto[]>([]);
@@ -70,14 +68,12 @@ export class QuanlynhanvienComponent implements OnInit, OnDestroy, CanComponentD
   loadUsers() {
     this.errorMessage.set(null);
     this.isLoading.set(true);
-    this.spinner.show('Đang tải danh sách nhân viên...');
 
     const term = this.searchTerm().trim();
     const searchValue = term.length >= 2 ? term : undefined;
 
     this.nhanVienService.getAll(this.pageNumber(), this.pageSize(), searchValue)
       .pipe(finalize(() => {
-        this.spinner.hide();
         this.isLoading.set(false);
       }))
       .subscribe({
@@ -182,9 +178,7 @@ export class QuanlynhanvienComponent implements OnInit, OnDestroy, CanComponentD
     modalRef.result.then(
       (confirmed) => {
         if (confirmed) {
-          this.spinner.show('Đang xóa nhân viên...');
           this.nhanVienService.delete(user.id)
-            .pipe(finalize(() => this.spinner.hide()))
             .subscribe({
               next: () => {
                 this.loadUsers();

@@ -5,7 +5,6 @@ import { NgbActiveModal, NgbCalendar, NgbDate, NgbDatepickerModule, NgbDateParse
 import { finalize } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { DonYeuCauService } from '../../../services/don-yeu-cau.service';
-import { SpinnerService } from '../../../services/spinner.service';
 import { 
   CreateDonYeuCauDto, 
   UpdateDonYeuCauDto, 
@@ -33,7 +32,6 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
   
   private fb = inject(FormBuilder);
   private donService = inject(DonYeuCauService);
-  private spinner = inject(SpinnerService);
   private modal = inject(NgbModal);
   private toastr = inject(ToastrService);
   activeModal = inject(NgbActiveModal);
@@ -217,9 +215,7 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
   private loadDonData(): void {
     if (!this.donId) return;
     
-    this.spinner.show('Đang tải thông tin đơn...');
     this.donService.getById(this.donId)
-      .pipe(finalize(() => this.spinner.hide()))
       .subscribe({
         next: (don) => {
           this.patchFormWithDonData(don);
@@ -301,9 +297,7 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
   private createDon(): void {
     const dto = this.buildCreateDto();
     
-    this.spinner.show('Đang tạo đơn...');
     this.donService.create(dto)
-      .pipe(finalize(() => this.spinner.hide()))
       .subscribe({
         next: (result) => {
           this.isDirty = false;
@@ -333,9 +327,7 @@ export class DonCreateEditComponent implements OnInit, CanComponentDeactivate {
     
     const dto = this.buildUpdateDto();
     
-    this.spinner.show('Đang cập nhật đơn...');
     this.donService.update(this.donId, dto)
-      .pipe(finalize(() => this.spinner.hide()))
       .subscribe({
         next: (result) => {
           this.isDirty = false;

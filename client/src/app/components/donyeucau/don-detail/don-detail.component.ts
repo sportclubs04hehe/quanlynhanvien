@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { finalize } from 'rxjs';
 import { DonYeuCauService } from '../../../services/don-yeu-cau.service';
-import { SpinnerService } from '../../../services/spinner.service';
 import { DonYeuCauDto, LoaiDonYeuCau, getTrangThaiDonDisplayName, getLoaiDonDisplayName } from '../../../types/don.model';
 import { DonStatusBadgeComponent } from '../../../shared/don-status-badge/don-status-badge.component';
 import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
@@ -19,7 +18,6 @@ export class DonDetailComponent implements OnInit {
   @Input() donId!: string;
   
   private donService = inject(DonYeuCauService);
-  private spinner = inject(SpinnerService);
   activeModal = inject(NgbActiveModal);
   
   don = signal<DonYeuCauDto | null>(null);
@@ -48,9 +46,7 @@ export class DonDetailComponent implements OnInit {
       return;
     }
     
-    this.spinner.show('Đang tải chi tiết đơn...');
     this.donService.getById(this.donId)
-      .pipe(finalize(() => this.spinner.hide()))
       .subscribe({
         next: (don) => {
           this.don.set(don);

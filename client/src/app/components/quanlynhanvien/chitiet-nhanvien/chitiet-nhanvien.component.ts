@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { finalize } from 'rxjs';
 import { QuanlynhanvienService } from '../../../services/quanlynhanvien.service';
-import { SpinnerService } from '../../../services/spinner.service';
 import { RoleService } from '../../../services/role.service';
 import { UserDto, NhanVienStatus } from '../../../types/users.model';
 import { APP_ROLES } from '../../../constants/roles.constants';
@@ -19,7 +18,6 @@ export class ChitietNhanvienComponent implements OnInit {
   @Input() userId!: string;
 
   private nhanVienService = inject(QuanlynhanvienService);
-  private spinner = inject(SpinnerService);
   roleService = inject(RoleService);
   activeModal = inject(NgbActiveModal);
 
@@ -39,9 +37,7 @@ export class ChitietNhanvienComponent implements OnInit {
       return;
     }
 
-    this.spinner.show('Đang tải thông tin chi tiết...');
     this.nhanVienService.getById(this.userId)
-      .pipe(finalize(() => this.spinner.hide()))
       .subscribe({
         next: (user) => {
           this.user.set(user);

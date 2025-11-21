@@ -63,12 +63,14 @@ namespace api.Service.Implement
             // 5. Cảnh báo
             if (dashboard.QuotaThangHienTai.DaVuotQuota)
             {
-                dashboard.CanhBao.Add($"⚠️ Bạn đã nghỉ {dashboard.QuotaThangHienTai.SoNgayDaSuDung} ngày trong tháng {targetThang}, vượt hạn mức {dashboard.QuotaThangHienTai.SoNgayPhepThang} ngày được phép!");
+                var soNgayVuot = Math.Abs(dashboard.QuotaThangHienTai.SoNgayPhepConLai);
+                dashboard.CanhBao.Add($"⚠️ Bạn đã nghỉ {dashboard.QuotaThangHienTai.SoNgayDaSuDung} ngày, vượt hạn mức {dashboard.QuotaThangHienTai.SoNgayPhepThang} ngày (dư {soNgayVuot} ngày)!");
             }
 
             if (dashboard.TongNgayNghiTrongNam > 12)
             {
-                dashboard.CanhBao.Add($"⚠️ Bạn đã nghỉ {dashboard.TongNgayNghiTrongNam} ngày trong năm {targetNam}, vượt hạn mức 12 ngày/năm!");
+                var soNgayVuotNam = dashboard.TongNgayNghiTrongNam - 12;
+                dashboard.CanhBao.Add($"⚠️ Bạn đã nghỉ {dashboard.TongNgayNghiTrongNam} ngày trong năm {targetNam}, vượt hạn mức 12 ngày (dư {soNgayVuotNam} ngày)!");
             }
 
             return dashboard;
@@ -85,12 +87,15 @@ namespace api.Service.Implement
                 Thang = thang
             };
 
-            // Lấy tất cả đơn đã approved trong tháng
+            // Lấy tất cả đơn nghỉ phép đã approved trong tháng (CHỈ NghiPhep, không bao gồm CongTac)
             var dons = await _donRepo.GetDonsByDateRangeAsync(
                 nhanVienId, 
                 startDate, 
                 endDate, 
                 TrangThaiDon.DaChapThuan);
+
+            // Filter chỉ lấy nghỉ phép
+            dons = dons.Where(d => d.LoaiDon == LoaiDonYeuCau.NghiPhep).ToList();
 
             // Convert sang NgayNghiDetailDto
             foreach (var don in dons)

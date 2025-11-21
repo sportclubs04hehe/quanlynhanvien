@@ -3,7 +3,6 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ThemSuaPhongbanComponent } from './them-sua-phongban/them-sua-phongban.component';
 import { NoficationComponent } from '../../shared/modal/nofication/nofication.component';
 import { PhongbanService } from '../../services/phongban.service';
-import { SpinnerService } from '../../services/spinner.service';
 import { PhongBanDto } from '../../types/phongban.model';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -20,7 +19,6 @@ import { CanComponentDeactivate } from '../../guards/unsaved-changes.guard';
 export class PhongbanComponent implements OnInit, OnDestroy, CanComponentDeactivate {
   private modal = inject(NgbModal);
   private phongbanService = inject(PhongbanService);
-  private spinner = inject(SpinnerService);
 
   phongBans = signal<PhongBanDto[]>([]);
   errorMessage = signal<string | null>(null);
@@ -68,14 +66,12 @@ export class PhongbanComponent implements OnInit, OnDestroy, CanComponentDeactiv
   loadPhongBans() {
     this.errorMessage.set(null);
     this.isLoading.set(true);
-    this.spinner.show('Đang tải danh sách phòng ban...');
 
     const term = this.searchTerm().trim();
     const searchValue = term.length >= 2 ? term : undefined;
 
     this.phongbanService.getAll(this.pageNumber(), this.pageSize(), searchValue)
       .pipe(finalize(() => {
-        this.spinner.hide();
         this.isLoading.set(false);
       }))
       .subscribe({
@@ -168,9 +164,7 @@ export class PhongbanComponent implements OnInit, OnDestroy, CanComponentDeactiv
     modalRef.result.then(
       (confirmed) => {
         if (confirmed) {
-          this.spinner.show('Đang xóa phòng ban...');
           this.phongbanService.delete(phongBan.id)
-            .pipe(finalize(() => this.spinner.hide()))
             .subscribe({
               next: () => {
                 this.loadPhongBans();

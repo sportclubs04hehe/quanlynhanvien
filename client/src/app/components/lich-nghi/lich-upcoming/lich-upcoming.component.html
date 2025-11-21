@@ -1,1 +1,208 @@
-<p>lich-upcoming works!</p>
+<div class="upcoming-container">
+  <!-- Header with Filters -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <h4 class="mb-0">
+          <i class="bi bi-calendar-event text-primary"></i>
+          Đơn Sắp Tới
+          <span class="badge bg-secondary ms-2">{{ filteredDons().length }}</span>
+        </h4>
+        <button class="btn btn-outline-secondary btn-sm" (click)="loadUpcomingDons()" [disabled]="isLoading()">
+          <i class="bi bi-arrow-clockwise"></i>
+          Làm mới
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Controls -->
+  <div class="row mb-4">
+    <div class="col-md-3 mb-2">
+      <label class="form-label small text-muted">Loại đơn</label>
+      <select 
+        class="form-select form-select-sm" 
+        [value]="filters().loaiDon"
+        (change)="updateFilter('loaiDon', $any($event.target).value)">
+        <option value="all">Tất cả</option>
+        <option value="NghiPhep">Nghỉ Phép</option>
+        <option value="CongTac">Công Tác</option>
+        <option value="LamThemGio">Làm Thêm Giờ</option>
+        <option value="DiMuon">Đi Muộn</option>
+      </select>
+    </div>
+
+    <div class="col-md-3 mb-2">
+      <label class="form-label small text-muted">Trạng thái</label>
+      <select 
+        class="form-select form-select-sm" 
+        [value]="filters().trangThai"
+        (change)="updateFilter('trangThai', $any($event.target).value)">
+        <option value="all">Tất cả</option>
+        <option value="ChoDuyet">Chờ Duyệt</option>
+        <option value="DaDuyet">Đã Duyệt</option>
+        <option value="TuChoi">Từ Chối</option>
+        <option value="HuyBo">Hủy Bỏ</option>
+      </select>
+    </div>
+
+    <div class="col-md-3 mb-2">
+      <label class="form-label small text-muted">Sắp xếp theo</label>
+      <select 
+        class="form-select form-select-sm" 
+        [value]="filters().sortBy"
+        (change)="updateFilter('sortBy', $any($event.target).value)">
+        <option value="ngayBatDau">Ngày bắt đầu</option>
+        <option value="ngayTao">Ngày tạo đơn</option>
+      </select>
+    </div>
+
+    <div class="col-md-3 mb-2">
+      <label class="form-label small text-muted">Thứ tự</label>
+      <div class="btn-group w-100" role="group">
+        <button 
+          type="button" 
+          class="btn btn-sm"
+          [class.btn-primary]="filters().sortOrder === 'asc'"
+          [class.btn-outline-secondary]="filters().sortOrder !== 'asc'"
+          (click)="updateFilter('sortOrder', 'asc')">
+          <i class="bi bi-sort-up"></i> Tăng
+        </button>
+        <button 
+          type="button" 
+          class="btn btn-sm"
+          [class.btn-primary]="filters().sortOrder === 'desc'"
+          [class.btn-outline-secondary]="filters().sortOrder !== 'desc'"
+          (click)="updateFilter('sortOrder', 'desc')">
+          <i class="bi bi-sort-down"></i> Giảm
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reset Filter Button -->
+  @if (filters().loaiDon !== 'all' || filters().trangThai !== 'all' || filters().sortBy !== 'ngayBatDau' || filters().sortOrder !== 'asc') {
+    <div class="row mb-3">
+      <div class="col-12">
+        <button class="btn btn-link btn-sm text-decoration-none" (click)="resetFilters()">
+          <i class="bi bi-x-circle"></i>
+          Xóa bộ lọc
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Empty State -->
+  @if (filteredDons().length === 0 && !isLoading()) {
+    <div class="text-center py-5">
+      <i class="bi bi-inbox display-1 text-muted"></i>
+      <p class="text-muted mt-3">Không có đơn nào sắp tới</p>
+      @if (filters().loaiDon !== 'all' || filters().trangThai !== 'all') {
+        <button class="btn btn-sm btn-outline-primary" (click)="resetFilters()">
+          Xóa bộ lọc
+        </button>
+      }
+    </div>
+  }
+
+  <!-- Dons List -->
+  @if (filteredDons().length > 0) {
+    <div class="row">
+      @for (don of filteredDons(); track don.id) {
+        <div class="col-12 col-lg-6 mb-3">
+          <div class="card h-100 shadow-sm border-0 don-card">
+            <div class="card-body">
+              <!-- Header -->
+              <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                  <h6 class="mb-1">
+                    <span class="badge me-2" [ngClass]="getLoaiDonBadgeClass(don.loaiDon)">
+                      {{ getLoaiDonText(don.loaiDon) }}
+                    </span>
+                    @if (don.loaiNghiPhep) {
+                      <span class="badge bg-light text-dark">
+                        {{ getLoaiNghiPhepText(don.loaiNghiPhepText) }}
+                      </span>
+                    }
+                  </h6>
+                  <small class="text-muted">
+                    <i class="bi bi-hash"></i>{{ don.maDon }}
+                  </small>
+                </div>
+                <span class="badge" [ngClass]="getTrangThaiBadgeClass(don.trangThai)">
+                  {{ getTrangThaiText(don.trangThaiText) }}
+                </span>
+              </div>
+
+              <!-- Dates -->
+              <div class="mb-3">
+                @if (don.loaiDon === 'LamThemGio' && don.ngayLamThem) {
+                  <div class="d-flex align-items-center text-muted small mb-1">
+                    <i class="bi bi-calendar-check me-2"></i>
+                    <strong>Ngày làm thêm:</strong>
+                    <span class="ms-2">{{ formatDate(don.ngayLamThem) }}</span>
+                  </div>
+                  <div class="d-flex align-items-center text-muted small">
+                    <i class="bi bi-clock me-2"></i>
+                    <span>{{ don.soGioLamThem }} giờ</span>
+                  </div>
+                } @else if (don.loaiDon === 'DiMuon' && don.ngayDiMuon) {
+                  <div class="d-flex align-items-center text-muted small mb-1">
+                    <i class="bi bi-calendar-x me-2"></i>
+                    <strong>Ngày đi muộn:</strong>
+                    <span class="ms-2">{{ formatDate(don.ngayDiMuon) }}</span>
+                  </div>
+                  @if (don.gioDuKienDen) {
+                    <div class="d-flex align-items-center text-muted small">
+                      <i class="bi bi-clock me-2"></i>
+                      <span>Giờ dự kiến đến: {{ formatDate(don.gioDuKienDen) }}</span>
+                    </div>
+                  }
+                } @else {
+                  <div class="d-flex align-items-center text-muted small mb-1">
+                    <i class="bi bi-calendar-range me-2"></i>
+                    <span>{{ formatDate(don.ngayBatDau!) }} - {{ formatDate(don.ngayKetThuc!) }}</span>
+                  </div>
+                  @if (don.soNgay || don.soNgayThucTe) {
+                    <div class="d-flex align-items-center text-muted small">
+                      <i class="bi bi-clock-history me-2"></i>
+                      <span>{{ don.soNgayThucTe || don.soNgay }} ngày</span>
+                    </div>
+                  }
+                }
+              </div>
+
+              <!-- Lý do -->
+              <div class="mb-3">
+                <small class="text-muted d-block mb-1"><strong>Lý do:</strong></small>
+                <p class="mb-0 small text-truncate-2-lines">{{ don.lyDo || 'Không có' }}</p>
+              </div>
+
+              <!-- Footer -->
+              <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                <small class="text-muted">
+                  <i class="bi bi-clock"></i>
+                  Tạo đơn vào ngày: {{ formatDate(don.ngayTao)}}
+                </small>
+                @if (don.tenNguoiDuyet) {
+                  <small class="text-muted">
+                    <i class="bi bi-person-check"></i>
+                    {{ don.tenNguoiDuyet }}
+                  </small>
+                }
+              </div>
+
+              <!-- Ghi chú duyệt -->
+              @if (don.ghiChuNguoiDuyet) {
+                <div class="mt-2 pt-2 border-top">
+                  <small class="text-muted d-block mb-1"><strong>Ghi chú duyệt:</strong></small>
+                  <p class="mb-0 small text-muted">{{ don.ghiChuNguoiDuyet }}</p>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
