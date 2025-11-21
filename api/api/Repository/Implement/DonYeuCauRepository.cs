@@ -671,6 +671,54 @@ namespace api.Repository.Implement
                 .ToListAsync();
         }
 
+        public async Task<List<DonYeuCau>> GetDonsByLoaiDonAsync(
+            Guid nhanVienId,
+            LoaiDonYeuCau loaiDon,
+            TrangThaiDon? trangThai,
+            int nam,
+            int thang)
+        {
+            var query = _context.DonYeuCaus
+                .Include(d => d.NhanVien)
+                .Include(d => d.NhanVien.PhongBan)
+                .Include(d => d.NhanVien.ChucVu)
+                .Where(d => d.NhanVienId == nhanVienId
+                    && d.LoaiDon == loaiDon);
+
+            if (trangThai.HasValue)
+            {
+                query = query.Where(d => d.TrangThai == trangThai.Value);
+            }
+
+            // Filter theo tháng tùy loại đơn
+            if (loaiDon == LoaiDonYeuCau.LamThemGio)
+            {
+                // Đơn làm thêm giờ dùng NgayLamThem
+                query = query.Where(d => d.NgayLamThem.HasValue
+                    && d.NgayLamThem.Value.Year == nam
+                    && d.NgayLamThem.Value.Month == thang
+                    && d.SoGioLamThem.HasValue);
+            }
+            else if (loaiDon == LoaiDonYeuCau.DiMuon)
+            {
+                // Đơn đi muộn dùng NgayDiMuon
+                query = query.Where(d => d.NgayDiMuon.HasValue
+                    && d.NgayDiMuon.Value.Year == nam
+                    && d.NgayDiMuon.Value.Month == thang);
+            }
+            else
+            {
+                // Nghỉ phép, công tác dùng NgayBatDau
+                query = query.Where(d => d.NgayBatDau.HasValue
+                    && d.NgayBatDau.Value.Year == nam
+                    && d.NgayBatDau.Value.Month == thang);
+            }
+
+            return await query
+                .OrderByDescending(d => d.NgayTao)
+                .ToListAsync();
+        }
+
         #endregion
     }
 }

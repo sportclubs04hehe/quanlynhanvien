@@ -116,6 +116,16 @@ namespace api.Repository.Interface
             DateTime endDate, 
             TrangThaiDon? trangThai = null);
 
+        /// <summary>
+        /// Lấy đơn theo loại đơn và tháng (dùng cho đơn làm thêm giờ)
+        /// </summary>
+        Task<List<DonYeuCau>> GetDonsByLoaiDonAsync(
+            Guid nhanVienId,
+            LoaiDonYeuCau loaiDon,
+            TrangThaiDon? trangThai,
+            int nam,
+            int thang);
+
         #endregion
 
         #region Thống kê

@@ -148,8 +148,15 @@ namespace api.Service.Implement
             // Tính tổng số ngày nghỉ và giờ làm thêm trong tháng
             calendar.SoNgayNghiTrongThang = calendar.NgayDaNghi.Sum(n => n.SoNgay);
 
-            var donLamThem = dons.Where(d => d.LoaiDon == LoaiDonYeuCau.LamThemGio).ToList();
-            calendar.SoGioLamThemTrongThang = donLamThem.Sum(d => d.SoGioLamThem ?? 0);
+            // Lấy riêng đơn làm thêm vì dùng NgayLamThem thay vì NgayBatDau/NgayKetThuc
+            var donLamThemTrongThang = await _donRepo.GetDonsByLoaiDonAsync(
+                nhanVienId,
+                LoaiDonYeuCau.LamThemGio,
+                TrangThaiDon.DaChapThuan,
+                nam,
+                thang);
+            
+            calendar.SoGioLamThemTrongThang = donLamThemTrongThang.Sum(d => d.SoGioLamThem ?? 0);
 
             return calendar;
         }
