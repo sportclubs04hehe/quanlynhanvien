@@ -31,18 +31,6 @@
           </a>
         </li>
 
-        <li class="nav-item">
-          <a class="nav-link" routerLink="/sessions" routerLinkActive="active">
-            Phiên đăng nhập
-          </a>
-        </li>
-
-        <li class="nav-item">
-          <a class="nav-link" routerLink="/telegram" routerLinkActive="active">
-            Cài đặt Telegram
-          </a>
-        </li>
-
         <li class="nav-item" *hasRole="[APP_ROLES.GIAM_DOC, APP_ROLES.TRUONG_PHONG]">
           <a class="nav-link" routerLink="/phongban" routerLinkActive="active">
             Phòng ban
@@ -50,8 +38,8 @@
         </li>
 
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown"
-            aria-expanded="false">
+          <a class="nav-link dropdown-toggle" id="navbarDropdown" role="button" data-bs-toggle="dropdown"
+            aria-expanded="false" routerLinkActive="active">
             Hệ thống / Cài đặt
           </a>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
@@ -59,11 +47,11 @@
             <li>
               <hr class="dropdown-divider">
             </li>
-            <li><a class="dropdown-item" routerLink="/quanlytaikhoan">Quản lý tài khoản</a></li>
+            <li><a class="dropdown-item" routerLink="/sessions">Phiên đăng nhập</a></li>
             <li>
               <hr class="dropdown-divider">
             </li>
-            <li><a class="dropdown-item" routerLink="/caidat">Cài đặt khác</a></li>
+            <li><a class="dropdown-item" routerLink="/telegram">Cài đặt Telegram</a></li>
           </ul>
         </li>
 
